@@ -1,6 +1,6 @@
 <template>
   <!-- Header -->
-  <div style="border-bottom: 1px solid #1a1a1a; padding: 32px 24px 20px; text-align: center">
+  <div style="border-bottom: 1px solid oklch(15% 0.008 45); padding: 32px 24px 20px; text-align: center">
     <div
       style="
         font-size: 11px;
@@ -17,7 +17,7 @@
         font-size: clamp(26px, 5vw, 44px);
         font-weight: 400;
         margin: 0;
-        color: #fff;
+        color: oklch(96% 0.005 45);
         letter-spacing: -1px;
       "
     >
@@ -34,7 +34,7 @@
   </div>
 
   <!-- Phase Tabs -->
-  <div style="display: flex; border-bottom: 1px solid #1a1a1a">
+  <div style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
     <button
       v-for="(p, i) in program.phases"
       :key="p.id"
@@ -42,7 +42,7 @@
       :style="{
         flex: 1,
         padding: '14px 8px',
-        background: activePhase === i ? '#111' : 'transparent',
+        background: activePhase === i ? 'oklch(11.5% 0.008 45)' : 'transparent',
         border: 'none',
         borderBottom: activePhase === i ? `2px solid ${p.color}` : '2px solid transparent',
         color: activePhase === i ? p.color : '#777',
@@ -50,6 +50,7 @@
         fontSize: '11px',
         letterSpacing: '2px',
         textTransform: 'uppercase',
+        transition: 'color 0.15s, border-color 0.15s',
       }"
     >
       <div style="font-weight: 700">{{ p.name }}</div>
@@ -80,7 +81,7 @@
       :key="d.day"
       :style="{
         marginBottom: '8px',
-        border: expandedDay === i ? `1px solid ${phase.color}44` : '1px solid #1c1c1c',
+        border: expandedDay === i ? `1px solid ${phase.color}44` : '1px solid oklch(17% 0.008 45)',
         borderRadius: '8px',
         overflow: 'hidden',
       }"
@@ -93,7 +94,7 @@
         :style="{
           width: '100%',
           padding: '13px 16px',
-          background: expandedDay === i ? '#111' : '#0d0d0d',
+          background: expandedDay === i ? 'oklch(11.5% 0.008 45)' : 'oklch(10% 0.01 45)',
           border: 'none',
           display: 'flex',
           justifyContent: 'space-between',
@@ -137,7 +138,7 @@
       <!-- Home / Gym Track Toggle -->
       <div
         v-if="expandedDay === i && d.gym"
-        style="display: flex; background: #0a0a0a; border-bottom: 1px solid #1a1a1a"
+        style="display: flex; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(15% 0.008 45)"
       >
         <button
           v-for="t in ['home', 'gym']"
@@ -146,7 +147,7 @@
           :style="{
             flex: 1,
             padding: '9px 8px',
-            background: getTrack(i, true) === t ? '#161616' : 'transparent',
+            background: getTrack(i, true) === t ? 'oklch(13% 0.008 45)' : 'transparent',
             border: 'none',
             borderBottom:
               getTrack(i, true) === t ? `2px solid ${phase.color}` : '2px solid transparent',
@@ -155,6 +156,7 @@
             fontSize: '11px',
             letterSpacing: '2px',
             textTransform: 'uppercase',
+            transition: 'color 0.15s, border-color 0.15s',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -166,7 +168,7 @@
       </div>
 
       <!-- Exercise Table -->
-      <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: #0d0d0d">
+      <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px">
           <thead>
             <tr style="color: #777">
@@ -215,7 +217,7 @@
             <tr
               v-for="(ex, j) in getExercises(i, d)"
               :key="j"
-              style="border-top: 1px solid #1a1a1a"
+              style="border-top: 1px solid oklch(15% 0.008 45)"
             >
               <td style="padding: 10px 8px 10px 0">
                 <a
@@ -283,7 +285,7 @@
     <div
       style="
         padding: 14px 16px;
-        border: 1px dashed #222;
+        border: 1px dashed oklch(22% 0.008 45);
         border-radius: 6px;
         font-size: 12px;
         line-height: 1.9;
@@ -315,17 +317,18 @@
       <div
         v-for="(t, i) in tips"
         :key="i"
-        style="
-          display: flex;
-          gap: 12px;
-          align-items: flex-start;
-          padding: 12px 14px;
-          background: #0d0d0d;
-          border-radius: 6px;
-          border: 1px solid #1a1a1a;
-          font-size: 13px;
-          color: #888;
-        "
+        :style="{
+          display: 'flex',
+          gap: '12px',
+          alignItems: 'flex-start',
+          padding: '12px 14px',
+          background: 'oklch(10% 0.01 45)',
+          borderRadius: '6px',
+          border: '1px solid oklch(17% 0.008 45)',
+          borderLeft: `3px solid ${phase.color}88`,
+          fontSize: '13px',
+          color: '#888',
+        }"
       >
         <span style="font-size: 16px; line-height: 1.4">{{ t.icon }}</span>
         <span>{{ t.text }}</span>

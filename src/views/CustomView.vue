@@ -1,11 +1,11 @@
 <template>
   <!-- Header -->
-  <div style="border-bottom: 1px solid #1a1a1a; padding: 32px 24px 20px; text-align: center">
+  <div style="border-bottom: 1px solid oklch(15% 0.008 45); padding: 32px 24px 20px; text-align: center">
     <div
       style="
         font-size: 11px;
         letter-spacing: 4px;
-        color: #555;
+        color: #888;
         text-transform: uppercase;
         margin-bottom: 8px;
       "
@@ -17,13 +17,13 @@
         font-size: clamp(26px, 5vw, 44px);
         font-weight: 400;
         margin: 0;
-        color: #fff;
+        color: oklch(96% 0.005 45);
         letter-spacing: -1px;
       "
     >
       Build Your Day
     </h1>
-    <p style="font-size: 13px; color: #555; margin-top: 8px; font-style: italic">
+    <p style="font-size: 13px; color: #888; margin-top: 8px; font-style: italic">
       Override any day with your own exercises · demo links auto-generated
     </p>
   </div>
@@ -51,13 +51,12 @@
           :style="{
             padding: '7px 14px',
             background: selectedDay === d ? '#a78bfa22' : 'transparent',
-            border: selectedDay === d ? '1px solid #a78bfa' : '1px solid #222',
+            border: selectedDay === d ? '1px solid #a78bfa' : '1px solid oklch(20% 0.008 45)',
             borderRadius: '20px',
-            color: selectedDay === d ? '#a78bfa' : '#444',
+            color: selectedDay === d ? '#a78bfa' : '#777',
             cursor: 'pointer',
             fontSize: '11px',
             letterSpacing: '1px',
-            fontFamily: 'Georgia, serif',
           }"
         >
           {{ d }}
@@ -84,8 +83,8 @@
       style="
         margin-bottom: 10px;
         padding: 14px;
-        background: #0d0d0d;
-        border: 1px solid #1c1c1c;
+        background: oklch(10% 0.01 45);
+        border: 1px solid oklch(17% 0.008 45);
         border-radius: 8px;
       "
     >
@@ -191,7 +190,7 @@
           >Watch demo ↗</a
         >
       </div>
-      <div v-else style="font-size: 11px; color: #2a2a2a; font-style: italic">
+      <div v-else style="font-size: 11px; color: #555; font-style: italic">
         Type a name to get a demo link
       </div>
     </div>
@@ -203,14 +202,13 @@
         width: 100%;
         padding: 11px;
         background: transparent;
-        border: 1px dashed #2a2a2a;
+        border: 1px dashed oklch(22% 0.008 45);
         border-radius: 8px;
-        color: #444;
+        color: #666;
         cursor: pointer;
         font-size: 11px;
         letter-spacing: 2px;
         text-transform: uppercase;
-        font-family: Georgia, serif;
         margin-bottom: 12px;
       "
     >
@@ -224,15 +222,14 @@
       :style="{
         width: '100%',
         padding: '13px',
-        background: hasValidExercises ? '#a78bfa' : '#111',
+        background: hasValidExercises ? '#a78bfa' : 'oklch(11.5% 0.008 45)',
         border: 'none',
         borderRadius: '8px',
-        color: hasValidExercises ? '#fff' : '#333',
+        color: hasValidExercises ? '#fff' : '#444',
         cursor: hasValidExercises ? 'pointer' : 'default',
         fontSize: '11px',
         letterSpacing: '3px',
         textTransform: 'uppercase',
-        fontFamily: 'Georgia, serif',
         marginBottom: '40px',
       }"
     >
@@ -258,7 +255,7 @@
       <div
         v-for="(exList, day) in savedWorkouts"
         :key="day"
-        style="margin-bottom: 8px; border: 1px solid #1c1c1c; border-radius: 8px; overflow: hidden"
+        style="margin-bottom: 8px; border: 1px solid oklch(17% 0.008 45); border-radius: 8px; overflow: hidden"
       >
         <!-- Day header -->
         <div
@@ -267,7 +264,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            background: #0d0d0d;
+            background: oklch(10% 0.01 45);
           "
         >
           <div style="display: flex; gap: 10px; align-items: center">
@@ -305,7 +302,6 @@
                 cursor: pointer;
                 font-size: 11px;
                 letter-spacing: 1px;
-                font-family: Georgia, serif;
                 margin-right: 8px;
               "
             >Yes</button>
@@ -318,7 +314,6 @@
                 cursor: pointer;
                 font-size: 11px;
                 letter-spacing: 1px;
-                font-family: Georgia, serif;
               "
             >No</button>
           </template>
@@ -332,7 +327,6 @@
               cursor: pointer;
               font-size: 11px;
               letter-spacing: 1px;
-              font-family: Georgia, serif;
             "
           >
             Delete
@@ -340,7 +334,7 @@
         </div>
 
         <!-- Exercise table -->
-        <div style="padding: 0 16px 14px; background: #0d0d0d">
+        <div style="padding: 0 16px 14px; background: oklch(10% 0.01 45)">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px">
             <thead>
               <tr style="color: #777">
@@ -389,7 +383,7 @@
               <tr
                 v-for="(ex, j) in exList"
                 :key="j"
-                style="border-top: 1px solid #1a1a1a"
+                style="border-top: 1px solid oklch(15% 0.008 45)"
               >
                 <td style="padding: 10px 8px 10px 0">
                   <a
@@ -458,8 +452,8 @@ const yt = (q) =>
 
 const inputStyle = {
   width: '100%',
-  background: '#111',
-  border: '1px solid #222',
+  background: 'oklch(11.5% 0.008 45)',
+  border: '1px solid oklch(20% 0.008 45)',
   borderRadius: '4px',
   padding: '8px 10px',
   color: '#e8e8e8',

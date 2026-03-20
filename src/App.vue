@@ -2,14 +2,14 @@
   <div
     style="
       min-height: 100vh;
-      background: #0a0a0a;
+      background: oklch(8% 0.012 45);
       color: #e8e8e8;
       font-family: Georgia, serif;
       padding-bottom: 60px;
     "
   >
     <!-- Nav -->
-    <nav style="display: flex; border-bottom: 1px solid #1a1a1a">
+    <nav style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
       <RouterLink to="/" class="nav-link">Program</RouterLink>
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
     </nav>
@@ -17,6 +17,15 @@
     <RouterView />
   </div>
 </template>
+
+<style>
+button,
+input,
+select,
+textarea {
+  font-family: Georgia, serif;
+}
+</style>
 
 <style scoped>
 .nav-link {
@@ -41,7 +50,7 @@
 }
 
 .nav-link.router-link-exact-active {
-  background: #111;
+  background: oklch(11.5% 0.008 45);
   border-bottom-color: #e8e8e8;
   color: #e8e8e8;
 }
