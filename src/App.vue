@@ -24,7 +24,7 @@
   padding: 12px 8px;
   background: transparent;
   border-bottom: 2px solid transparent;
-  color: #444;
+  color: #777;
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -33,6 +33,11 @@
   display: block;
   font-family: Georgia, serif;
   transition: color 0.15s;
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid #e8e8e8;
+  outline-offset: -2px;
 }
 
 .nav-link.router-link-exact-active {

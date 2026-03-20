@@ -5,7 +5,7 @@
       style="
         font-size: 11px;
         letter-spacing: 4px;
-        color: #555;
+        color: #888;
         text-transform: uppercase;
         margin-bottom: 8px;
       "
@@ -23,13 +23,13 @@
     >
       Build From Zero
     </h1>
-    <p style="font-size: 13px; color: #555; margin-top: 8px; font-style: italic">
+    <p style="font-size: 13px; color: #888; margin-top: 8px; font-style: italic">
       Home &amp; Gym Tracks · 5 days/week · 20–30 min
     </p>
     <div style="display: flex; gap: 20px; justify-content: center; margin-top: 12px">
-      <span style="font-size: 12px; color: #444">🏠 Home</span>
-      <span style="font-size: 12px; color: #444">🏋️ Gym</span>
-      <span style="font-size: 12px; color: #444">🔗 Tap exercise name for demo</span>
+      <span style="font-size: 12px; color: #888">🏠 Home</span>
+      <span style="font-size: 12px; color: #888">🏋️ Gym</span>
+      <span style="font-size: 12px; color: #888">🔗 Tap exercise name for demo</span>
     </div>
   </div>
 
@@ -45,7 +45,7 @@
         background: activePhase === i ? '#111' : 'transparent',
         border: 'none',
         borderBottom: activePhase === i ? `2px solid ${p.color}` : '2px solid transparent',
-        color: activePhase === i ? p.color : '#444',
+        color: activePhase === i ? p.color : '#777',
         cursor: 'pointer',
         fontSize: '11px',
         letterSpacing: '2px',
@@ -69,7 +69,7 @@
           flexShrink: 0,
         }"
       />
-      <span style="color: #666; font-size: 12px; font-style: italic">{{ phase.subtitle }}</span>
+      <span style="color: #888; font-size: 12px; font-style: italic">{{ phase.subtitle }}</span>
     </div>
   </div>
 
@@ -88,6 +88,8 @@
       <!-- Day Header Button -->
       <button
         @click="toggleDay(i)"
+        :aria-expanded="expandedDay === i"
+        :aria-label="`${d.day}: ${d.label} — ${expandedDay === i ? 'collapse' : 'expand'}`"
         :style="{
           width: '100%',
           padding: '13px 16px',
@@ -104,7 +106,7 @@
           <span
             style="
               font-size: 11px;
-              color: #555;
+              color: #777;
               letter-spacing: 2px;
               text-transform: uppercase;
               min-width: 72px;
@@ -125,9 +127,9 @@
             }"
             >{{ d.label }}</span
           >
-          <span v-if="!d.gym" style="font-size: 10px; color: #3a3a3a">🏠 only</span>
+          <span v-if="!d.gym" style="font-size: 10px; color: #666">🏠 only</span>
         </div>
-        <span style="color: #444; font-size: 18px; line-height: 1">{{
+        <span aria-hidden="true" style="color: #888; font-size: 18px; line-height: 1">{{
           expandedDay === i ? '−' : '+'
         }}</span>
       </button>
@@ -148,7 +150,7 @@
             border: 'none',
             borderBottom:
               getTrack(i, true) === t ? `2px solid ${phase.color}` : '2px solid transparent',
-            color: getTrack(i, true) === t ? '#e8e8e8' : '#444',
+            color: getTrack(i, true) === t ? '#e8e8e8' : '#777',
             cursor: 'pointer',
             fontSize: '11px',
             letterSpacing: '2px',
@@ -167,39 +169,46 @@
       <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: #0d0d0d">
         <table style="width: 100%; border-collapse: collapse; font-size: 13px">
           <thead>
-            <tr style="color: #444">
-              <td
+            <tr style="color: #777">
+              <th
+                scope="col"
                 style="
                   padding: 8px 0 4px;
                   font-size: 10px;
                   letter-spacing: 2px;
                   text-transform: uppercase;
+                  font-weight: 400;
+                  text-align: left;
                 "
               >
                 Exercise
-              </td>
-              <td
+              </th>
+              <th
+                scope="col"
                 style="
                   padding: 8px 0 4px;
                   font-size: 10px;
                   letter-spacing: 2px;
                   text-transform: uppercase;
                   text-align: center;
+                  font-weight: 400;
                 "
               >
                 Sets
-              </td>
-              <td
+              </th>
+              <th
+                scope="col"
                 style="
                   padding: 8px 0 4px;
                   font-size: 10px;
                   letter-spacing: 2px;
                   text-transform: uppercase;
                   text-align: center;
+                  font-weight: 400;
                 "
               >
                 Reps
-              </td>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -226,7 +235,7 @@
                 <span v-else style="color: #e8e8e8">{{ ex.name }}</span>
                 <div
                   v-if="ex.note"
-                  style="color: #555; font-size: 11px; margin-top: 3px; font-style: italic"
+                  style="color: #777; font-size: 11px; margin-top: 3px; font-style: italic"
                 >
                   {{ ex.note }}
                 </div>
@@ -264,7 +273,7 @@
       style="
         font-size: 10px;
         letter-spacing: 3px;
-        color: #444;
+        color: #666;
         text-transform: uppercase;
         margin-bottom: 10px;
       "
@@ -278,13 +287,13 @@
         border-radius: 6px;
         font-size: 12px;
         line-height: 1.9;
-        color: #555;
+        color: #888;
       "
     >
       <div v-for="(sub, i) in subs" :key="i">
-        <span style="color: #444">{{ sub[0] }}</span>
-        <span style="color: #333; margin: 0 8px">→</span>
-        <span style="color: #666">{{ sub[1] }}</span>
+        <span style="color: #aaa">{{ sub[0] }}</span>
+        <span style="color: #555; margin: 0 8px">→</span>
+        <span style="color: #888">{{ sub[1] }}</span>
       </div>
     </div>
   </div>
@@ -295,7 +304,7 @@
       style="
         font-size: 10px;
         letter-spacing: 3px;
-        color: #444;
+        color: #666;
         text-transform: uppercase;
         margin-bottom: 10px;
       "
@@ -327,6 +336,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -1057,3 +1067,12 @@ function getExercises(dayIndex, day) {
   return currentTrack === 'gym' ? day.gym : day.home
 }
 </script>
+
+<style scoped>
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #e8e8e8;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+</style>

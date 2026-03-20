@@ -36,7 +36,7 @@
         style="
           font-size: 10px;
           letter-spacing: 3px;
-          color: #444;
+          color: #666;
           text-transform: uppercase;
           margin-bottom: 10px;
         "
@@ -70,7 +70,7 @@
       style="
         font-size: 10px;
         letter-spacing: 3px;
-        color: #444;
+        color: #666;
         text-transform: uppercase;
         margin-bottom: 10px;
       "
@@ -91,68 +91,84 @@
     >
       <!-- Name row -->
       <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px">
-        <span style="font-size: 11px; color: #333; min-width: 18px; text-align: right">{{
+        <span style="font-size: 11px; color: #666; min-width: 18px; text-align: right">{{
           i + 1
         }}</span>
         <input
           v-model="ex.name"
+          :aria-label="`Exercise ${i + 1} name`"
           placeholder="Exercise name"
+          class="workout-input"
           :style="inputStyle"
         />
         <button
           @click="removeExercise(i)"
+          :aria-label="`Remove exercise ${i + 1}`"
           style="
             background: transparent;
             border: none;
-            color: #333;
+            color: #777;
             cursor: pointer;
             font-size: 20px;
             line-height: 1;
-            padding: 0 4px;
+            padding: 4px 8px;
             flex-shrink: 0;
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           "
         >
-          ×
+          <span aria-hidden="true">×</span>
         </button>
       </div>
 
       <!-- Sets / Reps row -->
       <div style="display: flex; gap: 8px; margin-bottom: 10px">
         <div style="flex: 1">
-          <div
+          <label
+            :for="`ex-${i}-sets`"
             style="
+              display: block;
               font-size: 9px;
               letter-spacing: 2px;
-              color: #333;
+              color: #666;
               text-transform: uppercase;
               margin-bottom: 4px;
               text-align: center;
             "
           >
             Sets
-          </div>
+          </label>
           <input
+            :id="`ex-${i}-sets`"
             v-model="ex.sets"
             placeholder="3"
+            class="workout-input"
             :style="{ ...inputStyle, textAlign: 'center' }"
           />
         </div>
         <div style="flex: 1">
-          <div
+          <label
+            :for="`ex-${i}-reps`"
             style="
+              display: block;
               font-size: 9px;
               letter-spacing: 2px;
-              color: #333;
+              color: #666;
               text-transform: uppercase;
               margin-bottom: 4px;
               text-align: center;
             "
           >
             Reps
-          </div>
+          </label>
           <input
+            :id="`ex-${i}-reps`"
             v-model="ex.reps"
             placeholder="10"
+            class="workout-input"
             :style="{ ...inputStyle, textAlign: 'center' }"
           />
         </div>
@@ -160,7 +176,7 @@
 
       <!-- Auto YouTube link -->
       <div v-if="ex.name.trim()" style="display: flex; align-items: center; gap: 6px">
-        <span style="font-size: 10px; color: #2a2a2a">▶</span>
+        <span aria-hidden="true" style="font-size: 10px; color: #666">▶</span>
         <a
           :href="yt(ex.name)"
           target="_blank"
@@ -231,7 +247,7 @@
         style="
           font-size: 10px;
           letter-spacing: 3px;
-          color: #444;
+          color: #666;
           text-transform: uppercase;
           margin-bottom: 10px;
         "
@@ -278,12 +294,41 @@
               >Custom</span
             >
           </div>
+          <template v-if="confirmDeleteDay === day">
+            <span style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px">Remove?</span>
+            <button
+              @click="deleteDay(day)"
+              style="
+                background: transparent;
+                border: none;
+                color: #f87171;
+                cursor: pointer;
+                font-size: 11px;
+                letter-spacing: 1px;
+                font-family: Georgia, serif;
+                margin-right: 8px;
+              "
+            >Yes</button>
+            <button
+              @click="confirmDeleteDay = null"
+              style="
+                background: transparent;
+                border: none;
+                color: #777;
+                cursor: pointer;
+                font-size: 11px;
+                letter-spacing: 1px;
+                font-family: Georgia, serif;
+              "
+            >No</button>
+          </template>
           <button
-            @click="deleteDay(day)"
+            v-else
+            @click="confirmDeleteDay = day"
             style="
               background: transparent;
               border: none;
-              color: #333;
+              color: #666;
               cursor: pointer;
               font-size: 11px;
               letter-spacing: 1px;
@@ -298,39 +343,46 @@
         <div style="padding: 0 16px 14px; background: #0d0d0d">
           <table style="width: 100%; border-collapse: collapse; font-size: 13px">
             <thead>
-              <tr style="color: #444">
-                <td
+              <tr style="color: #777">
+                <th
+                  scope="col"
                   style="
                     padding: 8px 0 4px;
                     font-size: 10px;
                     letter-spacing: 2px;
                     text-transform: uppercase;
+                    font-weight: 400;
+                    text-align: left;
                   "
                 >
                   Exercise
-                </td>
-                <td
+                </th>
+                <th
+                  scope="col"
                   style="
                     padding: 8px 0 4px;
                     font-size: 10px;
                     letter-spacing: 2px;
                     text-transform: uppercase;
                     text-align: center;
+                    font-weight: 400;
                   "
                 >
                   Sets
-                </td>
-                <td
+                </th>
+                <th
+                  scope="col"
                   style="
                     padding: 8px 0 4px;
                     font-size: 10px;
                     letter-spacing: 2px;
                     text-transform: uppercase;
                     text-align: center;
+                    font-weight: 400;
                   "
                 >
                   Reps
-                </td>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -386,7 +438,7 @@
       style="
         text-align: center;
         padding: 40px 16px;
-        color: #2a2a2a;
+        color: #888;
         font-size: 13px;
         font-style: italic;
       "
@@ -413,9 +465,10 @@ const inputStyle = {
   color: '#e8e8e8',
   fontSize: '13px',
   fontFamily: 'Georgia, serif',
-  outline: 'none',
   boxSizing: 'border-box',
 }
+
+const confirmDeleteDay = ref(null)
 
 const selectedDay = ref('Monday')
 const exercises = ref([{ name: '', sets: '', reps: '' }])
@@ -452,5 +505,26 @@ function deleteDay(day) {
   delete updated[day]
   savedWorkouts.value = updated
   localStorage.setItem('customWorkouts', JSON.stringify(updated))
+  confirmDeleteDay.value = null
 }
 </script>
+
+<style scoped>
+.workout-input:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 0;
+  border-color: #a78bfa44;
+}
+
+button:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+</style>
