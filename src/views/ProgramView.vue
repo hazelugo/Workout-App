@@ -34,7 +34,7 @@
   </div>
 
   <!-- Phase Tabs -->
-  <div style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
+  <div class="phase-tabs" style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
     <button
       v-for="(p, i) in program.phases"
       :key="p.id"
@@ -62,11 +62,11 @@
   <Transition name="reveal">
     <div
       v-if="!firstRunSeen"
-      style="
-        max-width: 640px;
-        margin: 14px auto 0;
-        padding: 0 16px;
-      "
+      :style="{
+        maxWidth: isDesktop ? '860px' : '640px',
+        margin: '14px auto 0',
+        padding: '0 16px',
+      }"
     >
       <div
         style="
@@ -112,7 +112,7 @@
   <div :key="activePhase">
 
   <!-- Phase Subtitle -->
-  <div style="padding: 14px 20px 4px; max-width: 640px; margin: 0 auto">
+  <div :style="{ padding: '14px 20px 4px', maxWidth: isDesktop ? '860px' : '640px', margin: '0 auto' }">
     <div style="display: flex; align-items: center; gap: 10px">
       <div
         :style="{
@@ -128,7 +128,7 @@
   </div>
 
   <!-- Days -->
-  <div style="max-width: 640px; margin: 8px auto 0; padding: 0 16px">
+  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '8px auto 0', padding: '0 16px' }">
     <div
       v-for="(d, i) in phase.days"
       :key="d.day"
@@ -143,8 +143,9 @@
       <!-- Day Header Button -->
       <button
         @click="toggleDay(i)"
-        :aria-expanded="expandedDay === i"
-        :aria-label="`${d.day}: ${d.label} — ${expandedDay === i ? 'collapse' : 'expand'}`"
+        class="day-header-btn"
+        :aria-expanded="isDesktop ? undefined : expandedDay === i"
+        :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${expandedDay === i ? 'collapse' : 'expand'}` : ''}`"
         :style="{
           width: '100%',
           padding: '13px 16px',
@@ -198,15 +199,17 @@
             }"
           >Today</span>
         </div>
-        <span aria-hidden="true" style="color: #888; font-size: 18px; line-height: 1">{{
-          expandedDay === i ? '−' : '+'
-        }}</span>
+        <span
+          v-if="!isDesktop"
+          aria-hidden="true"
+          style="color: #888; font-size: 18px; line-height: 1"
+        >{{ expandedDay === i ? '−' : '+' }}</span>
       </button>
 
       <!-- Home / Gym Track Toggle -->
       <Transition name="reveal">
       <div
-        v-if="expandedDay === i && d.gym"
+        v-if="(isDesktop || expandedDay === i) && d.gym"
         style="display: flex; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(15% 0.008 45)"
       >
         <button
@@ -239,7 +242,7 @@
 
       <!-- Exercise Table -->
       <Transition name="accordion">
-      <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
+      <div v-if="isDesktop || expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
           <thead>
             <tr style="color: #777">
@@ -347,7 +350,7 @@
   </Transition>
 
   <!-- Gym Substitutions -->
-  <div style="max-width: 640px; margin: 20px auto 0; padding: 0 16px">
+  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
         font-size: 10px;
@@ -378,7 +381,7 @@
   </div>
 
   <!-- Keys to Success -->
-  <div style="max-width: 640px; margin: 20px auto 0; padding: 0 16px">
+  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
         font-size: 10px;
@@ -390,7 +393,7 @@
     >
       Keys to Success
     </div>
-    <div style="display: flex; flex-direction: column; gap: 8px">
+    <div class="tips-grid">
       <div
         v-for="(t, i) in tips"
         :key="i"
@@ -417,7 +420,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1130,6 +1133,14 @@ function dismissFirstRun() {
   localStorage.setItem('onboard-v1', '1')
 }
 
+// ─── Responsive ───────────────────────────────────────────────────────────────
+
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 375)
+const isDesktop = computed(() => windowWidth.value >= 900)
+function onResize() { windowWidth.value = window.innerWidth }
+onMounted(() => window.addEventListener('resize', onResize, { passive: true }))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
 // ─── Computed ─────────────────────────────────────────────────────────────────
 
 const phase = computed(() => program.phases[activePhase.value])
@@ -1142,7 +1153,11 @@ function selectPhase(i) {
 }
 
 function toggleDay(i) {
-  expandedDay.value = expandedDay.value === i ? -1 : i
+  if (isDesktop.value) {
+    expandedDay.value = i // select/highlight only — no collapsing on desktop
+  } else {
+    expandedDay.value = expandedDay.value === i ? -1 : i
+  }
 }
 
 function getTrack(dayIndex, hasGym) {
@@ -1215,5 +1230,36 @@ a:hover {
 .reveal-enter-from,
 .reveal-leave-to {
   opacity: 0;
+}
+
+/* ── Desktop adaptations ─────────────────────────────────── */
+
+/* Phase tabs: sticky so you can switch phases while scrolling the week */
+.phase-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: oklch(8% 0.012 45);
+}
+
+/* Day header hover feedback (desktop) */
+@media (min-width: 900px) {
+  .day-header-btn:hover {
+    filter: brightness(1.1);
+  }
+}
+
+/* Tips: 2-column grid on desktop */
+.tips-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 900px) {
+  .tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>
