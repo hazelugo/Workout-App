@@ -50,13 +50,17 @@
         fontSize: '11px',
         letterSpacing: '2px',
         textTransform: 'uppercase',
-        transition: 'color 0.15s, border-color 0.15s',
+        transition: 'color 0.15s, border-color 0.15s, background 0.15s',
       }"
     >
       <div style="font-weight: 700">{{ p.name }}</div>
       <div style="font-size: 10px; margin-top: 2px; opacity: 0.7">{{ p.weeks }}</div>
     </button>
   </div>
+
+  <!-- Phase-dependent content: subtitle + days -->
+  <Transition name="phase-switch" mode="out-in">
+  <div :key="activePhase">
 
   <!-- Phase Subtitle -->
   <div style="padding: 14px 20px 4px; max-width: 640px; margin: 0 auto">
@@ -84,6 +88,7 @@
         border: expandedDay === i ? `1px solid ${phase.color}44` : '1px solid oklch(17% 0.008 45)',
         borderRadius: '8px',
         overflow: 'hidden',
+        transition: 'border-color 220ms ease-out',
       }"
     >
       <!-- Day Header Button -->
@@ -101,6 +106,7 @@
           alignItems: 'center',
           cursor: 'pointer',
           color: '#e8e8e8',
+          transition: 'background 180ms ease-out',
         }"
       >
         <div style="display: flex; gap: 10px; align-items: center">
@@ -136,6 +142,7 @@
       </button>
 
       <!-- Home / Gym Track Toggle -->
+      <Transition name="reveal">
       <div
         v-if="expandedDay === i && d.gym"
         style="display: flex; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(15% 0.008 45)"
@@ -166,8 +173,10 @@
           {{ t === 'home' ? '🏠' : '🏋️' }} {{ t }}
         </button>
       </div>
+      </Transition>
 
       <!-- Exercise Table -->
+      <Transition name="accordion">
       <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
           <thead>
@@ -268,8 +277,12 @@
           </tbody>
         </table>
       </div>
+      </Transition>
     </div>
   </div>
+
+  </div>
+  </Transition>
 
   <!-- Gym Substitutions -->
   <div style="max-width: 640px; margin: 20px auto 0; padding: 0 16px">
@@ -331,6 +344,7 @@
           fontSize: '0.875rem',
           lineHeight: 1.5,
           color: '#888',
+          transition: 'border-left-color 300ms ease-out',
         }"
       >
         <span style="font-size: 16px; line-height: 1.4">{{ t.icon }}</span>
@@ -1080,5 +1094,54 @@ a:focus-visible {
   outline: 2px solid #e8e8e8;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+a {
+  transition: opacity 100ms ease-out;
+}
+a:hover {
+  opacity: 0.75;
+}
+
+/* Phase switch — content fades + rises when switching phases */
+.phase-switch-enter-active {
+  transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.phase-switch-leave-active {
+  transition: opacity 100ms ease-in;
+}
+.phase-switch-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.phase-switch-leave-to {
+  opacity: 0;
+}
+
+/* Accordion — exercise content fades in from above */
+.accordion-enter-active {
+  transition: opacity 220ms ease-out, transform 220ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.accordion-leave-active {
+  transition: opacity 130ms ease-in;
+}
+.accordion-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.accordion-leave-to {
+  opacity: 0;
+}
+
+/* Reveal — track toggle fades in */
+.reveal-enter-active {
+  transition: opacity 160ms ease-out;
+}
+.reveal-leave-active {
+  transition: opacity 100ms ease-in;
+}
+.reveal-enter-from,
+.reveal-leave-to {
+  opacity: 0;
 }
 </style>

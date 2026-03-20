@@ -57,6 +57,7 @@
             cursor: 'pointer',
             fontSize: '11px',
             letterSpacing: '1px',
+            transition: 'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
           }"
         >
           {{ d }}
@@ -77,9 +78,10 @@
       Exercises
     </div>
 
+    <TransitionGroup name="exercise" tag="div" style="position: relative">
     <div
       v-for="(ex, i) in exercises"
-      :key="i"
+      :key="ex._id"
       style="
         margin-bottom: 10px;
         padding: 14px;
@@ -194,6 +196,7 @@
         Type a name to get a demo link
       </div>
     </div>
+    </TransitionGroup>
 
     <!-- Add Exercise -->
     <button
@@ -231,6 +234,7 @@
         letterSpacing: '3px',
         textTransform: 'uppercase',
         marginBottom: '40px',
+        transition: 'background 200ms ease-out, color 200ms ease-out',
       }"
     >
       Save for {{ selectedDay }}
@@ -291,46 +295,53 @@
               >Custom</span
             >
           </div>
-          <template v-if="confirmDeleteDay === day">
-            <span style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px">Remove?</span>
+          <Transition name="confirm" mode="out-in">
+            <div
+              v-if="confirmDeleteDay === day"
+              key="confirm"
+              style="display: flex; align-items: center"
+            >
+              <span style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px">Remove?</span>
+              <button
+                @click="deleteDay(day)"
+                style="
+                  background: transparent;
+                  border: none;
+                  color: #f87171;
+                  cursor: pointer;
+                  font-size: 11px;
+                  letter-spacing: 1px;
+                  margin-right: 8px;
+                "
+              >Yes</button>
+              <button
+                @click="confirmDeleteDay = null"
+                style="
+                  background: transparent;
+                  border: none;
+                  color: #777;
+                  cursor: pointer;
+                  font-size: 11px;
+                  letter-spacing: 1px;
+                "
+              >No</button>
+            </div>
             <button
-              @click="deleteDay(day)"
+              v-else
+              key="delete"
+              @click="confirmDeleteDay = day"
               style="
                 background: transparent;
                 border: none;
-                color: #f87171;
-                cursor: pointer;
-                font-size: 11px;
-                letter-spacing: 1px;
-                margin-right: 8px;
-              "
-            >Yes</button>
-            <button
-              @click="confirmDeleteDay = null"
-              style="
-                background: transparent;
-                border: none;
-                color: #777;
+                color: #666;
                 cursor: pointer;
                 font-size: 11px;
                 letter-spacing: 1px;
               "
-            >No</button>
-          </template>
-          <button
-            v-else
-            @click="confirmDeleteDay = day"
-            style="
-              background: transparent;
-              border: none;
-              color: #666;
-              cursor: pointer;
-              font-size: 11px;
-              letter-spacing: 1px;
-            "
-          >
-            Delete
-          </button>
+            >
+              Delete
+            </button>
+          </Transition>
         </div>
 
         <!-- Exercise table -->
@@ -461,23 +472,28 @@ const inputStyle = {
   color: '#e8e8e8',
   fontSize: '0.875rem',
   boxSizing: 'border-box',
+  transition: 'border-color 150ms ease-out',
 }
 
 const confirmDeleteDay = ref(null)
 
 const selectedDay = ref('Monday')
-const exercises = ref([{ name: '', sets: '', reps: '' }])
+
+let _exId = 0
+const newEx = () => ({ _id: _exId++, name: '', sets: '', reps: '' })
+const exercises = ref([newEx()])
 const savedWorkouts = ref(JSON.parse(localStorage.getItem('customWorkouts') || '{}'))
 
 const hasValidExercises = computed(() => exercises.value.some((e) => e.name.trim()))
 
 function addExercise() {
-  exercises.value.push({ name: '', sets: '', reps: '' })
+  exercises.value.push(newEx())
 }
 
 function removeExercise(i) {
   if (exercises.value.length === 1) {
-    exercises.value[0] = { name: '', sets: '', reps: '' }
+    const id = exercises.value[0]._id
+    exercises.value[0] = { _id: id, name: '', sets: '', reps: '' }
   } else {
     exercises.value.splice(i, 1)
   }
@@ -521,5 +537,39 @@ a:focus-visible {
   outline: 2px solid #a78bfa;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+a {
+  transition: opacity 100ms ease-out;
+}
+a:hover {
+  opacity: 0.75;
+}
+
+/* Exercise add/remove */
+.exercise-enter-active {
+  transition: opacity 200ms ease-out, transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.exercise-leave-active {
+  transition: opacity 140ms ease-in;
+}
+.exercise-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+.exercise-leave-to {
+  opacity: 0;
+}
+
+/* Delete confirmation swap */
+.confirm-enter-active {
+  transition: opacity 150ms ease-out;
+}
+.confirm-leave-active {
+  transition: opacity 80ms ease-in;
+}
+.confirm-enter-from,
+.confirm-leave-to {
+  opacity: 0;
 }
 </style>

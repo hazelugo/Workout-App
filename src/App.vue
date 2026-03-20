@@ -14,7 +14,9 @@
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
     </nav>
 
-    <RouterView />
+    <Transition name="page" mode="out-in">
+      <RouterView />
+    </Transition>
   </div>
 </template>
 
@@ -24,6 +26,16 @@ input,
 select,
 textarea {
   font-family: Georgia, serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 </style>
 
@@ -41,7 +53,7 @@ textarea {
   text-decoration: none;
   display: block;
   font-family: Georgia, serif;
-  transition: color 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .nav-link:focus-visible {
@@ -53,5 +65,16 @@ textarea {
   background: oklch(11.5% 0.008 45);
   border-bottom-color: #e8e8e8;
   color: #e8e8e8;
+}
+
+.page-enter-active {
+  transition: opacity 120ms ease-out;
+}
+.page-leave-active {
+  transition: opacity 80ms ease-in;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
 }
 </style>
