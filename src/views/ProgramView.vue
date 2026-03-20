@@ -14,7 +14,7 @@
     </div>
     <h1
       style="
-        font-size: clamp(26px, 5vw, 44px);
+        font-size: clamp(1.625rem, 5vw, 2.75rem);
         font-weight: 400;
         margin: 0;
         color: oklch(96% 0.005 45);
@@ -23,7 +23,7 @@
     >
       Build From Zero
     </h1>
-    <p style="font-size: 13px; color: #888; margin-top: 8px; font-style: italic">
+    <p style="font-size: 0.875rem; color: #888; margin-top: 8px; font-style: italic">
       Home &amp; Gym Tracks · 5 days/week · 20–30 min
     </p>
     <div style="display: flex; gap: 20px; justify-content: center; margin-top: 12px">
@@ -169,7 +169,7 @@
 
       <!-- Exercise Table -->
       <div v-if="expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
           <thead>
             <tr style="color: #777">
               <th
@@ -230,14 +230,14 @@
                     textDecoration: 'none',
                     borderBottom: `1px dashed ${phase.color}66`,
                     paddingBottom: '1px',
-                    fontSize: '13px',
+                    fontSize: '0.875rem',
                   }"
                   >{{ ex.name }} ↗</a
                 >
                 <span v-else style="color: #e8e8e8">{{ ex.name }}</span>
                 <div
                   v-if="ex.note"
-                  style="color: #777; font-size: 11px; margin-top: 3px; font-style: italic"
+                  style="color: #777; font-size: 0.6875rem; line-height: 1.5; margin-top: 3px; font-style: italic"
                 >
                   {{ ex.note }}
                 </div>
@@ -247,6 +247,7 @@
                   textAlign: 'center',
                   color: phase.color,
                   fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums',
                   padding: '10px 4px',
                 }"
               >
@@ -256,6 +257,7 @@
                 style="
                   text-align: center;
                   color: #aaa;
+                  font-variant-numeric: tabular-nums;
                   padding: 10px 0 10px 4px;
                   white-space: nowrap;
                 "
@@ -326,7 +328,8 @@
           borderRadius: '6px',
           border: '1px solid oklch(17% 0.008 45)',
           borderLeft: `3px solid ${phase.color}88`,
-          fontSize: '13px',
+          fontSize: '0.875rem',
+          lineHeight: 1.5,
           color: '#888',
         }"
       >

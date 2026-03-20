@@ -14,7 +14,7 @@
     </div>
     <h1
       style="
-        font-size: clamp(26px, 5vw, 44px);
+        font-size: clamp(1.625rem, 5vw, 2.75rem);
         font-weight: 400;
         margin: 0;
         color: oklch(96% 0.005 45);
@@ -23,7 +23,7 @@
     >
       Build Your Day
     </h1>
-    <p style="font-size: 13px; color: #888; margin-top: 8px; font-style: italic">
+    <p style="font-size: 0.875rem; color: #888; margin-top: 8px; font-style: italic">
       Override any day with your own exercises · demo links auto-generated
     </p>
   </div>
@@ -130,7 +130,7 @@
             :for="`ex-${i}-sets`"
             style="
               display: block;
-              font-size: 9px;
+              font-size: 0.625rem;
               letter-spacing: 2px;
               color: #666;
               text-transform: uppercase;
@@ -153,7 +153,7 @@
             :for="`ex-${i}-reps`"
             style="
               display: block;
-              font-size: 9px;
+              font-size: 0.625rem;
               letter-spacing: 2px;
               color: #666;
               text-transform: uppercase;
@@ -335,7 +335,7 @@
 
         <!-- Exercise table -->
         <div style="padding: 0 16px 14px; background: oklch(10% 0.01 45)">
-          <table style="width: 100%; border-collapse: collapse; font-size: 13px">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
             <thead>
               <tr style="color: #777">
                 <th
@@ -395,7 +395,7 @@
                       text-decoration: none;
                       border-bottom: 1px dashed #a78bfa55;
                       padding-bottom: 1px;
-                      font-size: 13px;
+                      font-size: 0.875rem;
                     "
                     >{{ ex.name }} ↗</a
                   >
@@ -405,6 +405,7 @@
                     text-align: center;
                     color: #a78bfa;
                     font-weight: 700;
+                    font-variant-numeric: tabular-nums;
                     padding: 10px 4px;
                   "
                 >
@@ -414,6 +415,7 @@
                   style="
                     text-align: center;
                     color: #aaa;
+                    font-variant-numeric: tabular-nums;
                     padding: 10px 0 10px 4px;
                     white-space: nowrap;
                   "
@@ -433,7 +435,7 @@
         text-align: center;
         padding: 40px 16px;
         color: #888;
-        font-size: 13px;
+        font-size: 0.875rem;
         font-style: italic;
       "
     >
@@ -457,8 +459,7 @@ const inputStyle = {
   borderRadius: '4px',
   padding: '8px 10px',
   color: '#e8e8e8',
-  fontSize: '13px',
-  fontFamily: 'Georgia, serif',
+  fontSize: '0.875rem',
   boxSizing: 'border-box',
 }
 
