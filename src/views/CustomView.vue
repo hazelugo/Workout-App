@@ -443,14 +443,19 @@
     <div
       v-else
       style="
+        padding: 28px 20px;
+        border: 1px dashed oklch(20% 0.008 45);
+        border-radius: 8px;
         text-align: center;
-        padding: 40px 16px;
-        color: #888;
-        font-size: 0.875rem;
-        font-style: italic;
       "
     >
-      No custom days saved yet. Build one above.
+      <div style="font-size: 22px; margin-bottom: 10px; opacity: 0.4">✎</div>
+      <div style="font-size: 0.875rem; color: #777; margin-bottom: 6px">
+        No custom days saved yet.
+      </div>
+      <div style="font-size: 12px; color: #555; line-height: 1.7; max-width: 320px; margin: 0 auto">
+        Use this when you're traveling, at a different gym, or want to swap in your own exercises for a day. Your custom day replaces the program day for as long as you keep it.
+      </div>
     </div>
   </div>
 </template>

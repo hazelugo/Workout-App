@@ -58,6 +58,55 @@
     </button>
   </div>
 
+  <!-- First-run orientation strip -->
+  <Transition name="reveal">
+    <div
+      v-if="!firstRunSeen"
+      style="
+        max-width: 640px;
+        margin: 14px auto 0;
+        padding: 0 16px;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 11px 14px;
+          background: oklch(10% 0.01 45);
+          border: 1px solid oklch(17% 0.008 45);
+          border-left: 3px solid #4ade80;
+          border-radius: 6px;
+          font-size: 12px;
+          line-height: 1.6;
+          color: #888;
+        "
+      >
+        <span>
+          <span style="color: #4ade80; font-weight: 700; letter-spacing: 0.5px">Start at Week 1.</span>
+          Open any day to see your exercises. Tap an exercise name to watch a demo video.
+        </span>
+        <button
+          @click="dismissFirstRun"
+          aria-label="Dismiss"
+          style="
+            background: transparent;
+            border: none;
+            color: #555;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0;
+            flex-shrink: 0;
+            margin-top: 1px;
+          "
+        >×</button>
+      </div>
+    </div>
+  </Transition>
+
   <!-- Phase-dependent content: subtitle + days -->
   <Transition name="phase-switch" mode="out-in">
   <div :key="activePhase">
@@ -135,6 +184,19 @@
             >{{ d.label }}</span
           >
           <span v-if="!d.gym" style="font-size: 10px; color: #666">🏠 only</span>
+          <span
+            v-if="d.day === today"
+            :style="{
+              fontSize: '9px',
+              padding: '2px 6px',
+              borderRadius: '20px',
+              background: `${phase.color}22`,
+              color: phase.color,
+              letterSpacing: '1.5px',
+              textTransform: 'uppercase',
+              fontWeight: 700,
+            }"
+          >Today</span>
         </div>
         <span aria-hidden="true" style="color: #888; font-size: 18px; line-height: 1">{{
           expandedDay === i ? '−' : '+'
@@ -1054,9 +1116,19 @@ const subs = [
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+const todayIndex = WEEKDAYS.indexOf(today)
+
 const activePhase = ref(0)
-const expandedDay = ref(0)
+const expandedDay = ref(todayIndex >= 0 ? todayIndex : 0)
 const track = ref({})
+
+const firstRunSeen = ref(localStorage.getItem('onboard-v1') === '1')
+function dismissFirstRun() {
+  firstRunSeen.value = true
+  localStorage.setItem('onboard-v1', '1')
+}
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
 
