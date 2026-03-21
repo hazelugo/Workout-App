@@ -14,7 +14,10 @@
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
       <RouterLink v-if="auth.isAuthenticated" to="/history" class="nav-link">History</RouterLink>
 
-      <!-- User indicator -->
+      <!-- Sign in link (unauthenticated) -->
+      <RouterLink v-if="!auth.isAuthenticated" to="/login" class="nav-link" style="margin-left: auto">Sign In</RouterLink>
+
+      <!-- User indicator (authenticated) -->
       <div v-if="auth.isAuthenticated" style="margin-left: auto; display: flex; align-items: center; padding-right: 12px; position: relative">
         <button
           @click="dropdownOpen = !dropdownOpen"
