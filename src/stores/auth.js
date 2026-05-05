@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function _loadProfile(userId) {
     const { data } = await supabase
       .from('profiles')
-      .select('display_name')
+      .select('display_name, program_adopted')
       .eq('id', userId)
       .single()
     profile.value = data
@@ -82,9 +82,15 @@ export const useAuthStore = defineStore('auth', () => {
     if (error) throw error
   }
 
+  async function adoptProgram() {
+    if (!user.value) return
+    await supabase.from('profiles').update({ program_adopted: true }).eq('id', user.value.id)
+    if (profile.value) profile.value = { ...profile.value, program_adopted: true }
+  }
+
   return {
     session, user, profile,
     isAuthenticated, userInitials,
-    init, cleanup, signIn, signUp, signInWithGoogle, signOut, resetPasswordForEmail,
+    init, cleanup, signIn, signUp, signInWithGoogle, signOut, resetPasswordForEmail, adoptProgram,
   }
 })

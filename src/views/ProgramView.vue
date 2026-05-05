@@ -34,7 +34,7 @@
   </div>
 
   <!-- Phase Tabs -->
-  <div class="phase-tabs" style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
+  <div v-if="!showOnboarding" class="phase-tabs" style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
     <button
       v-for="(p, i) in program.phases"
       :key="p.id"
@@ -58,10 +58,85 @@
     </button>
   </div>
 
+  <!-- Onboarding empty state -->
+  <div
+    v-if="showOnboarding"
+    :style="{
+      maxWidth: isDesktop ? '480px' : '100%',
+      margin: '56px auto',
+      padding: '0 24px',
+      textAlign: 'center',
+    }"
+  >
+    <div style="font-size: 40px; margin-bottom: 24px; line-height: 1">🏋️</div>
+    <h2
+      style="
+        font-size: 1.5rem;
+        font-weight: 400;
+        color: oklch(96% 0.005 45);
+        margin: 0 0 10px;
+        letter-spacing: -0.5px;
+      "
+    >
+      Welcome{{ authStore.profile?.display_name ? ', ' + authStore.profile.display_name.split(' ')[0] : '' }}
+    </h2>
+    <p style="color: #888; font-size: 0.9375rem; margin: 0 0 36px; line-height: 1.6">
+      You don't have a program yet. Start with our recommended plan or build your own.
+    </p>
+
+    <button
+      @click="handleAdoptProgram"
+      :disabled="adopting"
+      style="
+        display: block;
+        width: 100%;
+        padding: 16px 20px;
+        background: oklch(11.5% 0.008 45);
+        border: 1px solid oklch(22% 0.008 45);
+        border-left: 3px solid #4ade80;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+        margin-bottom: 10px;
+        opacity: 1;
+        transition: opacity 0.15s;
+      "
+    >
+      <div style="color: #4ade80; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px">
+        Recommended
+      </div>
+      <div style="color: oklch(96% 0.005 45); font-size: 1rem; margin-bottom: 4px">
+        Build From Zero — 8 Week Program
+      </div>
+      <div style="color: #666; font-size: 0.8125rem">
+        Home &amp; Gym Tracks · 5 days/week · 20–30 min
+      </div>
+    </button>
+
+    <button
+      @click="handleBuildOwn"
+      :disabled="adopting"
+      style="
+        display: block;
+        width: 100%;
+        padding: 14px 20px;
+        background: transparent;
+        border: 1px solid oklch(17% 0.008 45);
+        border-radius: 8px;
+        cursor: pointer;
+        color: #666;
+        font-size: 0.875rem;
+        text-align: center;
+      "
+    >
+      Build my own program
+    </button>
+  </div>
+
   <!-- First-run orientation strip -->
   <Transition name="reveal">
     <div
-      v-if="!firstRunSeen"
+      v-if="!firstRunSeen && !showOnboarding"
       :style="{
         maxWidth: isDesktop ? '860px' : '640px',
         margin: '14px auto 0',
@@ -108,7 +183,7 @@
   </Transition>
 
   <!-- Phase-dependent content: subtitle + days -->
-  <Transition name="phase-switch" mode="out-in">
+  <Transition v-if="!showOnboarding" name="phase-switch" mode="out-in">
   <div :key="activePhase">
 
   <!-- Phase Subtitle -->
@@ -350,7 +425,7 @@
   </Transition>
 
   <!-- Gym Substitutions -->
-  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
+  <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
         font-size: 10px;
@@ -381,7 +456,7 @@
   </div>
 
   <!-- Keys to Success -->
-  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
+  <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
         font-size: 10px;
@@ -421,7 +496,33 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
+
+// ─── Auth / Onboarding ────────────────────────────────────────────────────────
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const showOnboarding = computed(() =>
+  authStore.isAuthenticated &&
+  authStore.profile !== null &&
+  authStore.profile.program_adopted === false,
+)
+
+const adopting = ref(false)
+
+async function handleAdoptProgram() {
+  adopting.value = true
+  await authStore.adoptProgram()
+  adopting.value = false
+}
+
+async function handleBuildOwn() {
+  await authStore.adoptProgram()
+  router.push('/custom')
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

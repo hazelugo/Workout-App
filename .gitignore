@@ -40,3 +40,6 @@ __screenshots__/
 
 # Internal docs
 docs/
+
+.vercel
+.env*.local
