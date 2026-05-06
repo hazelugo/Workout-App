@@ -71,7 +71,6 @@ const inputStyle = {
 }
 
 onMounted(() => {
-  // Wait for Supabase to fire the PASSWORD_RECOVERY event from the redirect token
   supabase.auth.onAuthStateChange((event) => {
     if (event === 'PASSWORD_RECOVERY') {
       ready.value = true
