@@ -2,6 +2,7 @@
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
   display_name text,
+  program_adopted boolean not null default false,
   created_at timestamptz default now()
 );
 
