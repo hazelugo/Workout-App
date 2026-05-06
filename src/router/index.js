@@ -10,8 +10,8 @@ import { useAuthStore } from '../stores/auth'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', component: ProgramView },
-    { path: '/custom', component: CustomView },
+    { path: '/', component: ProgramView, meta: { requiresAuth: true } },
+    { path: '/custom', component: CustomView, meta: { requiresAuth: true } },
     { path: '/login', component: AuthView },
     { path: '/history', component: HistoryView, meta: { requiresAuth: true } },
     { path: '/reset-password', component: ResetPasswordView },
