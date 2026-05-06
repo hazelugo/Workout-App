@@ -264,7 +264,6 @@
           overflow: hidden;
         "
       >
-        <!-- Day header -->
         <div
           style="
             display: flex;

@@ -92,7 +92,7 @@
                 padding: 10px 14px;
                 background: transparent;
                 border: none;
-                color: #e8e8e8;
+                color: #E8440A;
                 font-size: 11px;
                 letter-spacing: 1.5px;
                 text-transform: uppercase;
@@ -123,9 +123,12 @@ const auth = useAuthStore()
 const router = useRouter()
 const dropdownOpen = ref(false)
 
-watch(() => auth.isAuthenticated, (isAuth) => {
-  if (!isAuth) router.push('/login')
-})
+watch(
+  () => auth.isAuthenticated,
+  (isAuth) => {
+    if (!isAuth) router.push('/login')
+  },
+)
 
 async function handleSignOut() {
   dropdownOpen.value = false
@@ -158,7 +161,7 @@ textarea {
   min-width: 72px;
   background: transparent;
   border-bottom: 2px solid transparent;
-  color: #777;
+  color: #e8440a;
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
