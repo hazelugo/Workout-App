@@ -1228,10 +1228,11 @@ const activePhase = ref(0)
 const expandedDay = ref(todayIndex >= 0 ? todayIndex : 0)
 const track = ref({})
 
-const firstRunSeen = ref(localStorage.getItem('onboard-v1') === '1')
+const _onboardKey = `onboard-v1-${authStore.user?.id ?? 'anon'}`
+const firstRunSeen = ref(localStorage.getItem(_onboardKey) === '1')
 function dismissFirstRun() {
   firstRunSeen.value = true
-  localStorage.setItem('onboard-v1', '1')
+  localStorage.setItem(_onboardKey, '1')
 }
 
 // ─── Responsive ───────────────────────────────────────────────────────────────

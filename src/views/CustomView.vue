@@ -1,6 +1,11 @@
 <template>
-  <!-- Header -->
-  <div style="border-bottom: 1px solid oklch(15% 0.008 45); padding: 32px 24px 20px; text-align: center">
+  <div
+    style="
+      border-bottom: 1px solid oklch(15% 0.008 45);
+      padding: 32px 24px 20px;
+      text-align: center;
+    "
+  >
     <div
       style="
         font-size: 11px;
@@ -28,7 +33,6 @@
     </p>
   </div>
 
-  <!-- Builder -->
   <div style="max-width: 640px; margin: 24px auto 0; padding: 0 16px">
     <!-- Day Selector -->
     <div style="margin-bottom: 24px">
@@ -57,7 +61,8 @@
             cursor: 'pointer',
             fontSize: '11px',
             letterSpacing: '1px',
-            transition: 'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
+            transition:
+              'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
           }"
         >
           {{ d }}
@@ -65,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Exercise Builder -->
     <div
       style="
         font-size: 10px;
@@ -79,126 +83,122 @@
     </div>
 
     <TransitionGroup name="exercise" tag="div" style="position: relative">
-    <div
-      v-for="(ex, i) in exercises"
-      :key="ex._id"
-      style="
-        margin-bottom: 10px;
-        padding: 14px;
-        background: oklch(10% 0.01 45);
-        border: 1px solid oklch(17% 0.008 45);
-        border-radius: 8px;
-      "
-    >
-      <!-- Name row -->
-      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px">
-        <span style="font-size: 11px; color: #666; min-width: 18px; text-align: right">{{
-          i + 1
-        }}</span>
-        <input
-          v-model="ex.name"
-          :aria-label="`Exercise ${i + 1} name`"
-          placeholder="Exercise name"
-          class="workout-input"
-          :style="inputStyle"
-        />
-        <button
-          @click="removeExercise(i)"
-          :aria-label="`Remove exercise ${i + 1}`"
-          style="
-            background: transparent;
-            border: none;
-            color: #777;
-            cursor: pointer;
-            font-size: 20px;
-            line-height: 1;
-            padding: 4px 8px;
-            flex-shrink: 0;
-            min-width: 44px;
-            min-height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          "
-        >
-          <span aria-hidden="true">×</span>
-        </button>
-      </div>
-
-      <!-- Sets / Reps row -->
-      <div style="display: flex; gap: 8px; margin-bottom: 10px">
-        <div style="flex: 1">
-          <label
-            :for="`ex-${i}-sets`"
+      <div
+        v-for="(ex, i) in exercises"
+        :key="ex._id"
+        style="
+          margin-bottom: 10px;
+          padding: 14px;
+          background: oklch(10% 0.01 45);
+          border: 1px solid oklch(17% 0.008 45);
+          border-radius: 8px;
+        "
+      >
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px">
+          <span style="font-size: 11px; color: #666; min-width: 18px; text-align: right">{{
+            i + 1
+          }}</span>
+          <input
+            v-model="ex.name"
+            :aria-label="`Exercise ${i + 1} name`"
+            placeholder="Exercise name"
+            class="workout-input"
+            :style="inputStyle"
+          />
+          <button
+            @click="removeExercise(i)"
+            :aria-label="`Remove exercise ${i + 1}`"
             style="
-              display: block;
-              font-size: 0.625rem;
-              letter-spacing: 2px;
-              color: #666;
-              text-transform: uppercase;
-              margin-bottom: 4px;
-              text-align: center;
+              background: transparent;
+              border: none;
+              color: #777;
+              cursor: pointer;
+              font-size: 20px;
+              line-height: 1;
+              padding: 4px 8px;
+              flex-shrink: 0;
+              min-width: 44px;
+              min-height: 44px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
             "
           >
-            Sets
-          </label>
-          <input
-            :id="`ex-${i}-sets`"
-            v-model="ex.sets"
-            placeholder="3"
-            class="workout-input"
-            :style="{ ...inputStyle, textAlign: 'center' }"
-          />
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
-        <div style="flex: 1">
-          <label
-            :for="`ex-${i}-reps`"
-            style="
-              display: block;
-              font-size: 0.625rem;
-              letter-spacing: 2px;
-              color: #666;
-              text-transform: uppercase;
-              margin-bottom: 4px;
-              text-align: center;
-            "
-          >
-            Reps
-          </label>
-          <input
-            :id="`ex-${i}-reps`"
-            v-model="ex.reps"
-            placeholder="10"
-            class="workout-input"
-            :style="{ ...inputStyle, textAlign: 'center' }"
-          />
-        </div>
-      </div>
 
-      <!-- Auto YouTube link -->
-      <div v-if="ex.name.trim()" style="display: flex; align-items: center; gap: 6px">
-        <span aria-hidden="true" style="font-size: 10px; color: #666">▶</span>
-        <a
-          :href="yt(ex.name)"
-          target="_blank"
-          rel="noopener noreferrer"
-          style="
-            font-size: 11px;
-            color: #a78bfa;
-            text-decoration: none;
-            border-bottom: 1px dashed #a78bfa55;
-            padding-bottom: 1px;
-          "
-          >Watch demo ↗</a
-        >
+        <div style="display: flex; gap: 8px; margin-bottom: 10px">
+          <div style="flex: 1">
+            <label
+              :for="`ex-${i}-sets`"
+              style="
+                display: block;
+                font-size: 0.625rem;
+                letter-spacing: 2px;
+                color: #666;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+                text-align: center;
+              "
+            >
+              Sets
+            </label>
+            <input
+              :id="`ex-${i}-sets`"
+              v-model="ex.sets"
+              placeholder="3"
+              class="workout-input"
+              :style="{ ...inputStyle, textAlign: 'center' }"
+            />
+          </div>
+          <div style="flex: 1">
+            <label
+              :for="`ex-${i}-reps`"
+              style="
+                display: block;
+                font-size: 0.625rem;
+                letter-spacing: 2px;
+                color: #666;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+                text-align: center;
+              "
+            >
+              Reps
+            </label>
+            <input
+              :id="`ex-${i}-reps`"
+              v-model="ex.reps"
+              placeholder="10"
+              class="workout-input"
+              :style="{ ...inputStyle, textAlign: 'center' }"
+            />
+          </div>
+        </div>
+
+        <div v-if="ex.name.trim()" style="display: flex; align-items: center; gap: 6px">
+          <span aria-hidden="true" style="font-size: 10px; color: #666">▶</span>
+          <a
+            :href="yt(ex.name)"
+            target="_blank"
+            rel="noopener noreferrer"
+            style="
+              font-size: 11px;
+              color: #a78bfa;
+              text-decoration: none;
+              border-bottom: 1px dashed #a78bfa55;
+              padding-bottom: 1px;
+            "
+            >Watch demo ↗</a
+          >
+        </div>
+        <div v-else style="font-size: 11px; color: #555; font-style: italic">
+          Type a name to get a demo link
+        </div>
       </div>
-      <div v-else style="font-size: 11px; color: #555; font-style: italic">
-        Type a name to get a demo link
-      </div>
-    </div>
     </TransitionGroup>
 
-    <!-- Add Exercise -->
     <button
       @click="addExercise"
       style="
@@ -218,7 +218,6 @@
       + Add Exercise
     </button>
 
-    <!-- Save -->
     <button
       @click="saveWorkout"
       :disabled="!hasValidExercises"
@@ -241,7 +240,6 @@
     </button>
   </div>
 
-  <!-- Saved Workouts -->
   <div style="max-width: 640px; margin: 0 auto; padding: 0 16px">
     <div v-if="Object.keys(savedWorkouts).length > 0">
       <div
@@ -259,7 +257,12 @@
       <div
         v-for="(exList, day) in savedWorkouts"
         :key="day"
-        style="margin-bottom: 8px; border: 1px solid oklch(17% 0.008 45); border-radius: 8px; overflow: hidden"
+        style="
+          margin-bottom: 8px;
+          border: 1px solid oklch(17% 0.008 45);
+          border-radius: 8px;
+          overflow: hidden;
+        "
       >
         <!-- Day header -->
         <div
@@ -301,7 +304,10 @@
               key="confirm"
               style="display: flex; align-items: center"
             >
-              <span style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px">Remove?</span>
+              <span
+                style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px"
+                >Remove?</span
+              >
               <button
                 @click="deleteDay(day)"
                 style="
@@ -313,7 +319,9 @@
                   letter-spacing: 1px;
                   margin-right: 8px;
                 "
-              >Yes</button>
+              >
+                Yes
+              </button>
               <button
                 @click="confirmDeleteDay = null"
                 style="
@@ -324,7 +332,9 @@
                   font-size: 11px;
                   letter-spacing: 1px;
                 "
-              >No</button>
+              >
+                No
+              </button>
             </div>
             <button
               v-else
@@ -344,9 +354,10 @@
           </Transition>
         </div>
 
-        <!-- Exercise table -->
         <div style="padding: 0 16px 14px; background: oklch(10% 0.01 45)">
-          <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
+          <table
+            style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4"
+          >
             <thead>
               <tr style="color: #777">
                 <th
@@ -454,7 +465,8 @@
         No custom days saved yet.
       </div>
       <div style="font-size: 12px; color: #555; line-height: 1.7; max-width: 320px; margin: 0 auto">
-        Use this when you're traveling, at a different gym, or want to swap in your own exercises for a day. Your custom day replaces the program day for as long as you keep it.
+        Use this when you're traveling, at a different gym, or want to swap in your own exercises
+        for a day. Your custom day replaces the program day for as long as you keep it.
       </div>
     </div>
   </div>
@@ -567,9 +579,10 @@ a:hover {
   opacity: 0.75;
 }
 
-/* Exercise add/remove */
 .exercise-enter-active {
-  transition: opacity 200ms ease-out, transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .exercise-leave-active {
   transition: opacity 140ms ease-in;
@@ -582,7 +595,6 @@ a:hover {
   opacity: 0;
 }
 
-/* Delete confirmation swap */
 .confirm-enter-active {
   transition: opacity 150ms ease-out;
 }
