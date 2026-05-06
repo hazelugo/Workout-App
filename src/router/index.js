@@ -1,4 +1,3 @@
-// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import ProgramView from '../views/ProgramView.vue'
 import CustomView from '../views/CustomView.vue'
