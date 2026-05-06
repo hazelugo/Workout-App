@@ -115,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 
@@ -123,10 +123,13 @@ const auth = useAuthStore()
 const router = useRouter()
 const dropdownOpen = ref(false)
 
+watch(() => auth.isAuthenticated, (isAuth) => {
+  if (!isAuth) router.push('/login')
+})
+
 async function handleSignOut() {
   dropdownOpen.value = false
   await auth.signOut()
-  router.push('/login')
 }
 </script>
 
