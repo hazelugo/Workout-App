@@ -61,6 +61,7 @@ create table public.custom_days (
 );
 
 alter table public.profiles enable row level security;
+alter table public.custom_days enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.set_logs enable row level security;
 
