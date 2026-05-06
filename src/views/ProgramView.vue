@@ -1,5 +1,4 @@
 <template>
-  <!-- Header -->
   <div style="border-bottom: 1px solid oklch(15% 0.008 45); padding: 32px 24px 20px; text-align: center">
     <div
       style="
@@ -32,8 +31,6 @@
       <span style="font-size: 12px; color: #888">🔗 Tap exercise name for demo</span>
     </div>
   </div>
-
-  <!-- Phase Tabs -->
   <div v-if="!showOnboarding" class="phase-tabs" style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
     <button
       v-for="(p, i) in program.phases"
@@ -57,8 +54,6 @@
       <div style="font-size: 10px; margin-top: 2px; opacity: 0.7">{{ p.weeks }}</div>
     </button>
   </div>
-
-  <!-- Onboarding empty state -->
   <div
     v-if="showOnboarding"
     :style="{
@@ -132,8 +127,6 @@
       Build my own program
     </button>
   </div>
-
-  <!-- First-run orientation strip -->
   <Transition name="reveal">
     <div
       v-if="!firstRunSeen && !showOnboarding"
@@ -181,12 +174,8 @@
       </div>
     </div>
   </Transition>
-
-  <!-- Phase-dependent content: subtitle + days -->
   <Transition v-if="!showOnboarding" name="phase-switch" mode="out-in">
   <div :key="activePhase">
-
-  <!-- Phase Subtitle -->
   <div :style="{ padding: '14px 20px 4px', maxWidth: isDesktop ? '860px' : '640px', margin: '0 auto' }">
     <div style="display: flex; align-items: center; gap: 10px">
       <div
@@ -201,8 +190,6 @@
       <span style="color: #888; font-size: 12px; font-style: italic">{{ phase.subtitle }}</span>
     </div>
   </div>
-
-  <!-- Days -->
   <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '8px auto 0', padding: '0 16px' }">
     <div
       v-for="(d, i) in phase.days"
@@ -215,7 +202,6 @@
         transition: 'border-color 220ms ease-out',
       }"
     >
-      <!-- Day Header Button -->
       <button
         @click="toggleDay(i)"
         class="day-header-btn"
@@ -280,8 +266,6 @@
           style="color: #888; font-size: 18px; line-height: 1"
         >{{ expandedDay === i ? '−' : '+' }}</span>
       </button>
-
-      <!-- Home / Gym Track Toggle -->
       <Transition name="reveal">
       <div
         v-if="(isDesktop || expandedDay === i) && d.gym"
@@ -314,8 +298,6 @@
         </button>
       </div>
       </Transition>
-
-      <!-- Exercise Table -->
       <Transition name="accordion">
       <div v-if="isDesktop || expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
@@ -423,8 +405,6 @@
 
   </div>
   </Transition>
-
-  <!-- Gym Substitutions -->
   <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
@@ -454,8 +434,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Keys to Success -->
   <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
     <div
       style="
@@ -499,9 +477,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-
-// ─── Auth / Onboarding ────────────────────────────────────────────────────────
-
 const authStore = useAuthStore()
 const router = useRouter()
 
@@ -524,12 +499,8 @@ async function handleBuildOwn() {
   router.push('/custom')
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const yt = (q) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(q + ' exercise demonstration')}`
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const program = {
   phases: [
@@ -1218,8 +1189,6 @@ const subs = [
   ['Preacher curl', 'Incline DB curl'],
 ]
 
-// ─── State ────────────────────────────────────────────────────────────────────
-
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today)
@@ -1235,19 +1204,13 @@ function dismissFirstRun() {
   localStorage.setItem(_onboardKey, '1')
 }
 
-// ─── Responsive ───────────────────────────────────────────────────────────────
-
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 375)
 const isDesktop = computed(() => windowWidth.value >= 900)
 function onResize() { windowWidth.value = window.innerWidth }
 onMounted(() => window.addEventListener('resize', onResize, { passive: true }))
 onUnmounted(() => window.removeEventListener('resize', onResize))
 
-// ─── Computed ─────────────────────────────────────────────────────────────────
-
 const phase = computed(() => program.phases[activePhase.value])
-
-// ─── Methods ──────────────────────────────────────────────────────────────────
 
 function selectPhase(i) {
   activePhase.value = i
