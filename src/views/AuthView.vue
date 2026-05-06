@@ -1,19 +1,35 @@
 <template>
   <div :style="{ maxWidth: '400px', margin: '60px auto', padding: '0 20px' }">
     <div style="text-align: center; margin-bottom: 32px">
-      <div style="font-size: 11px; letter-spacing: 4px; color: #888; text-transform: uppercase; margin-bottom: 8px">
+      <div
+        style="
+          font-size: 11px;
+          letter-spacing: 4px;
+          color: #888;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+        "
+      >
         Workout App
       </div>
-      <h1 style="font-size: 1.5rem; font-weight: 400; color: oklch(96% 0.005 45); margin: 0; letter-spacing: -0.5px">
+      <h1
+        style="
+          font-size: 1.5rem;
+          font-weight: 400;
+          color: oklch(96% 0.005 45);
+          margin: 0;
+          letter-spacing: -0.5px;
+        "
+      >
         {{ isSignUp ? 'Create Account' : 'Sign In' }}
       </h1>
     </div>
 
     <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 16px">
-
-      <!-- Display name (sign up only) -->
       <div v-if="isSignUp" style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888">Name</label>
+        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
+          >Name</label
+        >
         <input
           v-model="displayName"
           type="text"
@@ -21,12 +37,15 @@
           required
           :style="inputStyle"
         />
-        <span v-if="errors.displayName" style="font-size: 11px; color: #f87171">{{ errors.displayName }}</span>
+        <span v-if="errors.displayName" style="font-size: 11px; color: #f87171">{{
+          errors.displayName
+        }}</span>
       </div>
 
-      <!-- Email -->
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888">Email</label>
+        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
+          >Email</label
+        >
         <input
           v-model="email"
           type="email"
@@ -37,9 +56,10 @@
         <span v-if="errors.email" style="font-size: 11px; color: #f87171">{{ errors.email }}</span>
       </div>
 
-      <!-- Password -->
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888">Password</label>
+        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
+          >Password</label
+        >
         <input
           v-model="password"
           type="password"
@@ -47,21 +67,37 @@
           required
           :style="inputStyle"
         />
-        <span v-if="errors.password" style="font-size: 11px; color: #f87171">{{ errors.password }}</span>
+        <span v-if="errors.password" style="font-size: 11px; color: #f87171">{{
+          errors.password
+        }}</span>
         <button
           v-if="!isSignUp"
           type="button"
           @click="handleForgotPassword"
-          style="background: none; border: none; color: #888; font-size: 11px; cursor: pointer; text-align: left; padding: 0; font-family: Georgia, serif; text-decoration: underline"
-        >Forgot password?</button>
+          style="
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: left;
+            padding: 0;
+            font-family: Georgia, serif;
+            text-decoration: underline;
+          "
+        >
+          Forgot password?
+        </button>
       </div>
 
-      <!-- General error -->
-      <span v-if="errors.general" style="font-size: 12px; color: #f87171; text-align: center">{{ errors.general }}</span>
+      <span v-if="errors.general" style="font-size: 12px; color: #f87171; text-align: center">{{
+        errors.general
+      }}</span>
       <!-- Success message (e.g. reset email sent) -->
-      <span v-if="successMsg" style="font-size: 12px; color: #4ade80; text-align: center">{{ successMsg }}</span>
+      <span v-if="successMsg" style="font-size: 12px; color: #4ade80; text-align: center">{{
+        successMsg
+      }}</span>
 
-      <!-- Submit -->
       <button
         type="submit"
         :disabled="loading"
@@ -78,7 +114,9 @@
           transition: 'background 0.15s',
           fontFamily: 'Georgia, serif',
         }"
-      >{{ loading ? '...' : (isSignUp ? 'Create Account' : 'Sign In') }}</button>
+      >
+        {{ loading ? '...' : isSignUp ? 'Create Account' : 'Sign In' }}
+      </button>
 
       <!-- Divider -->
       <div style="display: flex; align-items: center; gap: 12px">
@@ -87,7 +125,6 @@
         <div style="flex: 1; height: 1px; background: oklch(18% 0.008 45)"></div>
       </div>
 
-      <!-- Google OAuth -->
       <button
         type="button"
         @click="handleGoogle"
@@ -105,17 +142,28 @@
           fontFamily: 'Georgia, serif',
           transition: 'border-color 0.15s',
         }"
-      >Continue with Google</button>
-
+      >
+        Continue with Google
+      </button>
     </form>
 
-    <!-- Toggle sign in / sign up -->
     <p style="text-align: center; margin-top: 24px; font-size: 12px; color: #888">
       {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
       <button
         @click="toggleMode"
-        style="background: none; border: none; color: #a78bfa; cursor: pointer; font-size: 12px; font-family: Georgia, serif; text-decoration: underline; padding: 0"
-      >{{ isSignUp ? 'Sign in' : 'Sign up' }}</button>
+        style="
+          background: none;
+          border: none;
+          color: #a78bfa;
+          cursor: pointer;
+          font-size: 12px;
+          font-family: Georgia, serif;
+          text-decoration: underline;
+          padding: 0;
+        "
+      >
+        {{ isSignUp ? 'Sign in' : 'Sign up' }}
+      </button>
     </p>
   </div>
 </template>

@@ -491,7 +491,14 @@ const selectedDay = ref('Monday')
 let _exId = 0
 const newEx = () => ({ _id: _exId++, name: '', sets: '', reps: '' })
 const exercises = ref([newEx()])
-const savedWorkouts = ref(JSON.parse(localStorage.getItem('customWorkouts') || '{}'))
+const savedWorkouts = ref({})
+
+onMounted(async () => {
+  const { data } = await supabase.from('custom_days').select('day_name, exercises')
+  if (data) {
+    savedWorkouts.value = Object.fromEntries(data.map((r) => [r.day_name, r.exercises]))
+  }
+})
 
 const hasValidExercises = computed(() => exercises.value.some((e) => e.name.trim()))
 
@@ -508,23 +515,28 @@ function removeExercise(i) {
   }
 }
 
-function saveWorkout() {
+async function saveWorkout() {
   const toSave = exercises.value.filter((e) => e.name.trim())
   if (!toSave.length) return
 
-  savedWorkouts.value = {
-    ...savedWorkouts.value,
-    [selectedDay.value]: toSave,
-  }
-  localStorage.setItem('customWorkouts', JSON.stringify(savedWorkouts.value))
-  exercises.value = [{ name: '', sets: '', reps: '' }]
+  const clean = toSave.map(({ name, sets, reps }) => ({ name, sets, reps }))
+  await supabase
+    .from('custom_days')
+    .upsert(
+      { user_id: auth.user.id, day_name: selectedDay.value, exercises: clean },
+      { onConflict: 'user_id,day_name' },
+    )
+
+  savedWorkouts.value = { ...savedWorkouts.value, [selectedDay.value]: clean }
+  exercises.value = [newEx()]
 }
 
-function deleteDay(day) {
+async function deleteDay(day) {
+  await supabase.from('custom_days').delete().eq('day_name', day)
+
   const updated = { ...savedWorkouts.value }
   delete updated[day]
   savedWorkouts.value = updated
-  localStorage.setItem('customWorkouts', JSON.stringify(updated))
   confirmDeleteDay.value = null
 }
 </script>
