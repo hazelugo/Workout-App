@@ -68,6 +68,9 @@ alter table public.set_logs enable row level security;
 create policy "profiles: own row" on public.profiles
   for all using (auth.uid() = id);
 
+create policy "custom_days: own rows" on public.custom_days
+  for all using (auth.uid() = user_id);
+
 create policy "sessions: own rows" on public.workout_sessions
   for all using (auth.uid() = user_id);
 

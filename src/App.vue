@@ -8,17 +8,34 @@
       padding-bottom: 60px;
     "
   >
-    <!-- Nav -->
-    <nav style="display: flex; align-items: stretch; border-bottom: 1px solid oklch(15% 0.008 45); position: relative">
+    <nav
+      style="
+        display: flex;
+        align-items: stretch;
+        border-bottom: 1px solid oklch(15% 0.008 45);
+        position: relative;
+      "
+    >
       <RouterLink to="/" class="nav-link">Program</RouterLink>
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
       <RouterLink v-if="auth.isAuthenticated" to="/history" class="nav-link">History</RouterLink>
-
-      <!-- Sign in link (unauthenticated) -->
-      <RouterLink v-if="!auth.isAuthenticated" to="/login" class="nav-link" style="margin-left: auto">Sign In</RouterLink>
-
-      <!-- User indicator (authenticated) -->
-      <div v-if="auth.isAuthenticated" style="margin-left: auto; display: flex; align-items: center; padding-right: 12px; position: relative">
+      <RouterLink
+        v-if="!auth.isAuthenticated"
+        to="/login"
+        class="nav-link"
+        style="margin-left: auto"
+        >Sign In</RouterLink
+      >
+      <div
+        v-if="auth.isAuthenticated"
+        style="
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          padding-right: 12px;
+          position: relative;
+        "
+      >
         <button
           @click="dropdownOpen = !dropdownOpen"
           :aria-expanded="dropdownOpen"
@@ -39,9 +56,10 @@
             alignItems: 'center',
             justifyContent: 'center',
           }"
-        >{{ auth.userInitials }}</button>
+        >
+          {{ auth.userInitials }}
+        </button>
 
-        <!-- Dropdown -->
         <Transition name="reveal">
           <div
             v-if="dropdownOpen"
@@ -57,10 +75,16 @@
               overflow: hidden;
             "
           >
-            <div style="padding: 10px 14px; font-size: 12px; color: #888; border-bottom: 1px solid oklch(18% 0.008 45)">
+            <div
+              style="
+                padding: 10px 14px;
+                font-size: 12px;
+                color: #888;
+                border-bottom: 1px solid oklch(18% 0.008 45);
+              "
+            >
               {{ auth.profile?.display_name }}
             </div>
-            <!-- Export CSV button added by Plan 3 Task 5 -->
             <button
               @click="handleSignOut"
               style="
@@ -76,7 +100,9 @@
                 cursor: pointer;
                 font-family: Georgia, serif;
               "
-            >Sign Out</button>
+            >
+              Sign Out
+            </button>
           </div>
         </Transition>
       </div>
@@ -105,11 +131,16 @@ async function handleSignOut() {
 </script>
 
 <style>
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font-family: Georgia, serif;
 }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -132,7 +163,10 @@ button, input, select, textarea {
   text-decoration: none;
   display: block;
   font-family: Georgia, serif;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s,
+    border-color 0.15s;
 }
 .nav-link:focus-visible {
   outline: 2px solid #e8e8e8;
@@ -143,11 +177,29 @@ button, input, select, textarea {
   border-bottom-color: #e8e8e8;
   color: #e8e8e8;
 }
-.page-enter-active { transition: opacity 120ms ease-out; }
-.page-leave-active { transition: opacity 80ms ease-in; }
-.page-enter-from, .page-leave-to { opacity: 0; }
-.reveal-enter-active { transition: opacity 120ms ease-out, transform 120ms ease-out; }
-.reveal-leave-active { transition: opacity 80ms ease-in; }
-.reveal-enter-from { opacity: 0; transform: translateY(-4px); }
-.reveal-leave-to { opacity: 0; }
+.page-enter-active {
+  transition: opacity 120ms ease-out;
+}
+.page-leave-active {
+  transition: opacity 80ms ease-in;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+.reveal-enter-active {
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+}
+.reveal-leave-active {
+  transition: opacity 80ms ease-in;
+}
+.reveal-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.reveal-leave-to {
+  opacity: 0;
+}
 </style>

@@ -1,4 +1,3 @@
-// src/stores/auth.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
@@ -89,8 +88,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    session, user, profile,
-    isAuthenticated, userInitials,
-    init, cleanup, signIn, signUp, signInWithGoogle, signOut, resetPasswordForEmail, adoptProgram,
+    session,
+    user,
+    profile,
+    isAuthenticated,
+    userInitials,
+    init,
+    cleanup,
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signOut,
+    resetPasswordForEmail,
+    adoptProgram,
   }
 })
