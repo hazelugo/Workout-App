@@ -3,9 +3,9 @@
     <div style="text-align: center; margin-bottom: 32px">
       <div
         style="
-          font-size: 11px;
+          font-size: 12px;
           letter-spacing: 4px;
-          color: #888;
+          color: #e8440a;
           text-transform: uppercase;
           margin-bottom: 8px;
         "
@@ -103,7 +103,7 @@
         :disabled="loading"
         :style="{
           padding: '12px',
-          background: loading ? 'oklch(20% 0.008 45)' : '#a78bfa',
+          background: loading ? 'oklch(20% 0.008 45)' : '#E8440A',
           border: 'none',
           color: loading ? '#666' : '#fff',
           fontSize: '11px',
@@ -154,7 +154,7 @@
         style="
           background: none;
           border: none;
-          color: #a78bfa;
+          color: #e8440a;
           cursor: pointer;
           font-size: 12px;
           font-family: Georgia, serif;
