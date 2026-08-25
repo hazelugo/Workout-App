@@ -688,4 +688,4 @@ export const subs = [
   ['Preacher curl', 'Incline DB curl'],
 ]
 
-export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
