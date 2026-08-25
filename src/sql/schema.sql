@@ -58,8 +58,7 @@ create table public.custom_days (
   day_name text not null,
   title text,
   exercises jsonb not null default '[]',
-  created_at timestamptz default now(),
-  unique(user_id, day_name)
+  created_at timestamptz default now()
 );
 
 create table public.custom_programs (

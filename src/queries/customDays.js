@@ -3,9 +3,12 @@ import { supabase } from '@/lib/supabase'
 import { queryKeys } from './keys'
 
 export async function fetchCustomDays() {
-  const { data, error } = await supabase.from('custom_days').select('day_name, title, exercises')
+  const { data, error } = await supabase
+    .from('custom_days')
+    .select('id, day_name, title, exercises, created_at')
+    .order('created_at', { ascending: false })
   if (error) throw error
-  return Object.fromEntries((data ?? []).map((r) => [r.day_name, { title: r.title ?? '', exercises: r.exercises }]))
+  return data ?? []
 }
 
 export function useCustomDaysQuery() {

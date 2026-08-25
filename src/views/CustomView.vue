@@ -32,7 +32,7 @@
       Custom Studio
     </h1>
     <p style="font-size: 0.875rem; color: #a3a3a3; margin-top: 8px; font-style: italic">
-      Build full week programs or override single days
+      Build full week programs or mix & match saved custom days
     </p>
 
     <!-- Top Segmented Navigation Tabs -->
@@ -85,12 +85,12 @@
           transition: 'all 180ms ease-out',
         }"
       >
-        ⚡ Day Builder
+        ⚡ Day Builder ({{ savedWorkouts.length }})
       </button>
     </div>
   </div>
 
-  <!-- Activation Toast Feedback -->
+  <!-- Activation / Copy Toast Feedback -->
   <Transition name="confirm">
     <div
       v-if="toastMessage"
@@ -339,8 +339,24 @@
               <!-- Day exercise editor -->
               <Transition name="rename-slide">
                 <div v-if="expandedProgramDay === `${program.id}|${d}`"
-                  style="padding: 4px 18px 18px"
+                  style="padding: 12px 18px 18px"
                 >
+                  <!-- COPY / IMPORT FROM SAVED CUSTOM DAYS -->
+                  <div v-if="savedWorkouts.length > 0" style="margin-bottom: 16px; padding: 12px; background: oklch(12% 0.008 45); border: 1px solid #a78bfa44; border-radius: 8px">
+                    <div style="font-size: 10px; letter-spacing: 1.5px; color: #c4b5fd; text-transform: uppercase; font-weight: 600; margin-bottom: 8px">
+                      📥 Copy from Saved Custom Days
+                    </div>
+                    <select
+                      @change="importSavedDayIntoProgram(program.id, d, $event.target.value); $event.target.value = ''"
+                      style="width: 100%; padding: 10px 12px; background: oklch(8% 0.012 45); border: 1px solid oklch(24% 0.008 45); border-radius: 6px; color: #ffffff; font-size: 0.875rem; min-height: 44px; cursor: pointer"
+                    >
+                      <option value="" disabled selected>Select a saved day to copy exercises…</option>
+                      <option v-for="sd in savedWorkouts" :key="sd.id" :value="sd.id">
+                        {{ sd.day_name }} — {{ sd.title || 'Untitled' }} ({{ sd.exercises?.length ?? 0 }} exercises)
+                      </option>
+                    </select>
+                  </div>
+
                   <!-- Title -->
                   <div style="margin-bottom: 14px">
                     <div style="font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600; margin-bottom: 6px">
@@ -442,8 +458,17 @@
 
   <!-- ═════════════════════ TAB 2: DAY BUILDER & OVERRIDES ═════════════════════ -->
   <div v-else style="max-width: 640px; margin: 28px auto 0; padding: 0 16px">
-    <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600; margin-bottom: 16px">
-      Single Day Override Builder
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px">
+      <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600">
+        {{ editingCustomDayId ? 'Editing Custom Day Version' : 'Build & Save Custom Day' }}
+      </div>
+      <button
+        v-if="editingCustomDayId"
+        @click="resetDayBuilder"
+        style="padding: 6px 14px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 9999px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px"
+      >
+        + New Version
+      </button>
     </div>
 
     <!-- Day Selector -->
@@ -478,11 +503,11 @@
     <!-- Plan Title -->
     <div style="margin-bottom: 24px">
       <div style="font-size: 10px; letter-spacing: 3px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 10px; font-weight: 600">
-        Plan Title <span style="color: #737373; letter-spacing: 1px; text-transform: none; font-weight: 400">(optional)</span>
+        Plan Title <span style="color: #737373; letter-spacing: 1px; text-transform: none; font-weight: 400">(optional e.g. Push Heavy, Delts Focus)</span>
       </div>
       <input
         v-model="planTitle"
-        placeholder="e.g. Upper Body, Leg Day, Push Focus…"
+        placeholder="e.g. Push Heavy, Delts Focus, Chest Hypertrophy…"
         aria-label="Plan title"
         class="workout-input"
         :style="inputStyle"
@@ -562,91 +587,42 @@
         transition: 'background 200ms ease-out, color 200ms ease-out',
       }"
     >
-      Save for {{ selectedDay }}
+      {{ editingCustomDayId ? 'Update Version for ' + selectedDay : 'Save Version for ' + selectedDay }}
     </button>
 
     <!-- SAVED CUSTOM DAYS LIST -->
-    <div v-if="Object.keys(savedWorkouts).length > 0">
+    <div v-if="savedWorkouts.length > 0">
       <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 12px; font-weight: 600">
-        Saved Custom Days
+        Saved Custom Day Versions ({{ savedWorkouts.length }})
       </div>
 
-      <div v-for="(dayData, day) in savedWorkouts" :key="day"
+      <div v-for="savedDay in savedWorkouts" :key="savedDay.id"
         style="margin-bottom: 12px; border: 1px solid oklch(18% 0.008 45); border-radius: 10px; overflow: hidden; background: oklch(10% 0.01 45)"
       >
         <!-- Card header -->
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: oklch(11% 0.01 45); flex-wrap: wrap; gap: 10px">
           <div style="display: flex; flex-direction: column; gap: 4px">
             <div style="display: flex; gap: 10px; align-items: center">
-              <span style="font-size: 12px; color: #a3a3a3; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; min-width: 80px">{{ day }}</span>
+              <span style="font-size: 12px; color: #a3a3a3; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; min-width: 80px">{{ savedDay.day_name }}</span>
               <span style="font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #a78bfa22; color: #c4b5fd; letter-spacing: 1px; text-transform: uppercase; font-weight: 500">Custom</span>
             </div>
-            <div v-if="dayData?.title" style="font-size: 0.9375rem; color: #f5f5f5; font-weight: 500; letter-spacing: -0.2px; padding-left: 90px">
-              {{ dayData.title }}
+            <div v-if="savedDay?.title" style="font-size: 0.9375rem; color: #f5f5f5; font-weight: 500; letter-spacing: -0.2px; padding-left: 90px">
+              {{ savedDay.title }}
             </div>
           </div>
           <Transition name="confirm" mode="out-in">
-            <div v-if="confirmDeleteDay === day" key="confirm" style="display: flex; align-items: center">
+            <div v-if="confirmDeleteDayId === savedDay.id" key="confirm" style="display: flex; align-items: center">
               <span style="font-size: 12px; color: #a3a3a3; margin-right: 10px">Remove?</span>
-              <button @click="deleteDay(day)" style="padding: 6px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px; margin-right: 8px">Yes</button>
-              <button @click="confirmDeleteDay = null" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">No</button>
+              <button @click="deleteDay(savedDay.id)" style="padding: 6px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px; margin-right: 8px">Yes</button>
+              <button @click="confirmDeleteDayId = null" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">No</button>
             </div>
             <div v-else key="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end">
-              <button @click="openLogModal(day, dayData)" style="padding: 6px 14px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; min-height: 38px; display: inline-flex; align-items: center">Log</button>
-              <button @click="editDay(day)" style="padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Edit</button>
-              <button @click="toggleRename(day)" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Rename</button>
-              <button @click="confirmDeleteDay = day" style="padding: 6px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Delete</button>
+              <button @click="openLogModal(savedDay)" style="padding: 6px 14px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; min-height: 38px; display: inline-flex; align-items: center">Log</button>
+              <button @click="editDay(savedDay)" style="padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Edit</button>
+              <button @click="confirmDeleteDayId = savedDay.id" style="padding: 6px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Delete</button>
             </div>
           </Transition>
         </div>
-
-        <!-- Inline rename row -->
-        <Transition name="rename-slide">
-          <div v-if="renamingDay === day"
-            style="padding: 12px 18px; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(18% 0.008 45); display: flex; align-items: center; gap: 10px; flex-wrap: wrap"
-          >
-            <span style="font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600">Move to</span>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; flex: 1">
-              <button
-                v-for="d in days.filter((d) => d !== day && !savedWorkouts[d])"
-                :key="d"
-                @click="renameTarget = d"
-                :style="{
-                  padding: '6px 12px',
-                  minHeight: '38px',
-                  background: renameTarget === d ? '#a78bfa22' : 'transparent',
-                  border: renameTarget === d ? '1px solid #a78bfa' : '1px solid oklch(22% 0.008 45)',
-                  borderRadius: '20px',
-                  color: renameTarget === d ? '#c4b5fd' : '#a3a3a3',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  letterSpacing: '1px',
-                  transition: 'color 150ms, border-color 150ms, background 150ms',
-                }"
-              >{{ d }}</button>
-              <span v-if="days.filter((d) => d !== day && !savedWorkouts[d]).length === 0"
-                style="font-size: 12px; color: #737373; font-style: italic">All other days already have custom plans</span>
-            </div>
-            <button @click="confirmRename(day)" :disabled="!renameTarget"
-              :style="{
-                padding: '6px 16px',
-                minHeight: '38px',
-                background: renameTarget ? '#a78bfa' : 'oklch(14% 0.008 45)',
-                border: 'none',
-                borderRadius: '20px',
-                color: renameTarget ? '#ffffff' : '#737373',
-                cursor: renameTarget ? 'pointer' : 'default',
-                fontSize: '11px',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                transition: 'background 200ms, color 200ms',
-              }"
-            >Move</button>
-            <button @click="renamingDay = null; renameTarget = null"
-              style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 16px; min-width: 38px; min-height: 38px">✕</button>
-          </div>
-        </Transition>
 
         <!-- Exercise table -->
         <div style="padding: 0 18px 16px; background: oklch(10% 0.01 45)">
@@ -659,7 +635,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(ex, j) in (dayData?.exercises ?? [])" :key="j" style="border-top: 1px solid oklch(15% 0.008 45)">
+              <tr v-for="(ex, j) in (savedDay?.exercises ?? [])" :key="j" style="border-top: 1px solid oklch(15% 0.008 45)">
                 <td style="padding: 12px 8px 12px 0">
                   <a :href="yt(ex.name)" target="_blank" rel="noopener noreferrer"
                     style="color: #c4b5fd; text-decoration: none; border-bottom: 1px dashed #a78bfa77; padding-bottom: 1px; font-size: 0.9375rem; font-weight: 500"
@@ -778,7 +754,7 @@ import { parseSetCount } from '@/lib/workout'
 const auth = useAuthStore()
 const queryClient = useQueryClient()
 
-const activeTab = ref('programs') // 'programs' | 'overrides'
+const activeTab = ref('programs')
 const toastMessage = ref(null)
 let _toastTimer = null
 
@@ -812,7 +788,7 @@ const inputStyle = {
 }
 
 // ── Computed data ──────────────────────────────────────────────
-const savedWorkouts = computed(() => customDaysData.value ?? {})
+const savedWorkouts = computed(() => customDaysData.value ?? [])
 const programs = computed(() => programsData.value ?? [])
 
 // ── Programs: create ──────────────────────────────────────────
@@ -903,6 +879,20 @@ function getOrInitDraft(programId, dayName) {
   return programDayDraft.value[key]
 }
 
+function importSavedDayIntoProgram(programId, dayName, savedDayId) {
+  const sd = savedWorkouts.value.find((item) => item.id === savedDayId)
+  if (!sd) return
+  const draft = getOrInitDraft(programId, dayName)
+  draft.title = sd.title ?? ''
+  draft.exercises = (sd.exercises ?? []).map((e) => ({
+    _id: _draftId++,
+    name: e.name,
+    sets: e.sets,
+    reps: e.reps,
+  }))
+  showToast(`Copied "${sd.day_name}${sd.title ? ' — ' + sd.title : ''}" into ${dayName}!`)
+}
+
 function toggleProgramEditor(programId) {
   expandedProgramId.value = expandedProgramId.value === programId ? null : programId
   expandedProgramDay.value = null
@@ -960,10 +950,9 @@ async function handleDeleteProgramDay(programId, dayName) {
   delete programDayDraft.value[key]
 }
 
-// ── Quick day override ────────────────────────────────────────
-const confirmDeleteDay = ref(null)
-const renamingDay = ref(null)
-const renameTarget = ref(null)
+// ── Quick day override & Builder ──────────────────────────────
+const confirmDeleteDayId = ref(null)
+const editingCustomDayId = ref(null)
 
 const selectedDay = ref('Monday')
 const planTitle = ref('')
@@ -987,65 +976,51 @@ function removeExercise(i) {
   }
 }
 
+function resetDayBuilder() {
+  editingCustomDayId.value = null
+  planTitle.value = ''
+  exercises.value = [newEx()]
+}
+
 async function saveWorkout() {
   const toSave = exercises.value.filter((e) => e.name.trim())
   if (!toSave.length) return
 
   const clean = toSave.map(({ name, sets, reps }) => ({ name, sets, reps }))
-  await supabase
-    .from('custom_days')
-    .upsert(
-      { user_id: auth.user.id, day_name: selectedDay.value, title: planTitle.value.trim(), exercises: clean },
-      { onConflict: 'user_id,day_name' },
-    )
+
+  if (editingCustomDayId.value) {
+    const { error } = await supabase
+      .from('custom_days')
+      .update({ day_name: selectedDay.value, title: planTitle.value.trim(), exercises: clean })
+      .eq('id', editingCustomDayId.value)
+    if (error) throw error
+    showToast(`Updated custom day version for ${selectedDay.value}!`)
+  } else {
+    const { error } = await supabase
+      .from('custom_days')
+      .insert({ user_id: auth.user.id, day_name: selectedDay.value, title: planTitle.value.trim(), exercises: clean })
+    if (error) throw error
+    showToast(`Saved new custom day version for ${selectedDay.value}!`)
+  }
 
   await invalidateCustomDays(queryClient)
-  exercises.value = [newEx()]
-  planTitle.value = ''
-  showToast(`Custom workout for ${selectedDay.value} saved!`)
+  resetDayBuilder()
 }
 
-async function deleteDay(day) {
-  await supabase.from('custom_days').delete().eq('day_name', day)
+async function deleteDay(id) {
+  await supabase.from('custom_days').delete().eq('id', id)
   await invalidateCustomDays(queryClient)
-  confirmDeleteDay.value = null
+  confirmDeleteDayId.value = null
+  if (editingCustomDayId.value === id) resetDayBuilder()
 }
 
-function editDay(day) {
-  const { title, exercises: exList } = savedWorkouts.value[day]
-  exercises.value = exList.map((e) => ({ _id: _exId++, name: e.name, sets: e.sets, reps: e.reps }))
-  planTitle.value = title ?? ''
-  selectedDay.value = day
+function editDay(savedDay) {
+  editingCustomDayId.value = savedDay.id
+  exercises.value = (savedDay.exercises ?? []).map((e) => ({ _id: _exId++, name: e.name, sets: e.sets, reps: e.reps }))
+  planTitle.value = savedDay.title ?? ''
+  selectedDay.value = savedDay.day_name
   activeTab.value = 'overrides'
   window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-function toggleRename(day) {
-  if (renamingDay.value === day) {
-    renamingDay.value = null
-    renameTarget.value = null
-  } else {
-    renamingDay.value = day
-    renameTarget.value = null
-  }
-}
-
-async function confirmRename(day) {
-  if (!renameTarget.value) return
-  const newDay = renameTarget.value
-  const { title, exercises: exList } = savedWorkouts.value[day]
-
-  await supabase
-    .from('custom_days')
-    .upsert(
-      { user_id: auth.user.id, day_name: newDay, title, exercises: exList },
-      { onConflict: 'user_id,day_name' },
-    )
-  await supabase.from('custom_days').delete().eq('day_name', day).eq('user_id', auth.user.id)
-
-  await invalidateCustomDays(queryClient)
-  renamingDay.value = null
-  renameTarget.value = null
 }
 
 // ── Log modal ──────────────────────────────────────────────────
@@ -1074,12 +1049,12 @@ function buildLogGroups(exercises) {
   return groups
 }
 
-function openLogModal(day, dayData) {
-  const exList = dayData?.exercises ?? []
+function openLogModal(savedDay) {
+  const exList = savedDay?.exercises ?? []
   logModal.value = {
     open: true,
-    dayName: day,
-    title: dayData?.title ?? '',
+    dayName: savedDay.day_name,
+    title: savedDay?.title ?? '',
     groups: buildLogGroups(exList),
     saving: false,
     error: null,
@@ -1106,7 +1081,7 @@ async function confirmLog() {
       }
     }
 
-    const dayData = savedWorkouts.value[logModal.value.dayName]
+    const dayData = savedWorkouts.value.find((sd) => sd.day_name === logModal.value.dayName)
     const exList = dayData?.exercises ?? []
 
     await logCustomDay(
