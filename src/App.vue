@@ -19,6 +19,25 @@
       <RouterLink to="/" class="nav-link">Program</RouterLink>
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
       <RouterLink v-if="auth.isAuthenticated" to="/history" class="nav-link">History</RouterLink>
+      <div
+        v-if="connectivity.isOnline === false || connectivity.pendingCount > 0"
+        style="
+          position: absolute;
+          left: 50%;
+          bottom: 6px;
+          transform: translateX(-50%);
+          font-size: 9px;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: #888;
+          pointer-events: none;
+          white-space: nowrap;
+        "
+      >
+        <span v-if="!connectivity.isOnline" style="color: #facc15">● Offline</span>
+        <span v-else-if="connectivity.syncing" style="color: #4ade80">↻ Syncing…</span>
+        <span v-else style="color: #4ade80">{{ connectivity.pendingCount }} queued</span>
+      </div>
       <RouterLink
         v-if="!auth.isAuthenticated"
         to="/login"
@@ -115,13 +134,28 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { useConnectivityStore } from './stores/connectivity'
 
 const auth = useAuthStore()
+const connectivity = useConnectivityStore()
 const router = useRouter()
 const dropdownOpen = ref(false)
+
+onMounted(() => {
+  connectivity.init(() => auth.user?.id ?? null)
+})
+
+onUnmounted(() => {
+  connectivity.cleanup()
+})
+
+watch(
+  () => auth.user?.id,
+  (id) => connectivity.setUserId(id),
+)
 
 watch(
   () => auth.isAuthenticated,

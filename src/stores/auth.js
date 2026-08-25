@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { queryClient } from '@/lib/queryClient'
+import { profileQueryOptions, invalidateProfile } from '@/queries/profile'
+import { queryKeys } from '@/queries/keys'
 
 export const useAuthStore = defineStore('auth', () => {
   const session = ref(null)
@@ -18,12 +21,13 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   async function _loadProfile(userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('display_name, program_adopted')
-      .eq('id', userId)
-      .single()
-    profile.value = data
+    profile.value = await queryClient.fetchQuery(profileQueryOptions(userId))
+  }
+
+  function _clearUserQueries() {
+    queryClient.removeQueries({ queryKey: queryKeys.history.all })
+    queryClient.removeQueries({ queryKey: queryKeys.customDays.all })
+    queryClient.removeQueries({ queryKey: queryKeys.profile.all })
   }
 
   async function init() {
@@ -39,6 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
         await _loadProfile(user.value.id)
       } else {
         profile.value = null
+        _clearUserQueries()
       }
     })
     _subscription = listener.subscription
@@ -85,6 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value) return
     await supabase.from('profiles').update({ program_adopted: true }).eq('id', user.value.id)
     if (profile.value) profile.value = { ...profile.value, program_adopted: true }
+    await invalidateProfile(queryClient, user.value.id)
   }
 
   return {

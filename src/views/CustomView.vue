@@ -472,11 +472,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
 
 const auth = useAuthStore()
+const queryClient = useQueryClient()
+const { data: customDaysData } = useCustomDaysQuery()
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -502,14 +506,7 @@ const selectedDay = ref('Monday')
 let _exId = 0
 const newEx = () => ({ _id: _exId++, name: '', sets: '', reps: '' })
 const exercises = ref([newEx()])
-const savedWorkouts = ref({})
-
-onMounted(async () => {
-  const { data } = await supabase.from('custom_days').select('day_name, exercises')
-  if (data) {
-    savedWorkouts.value = Object.fromEntries(data.map((r) => [r.day_name, r.exercises]))
-  }
-})
+const savedWorkouts = computed(() => customDaysData.value ?? {})
 
 const hasValidExercises = computed(() => exercises.value.some((e) => e.name.trim()))
 
@@ -538,16 +535,13 @@ async function saveWorkout() {
       { onConflict: 'user_id,day_name' },
     )
 
-  savedWorkouts.value = { ...savedWorkouts.value, [selectedDay.value]: clean }
+  await invalidateCustomDays(queryClient)
   exercises.value = [newEx()]
 }
 
 async function deleteDay(day) {
   await supabase.from('custom_days').delete().eq('day_name', day)
-
-  const updated = { ...savedWorkouts.value }
-  delete updated[day]
-  savedWorkouts.value = updated
+  await invalidateCustomDays(queryClient)
   confirmDeleteDay.value = null
 }
 </script>

@@ -398,6 +398,49 @@
             </tr>
           </tbody>
         </table>
+        <div style="padding-top: 12px; display: flex; align-items: center; gap: 10px">
+          <button
+            @click="logWorkout(i, d)"
+            :disabled="loggingDay === i"
+            :style="{
+              padding: '9px 16px',
+              background:
+                loggedDay === i || queuedDay === i ? `${phase.color}22` : 'transparent',
+              border: `1px solid ${loggedDay === i || queuedDay === i ? phase.color : 'oklch(22% 0.008 45)'}`,
+              borderRadius: '6px',
+              color: loggedDay === i || queuedDay === i ? phase.color : '#888',
+              cursor: loggingDay === i ? 'wait' : 'pointer',
+              fontSize: '11px',
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              transition: 'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
+            }"
+          >
+            {{
+              loggingDay === i
+                ? 'Saving…'
+                : loggedDay === i
+                  ? 'Logged ✓'
+                  : queuedDay === i
+                    ? 'Queued ✓'
+                    : 'Log workout'
+            }}
+          </button>
+          <RouterLink
+            v-if="loggedDay === i"
+            to="/history"
+            style="font-size: 11px; color: #666; text-decoration: none; letter-spacing: 0.5px"
+          >
+            View history →
+          </RouterLink>
+          <span
+            v-if="queuedDay === i && !connectivity.isOnline"
+            style="font-size: 11px; color: #facc15"
+          >
+            Saved offline — will sync when online
+          </span>
+          <span v-if="logError === i" style="font-size: 11px; color: #f87171">{{ logErrorMsg }}</span>
+        </div>
       </div>
       </Transition>
     </div>
@@ -476,8 +519,16 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useConnectivityStore } from '@/stores/connectivity'
+import { supabase } from '@/lib/supabase'
+import { buildSetLogs } from '@/lib/workout'
+import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
+import { queryClient } from '@/lib/queryClient'
+import { invalidateWorkoutHistory } from '@/queries/history'
+import { program, tips, subs, WEEKDAYS } from '@/data/program'
 
 const authStore = useAuthStore()
+const connectivity = useConnectivityStore()
 const router = useRouter()
 
 const showOnboarding = computed(() =>
@@ -499,697 +550,6 @@ async function handleBuildOwn() {
   router.push('/custom')
 }
 
-const yt = (q) =>
-  `https://www.youtube.com/results?search_query=${encodeURIComponent(q + ' exercise demonstration')}`
-
-const program = {
-  phases: [
-    {
-      id: 1,
-      name: 'Foundation',
-      weeks: 'Weeks 1–2',
-      subtitle: 'Advanced bodyweight — no equipment needed',
-      color: '#4ade80',
-      days: [
-        {
-          day: 'Monday',
-          label: 'Push',
-          home: [
-            {
-              name: 'Archer Push-Up',
-              sets: '3',
-              reps: '6/side',
-              note: 'One arm nearly straight, load shifts to working side',
-              link: yt('archer push-up'),
-            },
-            {
-              name: 'Pike Push-Up with 3s Negative',
-              sets: '3',
-              reps: '8',
-              note: '3 seconds down, explode up',
-              link: yt('pike push-up'),
-            },
-            {
-              name: 'Parallel Dips (2 chairs) with pause',
-              sets: '3',
-              reps: '8',
-              note: '1 second pause at bottom, elbows at 90°',
-              link: yt('parallel dips between chairs'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Tuesday',
-          label: 'Walk + Core',
-          home: [
-            {
-              name: 'Brisk Walk',
-              sets: '1',
-              reps: '2 miles',
-              note: 'Faster than a stroll — you should be breathing',
-              link: null,
-            },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '30s',
-              note: 'Lower back pressed flat, arms overhead, legs low',
-              link: yt('hollow body hold'),
-            },
-            {
-              name: 'RKC Plank',
-              sets: '3',
-              reps: '20s',
-              note: 'Squeeze everything — glutes, abs, fists. Harder than it sounds.',
-              link: yt('RKC plank'),
-            },
-            {
-              name: 'Dead Bug',
-              sets: '3',
-              reps: '10/side',
-              note: 'Slow and controlled, back stays flat',
-              link: yt('dead bug exercise'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Wednesday',
-          label: 'Pull + Legs',
-          home: [
-            {
-              name: 'Inverted Row (under table)',
-              sets: '4',
-              reps: '10',
-              note: 'Chest to table edge, body straight as a board',
-              link: yt('inverted row under table'),
-            },
-            {
-              name: 'Bulgarian Split Squat',
-              sets: '3',
-              reps: '8/leg',
-              note: 'Rear foot elevated on chair, front knee tracks over toes',
-              link: yt('Bulgarian split squat bodyweight'),
-            },
-            {
-              name: 'Jump Squat',
-              sets: '3',
-              reps: '10',
-              note: 'Land soft — absorb with bent knees, not stiff legs',
-              link: yt('jump squat'),
-            },
-            {
-              name: 'Glute Bridge with 2s hold',
-              sets: '3',
-              reps: '12',
-              note: 'Squeeze at top for 2 seconds each rep',
-              link: yt('glute bridge'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Thursday',
-          label: 'Walk + Mobility',
-          home: [
-            { name: 'Brisk Walk', sets: '1', reps: '2 miles', note: '', link: null },
-            {
-              name: "World's Greatest Stretch",
-              sets: '3',
-              reps: '5/side',
-              note: 'Lunge, elbow to floor, rotate — full sequence',
-              link: yt("world's greatest stretch"),
-            },
-            {
-              name: 'Hip 90/90 Stretch',
-              sets: '2',
-              reps: '60s/side',
-              note: 'Hips from all the sitting',
-              link: yt('hip 90 90 stretch'),
-            },
-            {
-              name: 'Thoracic Extension over Chair',
-              sets: '2',
-              reps: '10',
-              note: 'Drape upper back over chair back, arms overhead',
-              link: yt('thoracic extension chair'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Friday',
-          label: 'Full Body',
-          home: [
-            {
-              name: 'Archer Push-Up',
-              sets: '3',
-              reps: '6/side',
-              note: '',
-              link: yt('archer push-up'),
-            },
-            {
-              name: 'Inverted Row',
-              sets: '3',
-              reps: '10',
-              note: '',
-              link: yt('inverted row under table'),
-            },
-            {
-              name: 'Bulgarian Split Squat',
-              sets: '3',
-              reps: '8/leg',
-              note: '',
-              link: yt('Bulgarian split squat bodyweight'),
-            },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '30s',
-              note: '',
-              link: yt('hollow body hold'),
-            },
-          ],
-          gym: null,
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Build',
-      weeks: 'Weeks 3–4',
-      subtitle: 'Harder bodyweight + intro to gym',
-      color: '#facc15',
-      days: [
-        {
-          day: 'Monday',
-          label: 'Upper A',
-          home: [
-            {
-              name: 'Pseudo Planche Push-Up',
-              sets: '3',
-              reps: '8',
-              note: 'Hands at hips level, lean forward — serious shoulder load',
-              link: yt('pseudo planche push-up'),
-            },
-            {
-              name: 'Pike Push-Up with 4s Negative',
-              sets: '3',
-              reps: '8',
-              note: '4 seconds down now',
-              link: yt('pike push-up'),
-            },
-            {
-              name: 'Parallel Dips — max reps',
-              sets: '3',
-              reps: 'to failure',
-              note: 'Controlled failure, no bouncing at bottom',
-              link: yt('parallel dips between chairs'),
-            },
-          ],
-          gym: [
-            {
-              name: 'Barbell Back Squat',
-              sets: '3',
-              reps: '5–8',
-              note: 'Start light — form first, load second',
-              link: yt('barbell back squat form'),
-            },
-            {
-              name: 'DB Row',
-              sets: '2',
-              reps: '5–8/arm',
-              note: 'Brace knee on bench, full stretch at bottom',
-              link: yt('dumbbell row'),
-            },
-            {
-              name: 'DB Incline Bench Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell incline bench press'),
-            },
-            {
-              name: 'Prone DB Row',
-              sets: '2',
-              reps: '5–8',
-              note: 'Lie face-down on incline bench, row both DBs',
-              link: yt('prone dumbbell row incline bench'),
-            },
-            {
-              name: 'Cuban Press',
-              sets: '3',
-              reps: '8–10',
-              note: 'Light DBs — external rotation then overhead press',
-              link: yt('Cuban press exercise'),
-            },
-            {
-              name: 'Incline DB Curl',
-              sets: '2',
-              reps: '5–8',
-              note: 'Arms hang behind torso — full bicep stretch',
-              link: yt('incline dumbbell curl'),
-            },
-          ],
-        },
-        {
-          day: 'Tuesday',
-          label: 'Walk + Core',
-          home: [
-            { name: 'Walk', sets: '1', reps: '2.5 miles', note: '', link: null },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '40s',
-              note: '',
-              link: yt('hollow body hold'),
-            },
-            { name: 'RKC Plank', sets: '3', reps: '25s', note: '', link: yt('RKC plank') },
-            {
-              name: 'Hanging Leg Raise (or lying)',
-              sets: '3',
-              reps: '12',
-              note: 'If no bar, do lying leg raises — slow, back flat',
-              link: yt('hanging leg raise'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Wednesday',
-          label: 'Lower + Shoulders',
-          home: [
-            {
-              name: 'Shrimp Squat (assisted)',
-              sets: '3',
-              reps: '6/leg',
-              note: 'Hold a doorframe for balance — one leg, rear foot held behind',
-              link: yt('shrimp squat assisted'),
-            },
-            {
-              name: 'Nordic Curl Negative (under couch)',
-              sets: '3',
-              reps: '5',
-              note: 'Anchor feet, lower yourself as slowly as possible',
-              link: yt('nordic curl negative'),
-            },
-            {
-              name: 'Inverted Row — feet elevated',
-              sets: '3',
-              reps: '10',
-              note: 'Feet on chair, body more horizontal = harder',
-              link: yt('inverted row feet elevated'),
-            },
-          ],
-          gym: [
-            {
-              name: 'DB Romanian Deadlift',
-              sets: '2',
-              reps: '5',
-              note: 'Hinge at hips, feel the hamstring stretch',
-              link: yt('dumbbell Romanian deadlift'),
-            },
-            {
-              name: 'DB Overhead Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell overhead press'),
-            },
-            {
-              name: 'Deficit Push-Up',
-              sets: '2',
-              reps: 'to failure',
-              note: 'Hands on plates or books — chest drops below hand level',
-              link: yt('deficit push-up'),
-            },
-            {
-              name: 'Bulgarian Split Squat',
-              sets: '2',
-              reps: '5–8/leg',
-              note: 'Rear foot on bench',
-              link: yt('Bulgarian split squat'),
-            },
-            {
-              name: 'Calf Raises',
-              sets: '4',
-              reps: '5–8',
-              note: 'Stand on step edge for full range of motion',
-              link: yt('calf raises step'),
-            },
-          ],
-        },
-        {
-          day: 'Thursday',
-          label: 'Walk + Mobility',
-          home: [
-            { name: 'Walk', sets: '1', reps: '2.5 miles', note: '', link: null },
-            {
-              name: 'Couch Stretch',
-              sets: '2',
-              reps: '60s/side',
-              note: 'Hip flexors — essential after desk work',
-              link: yt('couch stretch hip flexor'),
-            },
-            {
-              name: 'Hip 90/90 with rotation',
-              sets: '2',
-              reps: '8/side',
-              note: '',
-              link: yt('90 90 hip stretch rotation'),
-            },
-            {
-              name: 'Cat-Cow',
-              sets: '2',
-              reps: '12',
-              note: 'Slow — spinal health',
-              link: yt('cat cow stretch'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Friday',
-          label: 'Upper B',
-          home: [
-            {
-              name: 'Pseudo Planche Push-Up',
-              sets: '3',
-              reps: '8',
-              note: '',
-              link: yt('pseudo planche push-up'),
-            },
-            {
-              name: 'Inverted Row — feet elevated',
-              sets: '3',
-              reps: '10',
-              note: '',
-              link: yt('inverted row feet elevated'),
-            },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '40s',
-              note: '',
-              link: yt('hollow body hold'),
-            },
-          ],
-          gym: [
-            { name: 'DB Row', sets: '2', reps: '5–8/arm', note: '', link: yt('dumbbell row') },
-            {
-              name: 'DB Incline Bench Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell incline bench press'),
-            },
-            {
-              name: 'DB Lateral Raise',
-              sets: '2',
-              reps: 'to failure',
-              note: 'Light — controlled arc, no swinging',
-              link: yt('dumbbell lateral raise'),
-            },
-            {
-              name: 'Tricep Overhead Extension',
-              sets: '2',
-              reps: '5–8',
-              note: 'One DB, both hands, lower behind head',
-              link: yt('tricep overhead extension dumbbell'),
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Strength',
-      weeks: 'Weeks 5–8',
-      subtitle: 'Full gym program — progressive overload',
-      color: '#f87171',
-      days: [
-        {
-          day: 'Monday',
-          label: 'Upper A',
-          home: [
-            {
-              name: 'Archer Push-Up — slow negative',
-              sets: '4',
-              reps: '6/side',
-              note: '4s down, explode up',
-              link: yt('archer push-up'),
-            },
-            {
-              name: 'Pseudo Planche Push-Up',
-              sets: '3',
-              reps: '10',
-              note: '',
-              link: yt('pseudo planche push-up'),
-            },
-            {
-              name: 'Parallel Dips — weighted (backpack)',
-              sets: '3',
-              reps: '8',
-              note: 'Add books to a backpack for load',
-              link: yt('weighted dips'),
-            },
-          ],
-          gym: [
-            {
-              name: 'Barbell Back Squat',
-              sets: '3',
-              reps: '5–8',
-              note: 'Add weight each week — this is your primary lift',
-              link: yt('barbell back squat form'),
-            },
-            { name: 'DB Row', sets: '2', reps: '5–8/arm', note: '', link: yt('dumbbell row') },
-            {
-              name: 'DB Incline Bench Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell incline bench press'),
-            },
-            {
-              name: 'Prone DB Row',
-              sets: '2',
-              reps: '5–8',
-              note: 'Face-down on incline bench',
-              link: yt('prone dumbbell row incline bench'),
-            },
-            {
-              name: 'Cuban Press',
-              sets: '3',
-              reps: '8–10',
-              note: '',
-              link: yt('Cuban press exercise'),
-            },
-            {
-              name: 'Incline DB Curl',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('incline dumbbell curl'),
-            },
-          ],
-        },
-        {
-          day: 'Tuesday',
-          label: 'Walk + Core',
-          home: [
-            {
-              name: 'Walk',
-              sets: '1',
-              reps: '3 miles',
-              note: 'Back to your original pace — should feel natural now',
-              link: null,
-            },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '50s',
-              note: '',
-              link: yt('hollow body hold'),
-            },
-            { name: 'RKC Plank', sets: '3', reps: '30s', note: '', link: yt('RKC plank') },
-            {
-              name: 'Ab Wheel Rollout (or pike on floor)',
-              sets: '3',
-              reps: '10',
-              note: 'If no wheel, do pike rollout on socks on hardwood',
-              link: yt('ab wheel rollout'),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Wednesday',
-          label: 'Lower + Shoulders',
-          home: [
-            {
-              name: 'Shrimp Squat (unassisted)',
-              sets: '3',
-              reps: '6/leg',
-              note: 'No doorframe — balance on your own now',
-              link: yt('shrimp squat'),
-            },
-            {
-              name: 'Nordic Curl Negative',
-              sets: '3',
-              reps: '6',
-              note: 'Anchor feet under couch, lower as slowly as possible',
-              link: yt('nordic curl negative'),
-            },
-            {
-              name: 'Pike Push-Up — feet elevated',
-              sets: '3',
-              reps: '10',
-              note: 'Feet on chair — shifts more load to shoulders',
-              link: yt('pike push-up feet elevated'),
-            },
-          ],
-          gym: [
-            {
-              name: 'Barbell or DB Romanian Deadlift',
-              sets: '2',
-              reps: '5',
-              note: 'Barbell preferred — load progressively',
-              link: yt('Romanian deadlift barbell'),
-            },
-            {
-              name: 'DB Overhead Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell overhead press'),
-            },
-            {
-              name: 'Deficit Push-Up',
-              sets: '2',
-              reps: 'to failure',
-              note: '',
-              link: yt('deficit push-up'),
-            },
-            {
-              name: 'Bulgarian Split Squat',
-              sets: '2',
-              reps: '5–8/leg',
-              note: 'Hold DBs at sides as you progress',
-              link: yt('Bulgarian split squat dumbbell'),
-            },
-            {
-              name: 'Calf Raises',
-              sets: '4',
-              reps: '5–8',
-              note: 'Hold a DB for added load',
-              link: yt('weighted calf raises'),
-            },
-          ],
-        },
-        {
-          day: 'Thursday',
-          label: 'Walk + Mobility',
-          home: [
-            { name: 'Walk', sets: '1', reps: '3 miles', note: '', link: null },
-            {
-              name: 'Couch Stretch',
-              sets: '2',
-              reps: '90s/side',
-              note: '',
-              link: yt('couch stretch hip flexor'),
-            },
-            {
-              name: "World's Greatest Stretch",
-              sets: '3',
-              reps: '5/side',
-              note: '',
-              link: yt("world's greatest stretch"),
-            },
-            {
-              name: "Farmer's Carry (DBs)",
-              sets: '3',
-              reps: '40s',
-              note: 'Walk holding both 25lb DBs, tall spine',
-              link: yt("farmer's carry"),
-            },
-          ],
-          gym: null,
-        },
-        {
-          day: 'Friday',
-          label: 'Upper B',
-          home: [
-            {
-              name: 'Archer Push-Up — max reps',
-              sets: '3',
-              reps: 'to failure/side',
-              note: '',
-              link: yt('archer push-up'),
-            },
-            {
-              name: 'Inverted Row — feet elevated, slow negative',
-              sets: '3',
-              reps: '10',
-              note: '3s down',
-              link: yt('inverted row feet elevated'),
-            },
-            { name: 'Shrimp Squat', sets: '3', reps: '8/leg', note: '', link: yt('shrimp squat') },
-            {
-              name: 'Hollow Body Hold',
-              sets: '3',
-              reps: '50s',
-              note: '',
-              link: yt('hollow body hold'),
-            },
-          ],
-          gym: [
-            { name: 'DB Row', sets: '2', reps: '5–8/arm', note: '', link: yt('dumbbell row') },
-            {
-              name: 'DB Incline Bench Press',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('dumbbell incline bench press'),
-            },
-            {
-              name: 'DB Lateral Raise',
-              sets: '2',
-              reps: 'to failure',
-              note: '',
-              link: yt('dumbbell lateral raise'),
-            },
-            {
-              name: 'Tricep Overhead Extension',
-              sets: '2',
-              reps: '5–8',
-              note: '',
-              link: yt('tricep overhead extension dumbbell'),
-            },
-          ],
-        },
-      ],
-    },
-  ],
-}
-
-const tips = [
-  { icon: '💤', text: "Sleep 7–8 hrs. That's when you grow." },
-  { icon: '🥩', text: '0.7–1g protein per lb bodyweight daily.' },
-  { icon: '📈', text: 'Add weight to barbell lifts weekly — even 5lbs counts.' },
-  { icon: '🏠', text: 'Home day ≠ easy day. These are real progressions.' },
-  { icon: '🎯', text: 'Miss a session? Pick up the next one. Never restart the week.' },
-]
-
-const subs = [
-  ['Hack squat', 'Barbell back squat'],
-  ['Lat pulldown', 'DB Row'],
-  ['Chest-supported row', 'Prone DB Row (on incline bench)'],
-  ['Leg extensions', 'Bulgarian split squat'],
-  ['Preacher curl', 'Incline DB curl'],
-]
-
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today)
 
@@ -1207,8 +567,6 @@ function dismissFirstRun() {
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 375)
 const isDesktop = computed(() => windowWidth.value >= 900)
 function onResize() { windowWidth.value = window.innerWidth }
-onMounted(() => window.addEventListener('resize', onResize, { passive: true }))
-onUnmounted(() => window.removeEventListener('resize', onResize))
 
 const phase = computed(() => program.phases[activePhase.value])
 
@@ -1238,6 +596,109 @@ function getExercises(dayIndex, day) {
   const currentTrack = getTrack(dayIndex, !!day.gym)
   return currentTrack === 'gym' ? day.gym : day.home
 }
+
+const loggingDay = ref(null)
+const loggedDay = ref(null)
+const queuedDay = ref(null)
+const logError = ref(null)
+const logErrorMsg = ref('')
+let _loggedTimer = null
+let _queuedTimer = null
+
+async function queueWorkoutOffline(dayIndex, sessionPayload, exercises) {
+  await enqueueWorkout(authStore.user.id, sessionPayload, exercises)
+  await connectivity.onWorkoutQueued()
+  loggingDay.value = null
+  queuedDay.value = dayIndex
+  clearTimeout(_queuedTimer)
+  _queuedTimer = setTimeout(() => {
+    if (queuedDay.value === dayIndex) queuedDay.value = null
+  }, 4000)
+}
+
+async function logWorkout(dayIndex, day) {
+  if (!authStore.user || loggingDay.value !== null) return
+
+  const exercises = getExercises(dayIndex, day)
+  if (!exercises?.length) return
+
+  loggingDay.value = dayIndex
+  logError.value = null
+  const currentTrack = getTrack(dayIndex, !!day.gym)
+  const now = new Date().toISOString()
+
+  const sessionPayload = {
+    user_id: authStore.user.id,
+    date: now.slice(0, 10),
+    phase: program.phases[activePhase.value].id,
+    week: currentWeek.value,
+    day_name: day.day,
+    track: currentTrack,
+    completed_at: now,
+  }
+
+  if (!connectivity.isOnline) {
+    await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+    return
+  }
+
+  const { data: session, error } = await supabase
+    .from('workout_sessions')
+    .insert(sessionPayload)
+    .select('id')
+    .single()
+
+  if (error) {
+    if (isNetworkError(error)) {
+      await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+      return
+    }
+    logError.value = dayIndex
+    logErrorMsg.value = error.message
+    loggingDay.value = null
+    return
+  }
+
+  const setLogs = buildSetLogs(session.id, exercises)
+  if (setLogs.length) {
+    const { error: setsError } = await supabase.from('set_logs').insert(setLogs)
+    if (setsError) {
+      if (isNetworkError(setsError)) {
+        await supabase.from('workout_sessions').delete().eq('id', session.id)
+        await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+        return
+      }
+      logError.value = dayIndex
+      logErrorMsg.value = setsError.message
+      loggingDay.value = null
+      return
+    }
+  }
+
+  loggingDay.value = null
+  loggedDay.value = dayIndex
+  await invalidateWorkoutHistory(queryClient)
+  clearTimeout(_loggedTimer)
+  _loggedTimer = setTimeout(() => {
+    if (loggedDay.value === dayIndex) loggedDay.value = null
+  }, 4000)
+}
+
+const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
+const currentWeek = ref(1)
+onMounted(() => {
+  window.addEventListener('resize', onResize, { passive: true })
+  const saved = localStorage.getItem(_weekKey.value)
+  if (saved) {
+    const n = parseInt(saved, 10)
+    if (n >= 1 && n <= 8) currentWeek.value = n
+  }
+})
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+  clearTimeout(_loggedTimer)
+  clearTimeout(_queuedTimer)
+})
 </script>
 
 <style scoped>
