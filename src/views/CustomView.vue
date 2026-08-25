@@ -5,52 +5,140 @@
       border-bottom: 1px solid oklch(15% 0.008 45);
       padding: 32px 24px 20px;
       text-align: center;
+      background: oklch(9% 0.01 45);
     "
   >
     <div
       style="
         font-size: 11px;
         letter-spacing: 4px;
-        color: #888;
+        color: #a3a3a3;
         text-transform: uppercase;
         margin-bottom: 8px;
       "
     >
-      Custom Plan
+      Custom Workouts
     </div>
     <h1
       style="
         font-size: clamp(1.625rem, 5vw, 2.75rem);
         font-weight: 400;
         margin: 0;
-        color: oklch(96% 0.005 45);
+        color: #f5f5f5;
         letter-spacing: -1px;
+        font-family: Georgia, serif;
       "
     >
-      Build Your Day
+      Custom Studio
     </h1>
-    <p style="font-size: 0.875rem; color: #888; margin-top: 8px; font-style: italic">
-      Save full programs or override any single day
+    <p style="font-size: 0.875rem; color: #a3a3a3; margin-top: 8px; font-style: italic">
+      Build full week programs or override single days
     </p>
+
+    <!-- Top Segmented Navigation Tabs -->
+    <div
+      style="
+        display: flex;
+        max-width: 440px;
+        margin: 20px auto 0;
+        background: oklch(12% 0.008 45);
+        padding: 4px;
+        border-radius: 9999px;
+        border: 1px solid oklch(18% 0.008 45);
+      "
+    >
+      <button
+        @click="activeTab = 'programs'"
+        :style="{
+          flex: 1,
+          padding: '10px 16px',
+          borderRadius: '9999px',
+          background: activeTab === 'programs' ? '#a78bfa' : 'transparent',
+          color: activeTab === 'programs' ? '#ffffff' : '#a3a3a3',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '12px',
+          fontWeight: '600',
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          minHeight: '44px',
+          transition: 'all 180ms ease-out',
+        }"
+      >
+        📋 My Programs ({{ programs.length }})
+      </button>
+      <button
+        @click="activeTab = 'overrides'"
+        :style="{
+          flex: 1,
+          padding: '10px 16px',
+          borderRadius: '9999px',
+          background: activeTab === 'overrides' ? '#a78bfa' : 'transparent',
+          color: activeTab === 'overrides' ? '#ffffff' : '#a3a3a3',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '12px',
+          fontWeight: '600',
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          minHeight: '44px',
+          transition: 'all 180ms ease-out',
+        }"
+      >
+        ⚡ Day Builder
+      </button>
+    </div>
   </div>
 
-  <!-- ═══════════════════════ MY PROGRAMS section ═══════════════════════ -->
-  <div style="max-width: 640px; margin: 28px auto 0; padding: 0 16px">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
-      <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase">
-        My Programs
+  <!-- Activation Toast Feedback -->
+  <Transition name="confirm">
+    <div
+      v-if="toastMessage"
+      style="
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #15803d;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 999;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <span>✓</span> {{ toastMessage }}
+    </div>
+  </Transition>
+
+  <!-- ═══════════════════════ TAB 1: MY PROGRAMS ═══════════════════════ -->
+  <div v-if="activeTab === 'programs'" style="max-width: 640px; margin: 28px auto 0; padding: 0 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px">
+      <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600">
+        Saved Program Templates
       </div>
       <button
         @click="startNewProgram"
         style="
-          padding: 5px 12px;
-          background: #a78bfa18;
-          border: 1px solid #a78bfa55;
-          border-radius: 20px;
-          color: #a78bfa;
+          padding: 8px 16px;
+          background: #a78bfa22;
+          border: 1px solid #a78bfa;
+          border-radius: 9999px;
+          color: #c4b5fd;
           cursor: pointer;
-          font-size: 10px;
+          font-size: 11px;
+          font-weight: 600;
           letter-spacing: 1px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 150ms ease-out;
         "
       >
         + New Program
@@ -62,21 +150,21 @@
       <div
         v-if="creatingProgram"
         style="
-          margin-bottom: 12px;
-          padding: 12px 14px;
-          background: oklch(8% 0.012 45);
-          border: 1px solid oklch(20% 0.008 45);
-          border-radius: 8px;
+          margin-bottom: 16px;
+          padding: 16px;
+          background: oklch(10% 0.01 45);
+          border: 1px solid #a78bfa66;
+          border-radius: 12px;
           display: flex;
-          gap: 8px;
+          gap: 10px;
           align-items: center;
         "
       >
         <input
           v-model="newProgramName"
-          placeholder="Program name (e.g. Summer Cut)"
+          placeholder="Program name (e.g. Summer Cut, Hypertrophy Phase)"
           class="workout-input"
-          :style="{ ...inputStyle, flex: 1 }"
+          :style="{ ...inputStyle, flex: 1, minHeight: '44px' }"
           @keydown.enter="saveNewProgram"
           @keydown.escape="creatingProgram = false"
           ref="newProgramInput"
@@ -85,15 +173,17 @@
           @click="saveNewProgram"
           :disabled="!newProgramName.trim() || savingProgram"
           :style="{
-            padding: '7px 14px',
-            background: newProgramName.trim() ? '#a78bfa' : 'oklch(14% 0.008 45)',
+            padding: '10px 18px',
+            background: newProgramName.trim() ? '#a78bfa' : 'oklch(16% 0.008 45)',
             border: 'none',
-            borderRadius: '6px',
-            color: newProgramName.trim() ? '#fff' : '#444',
+            borderRadius: '9999px',
+            color: newProgramName.trim() ? '#ffffff' : '#737373',
             cursor: newProgramName.trim() ? 'pointer' : 'default',
-            fontSize: '11px',
+            fontSize: '12px',
+            fontWeight: '600',
             letterSpacing: '1px',
             whiteSpace: 'nowrap',
+            minHeight: '44px',
             transition: 'background 200ms, color 200ms',
           }"
         >
@@ -101,7 +191,7 @@
         </button>
         <button
           @click="creatingProgram = false"
-          style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 16px"
+          style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 20px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
         >
           ✕
         </button>
@@ -109,23 +199,23 @@
     </Transition>
 
     <!-- Program cards -->
-    <div v-if="programsLoading" style="padding: 24px 0; text-align: center; color: #555; font-size: 0.875rem">
+    <div v-if="programsLoading" style="padding: 32px 0; text-align: center; color: #a3a3a3; font-size: 0.875rem">
       Loading programs…
     </div>
 
     <div v-else-if="programs.length === 0 && !creatingProgram"
       style="
-        padding: 24px 20px;
-        border: 1px dashed oklch(20% 0.008 45);
-        border-radius: 8px;
+        padding: 36px 20px;
+        border: 1px dashed oklch(22% 0.008 45);
+        border-radius: 12px;
         text-align: center;
-        margin-bottom: 28px;
+        margin-bottom: 36px;
       "
     >
-      <div style="font-size: 20px; margin-bottom: 8px; opacity: 0.4">📋</div>
-      <div style="font-size: 0.875rem; color: #666">No programs yet.</div>
-      <div style="font-size: 12px; color: #555; margin-top: 4px">
-        Create a program to save a full week of workouts as a reusable plan.
+      <div style="font-size: 28px; margin-bottom: 12px; opacity: 0.6">📋</div>
+      <div style="font-size: 0.9375rem; color: #e5e5e5; font-weight: 500">No custom programs yet</div>
+      <div style="font-size: 13px; color: #a3a3a3; margin-top: 6px; line-height: 1.5">
+        Create a program to save a full 7-day training schedule as a reusable template.
       </div>
     </div>
 
@@ -133,7 +223,7 @@
       <div
         v-for="program in programs"
         :key="program.id"
-        style="margin-bottom: 10px; border: 1px solid oklch(17% 0.008 45); border-radius: 8px; overflow: hidden"
+        style="margin-bottom: 14px; border: 1px solid oklch(18% 0.008 45); border-radius: 12px; overflow: hidden; background: oklch(10% 0.01 45)"
       >
         <!-- Program card header -->
         <div
@@ -141,65 +231,67 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 13px 16px;
-            background: oklch(10% 0.01 45);
+            padding: 16px 18px;
+            background: oklch(11% 0.01 45);
+            gap: 12px;
+            flex-wrap: wrap;
           "
         >
-          <div style="display: flex; align-items: center; gap: 10px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1">
             <!-- Editable program name -->
-            <div v-if="renamingProgramId === program.id" style="display: flex; gap: 6px; align-items: center; flex: 1">
+            <div v-if="renamingProgramId === program.id" style="display: flex; gap: 8px; align-items: center; flex: 1">
               <input
                 v-model="renameProgramName"
                 class="workout-input"
-                :style="{ ...inputStyle, flex: 1, fontSize: '0.875rem', padding: '4px 8px' }"
+                :style="{ ...inputStyle, flex: 1, fontSize: '0.875rem', padding: '6px 12px', minHeight: '40px' }"
                 @keydown.enter="confirmProgramRename(program.id)"
                 @keydown.escape="renamingProgramId = null"
               />
               <button @click="confirmProgramRename(program.id)"
-                style="background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 11px">
+                style="padding: 6px 14px; background: #a78bfa; border: none; border-radius: 9999px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px">
                 Save
               </button>
               <button @click="renamingProgramId = null"
-                style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 14px">
+                style="padding: 6px 10px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 9999px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">
                 ✕
               </button>
             </div>
-            <div v-else style="display: flex; align-items: center; gap: 10px">
-              <span style="font-size: 0.9375rem; color: #e8e8e8; font-weight: 400">{{ program.name }}</span>
-              <span style="font-size: 10px; color: #555; letter-spacing: 1px">
+            <div v-else style="display: flex; align-items: center; gap: 12px">
+              <span style="font-size: 1rem; color: #f5f5f5; font-weight: 600">{{ program.name }}</span>
+              <span style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: oklch(16% 0.008 45); color: #a3a3a3; font-weight: 500">
                 {{ program.custom_program_days?.length ?? 0 }} day{{ (program.custom_program_days?.length ?? 0) !== 1 ? 's' : '' }}
               </span>
             </div>
           </div>
-          <div style="display: flex; gap: 4px; align-items: center; flex-shrink: 0">
+
+          <!-- Action buttons with minimum 44px touch targets -->
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
             <button @click="toggleProgramEditor(program.id)"
-              style="background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 11px; letter-spacing: 1px">
-              {{ expandedProgramId === program.id ? 'Close' : 'Edit' }}
+              style="padding: 8px 14px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
+              {{ expandedProgramId === program.id ? 'Close' : 'Edit Days' }}
             </button>
-            <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
             <button @click="handleActivateProgram(program)"
               :disabled="activatingProgramId === program.id"
-              style="background: transparent; border: none; color: #4ade80; cursor: pointer; font-size: 11px; letter-spacing: 1px">
-              {{ activatingProgramId === program.id ? 'Applying…' : 'Activate' }}
+              style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
+              {{ activatingProgramId === program.id ? 'Applying…' : 'Activate Plan' }}
             </button>
-            <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
             <button @click="renamingProgramId = program.id; renameProgramName = program.name"
-              style="background: transparent; border: none; color: #666; cursor: pointer; font-size: 11px; letter-spacing: 1px">
+              style="padding: 8px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
               Rename
             </button>
-            <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
-            <button v-if="confirmDeleteProgramId !== program.id"
-              @click="confirmDeleteProgramId = program.id"
-              style="background: transparent; border: none; color: #666; cursor: pointer; font-size: 11px; letter-spacing: 1px">
-              Delete
-            </button>
+            <template v-if="confirmDeleteProgramId !== program.id">
+              <button @click="confirmDeleteProgramId = program.id"
+                style="padding: 8px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
+                Delete
+              </button>
+            </template>
             <template v-else>
               <button @click="handleDeleteProgram(program.id)"
-                style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 11px; letter-spacing: 1px">
-                Yes
+                style="padding: 8px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px">
+                Confirm
               </button>
               <button @click="confirmDeleteProgramId = null"
-                style="background: transparent; border: none; color: #777; cursor: pointer; font-size: 11px">
+                style="padding: 8px 10px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">
                 No
               </button>
             </template>
@@ -209,12 +301,12 @@
         <!-- Program day editor (expanded) -->
         <Transition name="rename-slide">
           <div v-if="expandedProgramId === program.id"
-            style="background: oklch(7% 0.01 45); border-top: 1px solid oklch(15% 0.008 45)"
+            style="background: oklch(8% 0.01 45); border-top: 1px solid oklch(16% 0.008 45)"
           >
             <div
               v-for="d in days"
               :key="d"
-              style="border-bottom: 1px solid oklch(12% 0.008 45)"
+              style="border-bottom: 1px solid oklch(13% 0.008 45)"
             >
               <!-- Day row header -->
               <button
@@ -224,21 +316,22 @@
                   display: flex;
                   justify-content: space-between;
                   align-items: center;
-                  padding: 10px 16px;
+                  padding: 12px 18px;
                   background: transparent;
                   border: none;
                   cursor: pointer;
                   text-align: left;
+                  min-height: 48px;
                 "
               >
-                <div style="display: flex; align-items: center; gap: 10px">
-                  <span style="font-size: 11px; color: #555; letter-spacing: 2px; text-transform: uppercase; min-width: 80px">{{ d }}</span>
-                  <span v-if="getProgramDay(program, d)" style="font-size: 12px; color: #888">
+                <div style="display: flex; align-items: center; gap: 12px">
+                  <span style="font-size: 11px; color: #a3a3a3; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; min-width: 84px">{{ d }}</span>
+                  <span v-if="getProgramDay(program, d)" style="font-size: 13px; color: #e5e5e5; font-weight: 500">
                     {{ getProgramDay(program, d).title || `${getProgramDay(program, d).exercises?.length ?? 0} exercise${(getProgramDay(program, d).exercises?.length ?? 0) !== 1 ? 's' : ''}` }}
                   </span>
-                  <span v-else style="font-size: 11px; color: #3a3a3a; font-style: italic">Empty — click to add</span>
+                  <span v-else style="font-size: 12px; color: #737373; font-style: italic">Empty — tap to build</span>
                 </div>
-                <span style="color: #555; font-size: 14px">
+                <span style="color: #a3a3a3; font-size: 16px">
                   {{ expandedProgramDay === `${program.id}|${d}` ? '−' : '+' }}
                 </span>
               </button>
@@ -246,33 +339,33 @@
               <!-- Day exercise editor -->
               <Transition name="rename-slide">
                 <div v-if="expandedProgramDay === `${program.id}|${d}`"
-                  style="padding: 0 16px 16px"
+                  style="padding: 4px 18px 18px"
                 >
                   <!-- Title -->
-                  <div style="margin-bottom: 12px">
-                    <div style="font-size: 10px; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 6px">
-                      Day Title <span style="text-transform: none; letter-spacing: 0; color: #444">(optional)</span>
+                  <div style="margin-bottom: 14px">
+                    <div style="font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600; margin-bottom: 6px">
+                      Day Title <span style="text-transform: none; letter-spacing: 0; color: #737373">(optional)</span>
                     </div>
                     <input
                       v-model="programDayDraft[`${program.id}|${d}`].title"
-                      placeholder="e.g. Push Day, Upper Body…"
+                      placeholder="e.g. Push Day, Upper Body, Leg Focus…"
                       class="workout-input"
                       :style="inputStyle"
                     />
                   </div>
 
                   <!-- Exercises -->
-                  <div style="font-size: 10px; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 8px">
+                  <div style="font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600; margin-bottom: 10px">
                     Exercises
                   </div>
                   <TransitionGroup name="exercise" tag="div" style="position: relative">
                     <div
                       v-for="(ex, i) in programDayDraft[`${program.id}|${d}`].exercises"
                       :key="ex._id"
-                      style="margin-bottom: 8px; padding: 12px; background: oklch(10% 0.01 45); border: 1px solid oklch(17% 0.008 45); border-radius: 8px"
+                      style="margin-bottom: 10px; padding: 14px; background: oklch(11% 0.01 45); border: 1px solid oklch(18% 0.008 45); border-radius: 8px"
                     >
-                      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px">
-                        <span style="font-size: 11px; color: #555; min-width: 18px; text-align: right">{{ i + 1 }}</span>
+                      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px">
+                        <span style="font-size: 12px; color: #a3a3a3; min-width: 18px; text-align: right">{{ i + 1 }}</span>
                         <input
                           v-model="ex.name"
                           :aria-label="`Exercise ${i + 1} name`"
@@ -283,18 +376,18 @@
                         <button
                           @click="removeProgramExercise(program.id, d, i)"
                           :aria-label="`Remove exercise ${i + 1}`"
-                          style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 18px; padding: 4px 8px; flex-shrink: 0; min-width: 36px; min-height: 36px; display: flex; align-items: center; justify-content: center"
+                          style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 20px; padding: 4px 8px; flex-shrink: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
                         >
                           <span aria-hidden="true">×</span>
                         </button>
                       </div>
-                      <div style="display: flex; gap: 8px">
+                      <div style="display: flex; gap: 10px">
                         <div style="flex: 1; text-align: center">
-                          <label :for="`pd-${program.id}-${d}-${i}-sets`" style="display: block; font-size: 9px; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 4px">Sets</label>
+                          <label :for="`pd-${program.id}-${d}-${i}-sets`" style="display: block; font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 4px">Sets</label>
                           <input :id="`pd-${program.id}-${d}-${i}-sets`" v-model="ex.sets" placeholder="3" class="workout-input" :style="{ ...inputStyle, textAlign: 'center' }" />
                         </div>
                         <div style="flex: 1; text-align: center">
-                          <label :for="`pd-${program.id}-${d}-${i}-reps`" style="display: block; font-size: 9px; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 4px">Reps</label>
+                          <label :for="`pd-${program.id}-${d}-${i}-reps`" style="display: block; font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 4px">Reps</label>
                           <input :id="`pd-${program.id}-${d}-${i}-reps`" v-model="ex.reps" placeholder="10" class="workout-input" :style="{ ...inputStyle, textAlign: 'center' }" />
                         </div>
                       </div>
@@ -302,24 +395,26 @@
                   </TransitionGroup>
 
                   <button @click="addProgramExercise(program.id, d)"
-                    style="width: 100%; padding: 8px; background: transparent; border: 1px dashed oklch(22% 0.008 45); border-radius: 6px; color: #555; cursor: pointer; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px"
+                    style="width: 100%; min-height: 44px; padding: 10px; background: transparent; border: 1px dashed oklch(24% 0.008 45); border-radius: 8px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px"
                   >
                     + Add Exercise
                   </button>
 
-                  <div style="display: flex; gap: 8px">
+                  <div style="display: flex; gap: 10px">
                     <button
                       @click="saveProgramDayHandler(program.id, d)"
                       :disabled="savingProgramDay === `${program.id}|${d}`"
                       :style="{
                         flex: 1,
-                        padding: '9px',
+                        padding: '12px',
+                        minHeight: '44px',
                         background: '#a78bfa',
                         border: 'none',
-                        borderRadius: '6px',
-                        color: '#fff',
+                        borderRadius: '9999px',
+                        color: '#ffffff',
                         cursor: 'pointer',
-                        fontSize: '10px',
+                        fontSize: '11px',
+                        fontWeight: '700',
                         letterSpacing: '2px',
                         textTransform: 'uppercase',
                         transition: 'opacity 200ms',
@@ -331,7 +426,7 @@
                     <button
                       v-if="getProgramDay(program, d)"
                       @click="handleDeleteProgramDay(program.id, d)"
-                      style="padding: 9px 14px; background: transparent; border: 1px solid oklch(22% 0.008 45); border-radius: 6px; color: #666; cursor: pointer; font-size: 10px; letter-spacing: 1px; text-transform: uppercase"
+                      style="padding: 12px 18px; min-height: 44px; background: transparent; border: 1px solid oklch(22% 0.008 45); border-radius: 9999px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase"
                     >
                       Clear
                     </button>
@@ -345,15 +440,15 @@
     </div>
   </div>
 
-  <!-- ════════════════════ QUICK DAY OVERRIDE section ════════════════════ -->
-  <div style="max-width: 640px; margin: 32px auto 0; padding: 0 16px">
-    <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 16px">
-      Quick Day Override
+  <!-- ═════════════════════ TAB 2: DAY BUILDER & OVERRIDES ═════════════════════ -->
+  <div v-else style="max-width: 640px; margin: 28px auto 0; padding: 0 16px">
+    <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600; margin-bottom: 16px">
+      Single Day Override Builder
     </div>
 
     <!-- Day Selector -->
     <div style="margin-bottom: 24px">
-      <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 10px">
+      <div style="font-size: 10px; letter-spacing: 3px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 10px; font-weight: 600">
         Day of Week
       </div>
       <div style="display: flex; flex-wrap: wrap; gap: 8px">
@@ -362,13 +457,15 @@
           :key="d"
           @click="selectedDay = d"
           :style="{
-            padding: '7px 14px',
+            padding: '10px 16px',
+            minHeight: '44px',
             background: selectedDay === d ? '#a78bfa22' : 'transparent',
-            border: selectedDay === d ? '1px solid #a78bfa' : '1px solid oklch(20% 0.008 45)',
-            borderRadius: '20px',
-            color: selectedDay === d ? '#a78bfa' : '#777',
+            border: selectedDay === d ? '1px solid #a78bfa' : '1px solid oklch(22% 0.008 45)',
+            borderRadius: '9999px',
+            color: selectedDay === d ? '#c4b5fd' : '#a3a3a3',
             cursor: 'pointer',
-            fontSize: '11px',
+            fontSize: '12px',
+            fontWeight: '600',
             letterSpacing: '1px',
             transition: 'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
           }"
@@ -380,19 +477,19 @@
 
     <!-- Plan Title -->
     <div style="margin-bottom: 24px">
-      <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 10px">
-        Plan Title <span style="color: #555; letter-spacing: 1px; text-transform: none">(optional)</span>
+      <div style="font-size: 10px; letter-spacing: 3px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 10px; font-weight: 600">
+        Plan Title <span style="color: #737373; letter-spacing: 1px; text-transform: none; font-weight: 400">(optional)</span>
       </div>
       <input
         v-model="planTitle"
-        placeholder="e.g. Upper Body, Leg Day, Push Day…"
+        placeholder="e.g. Upper Body, Leg Day, Push Focus…"
         aria-label="Plan title"
         class="workout-input"
         :style="inputStyle"
       />
     </div>
 
-    <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 10px">
+    <div style="font-size: 10px; letter-spacing: 3px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 10px; font-weight: 600">
       Exercises
     </div>
 
@@ -400,10 +497,10 @@
       <div
         v-for="(ex, i) in exercises"
         :key="ex._id"
-        style="margin-bottom: 10px; padding: 14px; background: oklch(10% 0.01 45); border: 1px solid oklch(17% 0.008 45); border-radius: 8px"
+        style="margin-bottom: 12px; padding: 16px; background: oklch(10% 0.01 45); border: 1px solid oklch(18% 0.008 45); border-radius: 10px"
       >
-        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px">
-          <span style="font-size: 11px; color: #666; min-width: 18px; text-align: right">{{ i + 1 }}</span>
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px">
+          <span style="font-size: 12px; color: #a3a3a3; min-width: 18px; text-align: right">{{ i + 1 }}</span>
           <input
             v-model="ex.name"
             :aria-label="`Exercise ${i + 1} name`"
@@ -414,35 +511,35 @@
           <button
             @click="removeExercise(i)"
             :aria-label="`Remove exercise ${i + 1}`"
-            style="background: transparent; border: none; color: #777; cursor: pointer; font-size: 20px; line-height: 1; padding: 4px 8px; flex-shrink: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
+            style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px 8px; flex-shrink: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
           >
             <span aria-hidden="true">×</span>
           </button>
         </div>
 
-        <div style="display: flex; gap: 8px; margin-bottom: 10px">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px">
           <div style="flex: 1">
-            <label :for="`ex-${i}-sets`" style="display: block; font-size: 0.625rem; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 4px; text-align: center">Sets</label>
+            <label :for="`ex-${i}-sets`" style="display: block; font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 4px; text-align: center; font-weight: 600">Sets</label>
             <input :id="`ex-${i}-sets`" v-model="ex.sets" placeholder="3" class="workout-input" :style="{ ...inputStyle, textAlign: 'center' }" />
           </div>
           <div style="flex: 1">
-            <label :for="`ex-${i}-reps`" style="display: block; font-size: 0.625rem; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 4px; text-align: center">Reps</label>
+            <label :for="`ex-${i}-reps`" style="display: block; font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 4px; text-align: center; font-weight: 600">Reps</label>
             <input :id="`ex-${i}-reps`" v-model="ex.reps" placeholder="10" class="workout-input" :style="{ ...inputStyle, textAlign: 'center' }" />
           </div>
         </div>
 
         <div v-if="ex.name.trim()" style="display: flex; align-items: center; gap: 6px">
-          <span aria-hidden="true" style="font-size: 10px; color: #666">▶</span>
+          <span aria-hidden="true" style="font-size: 10px; color: #a78bfa">▶</span>
           <a :href="yt(ex.name)" target="_blank" rel="noopener noreferrer"
-            style="font-size: 11px; color: #a78bfa; text-decoration: none; border-bottom: 1px dashed #a78bfa55; padding-bottom: 1px"
+            style="font-size: 12px; color: #c4b5fd; text-decoration: none; border-bottom: 1px dashed #a78bfa77; padding-bottom: 1px"
           >Watch demo ↗</a>
         </div>
-        <div v-else style="font-size: 11px; color: #555; font-style: italic">Type a name to get a demo link</div>
+        <div v-else style="font-size: 12px; color: #737373; font-style: italic">Type a name to get a demo link</div>
       </div>
     </TransitionGroup>
 
     <button @click="addExercise"
-      style="width: 100%; padding: 11px; background: transparent; border: 1px dashed oklch(22% 0.008 45); border-radius: 8px; color: #666; cursor: pointer; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px"
+      style="width: 100%; min-height: 48px; padding: 12px; background: transparent; border: 1px dashed oklch(24% 0.008 45); border-radius: 10px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px"
     >
       + Add Exercise
     </button>
@@ -450,13 +547,15 @@
     <button @click="saveWorkout" :disabled="!hasValidExercises"
       :style="{
         width: '100%',
-        padding: '13px',
-        background: hasValidExercises ? '#a78bfa' : 'oklch(11.5% 0.008 45)',
+        padding: '14px',
+        minHeight: '48px',
+        background: hasValidExercises ? '#a78bfa' : 'oklch(12% 0.008 45)',
         border: 'none',
-        borderRadius: '8px',
-        color: hasValidExercises ? '#fff' : '#444',
+        borderRadius: '9999px',
+        color: hasValidExercises ? '#ffffff' : '#737373',
         cursor: hasValidExercises ? 'pointer' : 'default',
         fontSize: '11px',
+        fontWeight: '700',
         letterSpacing: '3px',
         textTransform: 'uppercase',
         marginBottom: '40px',
@@ -465,43 +564,38 @@
     >
       Save for {{ selectedDay }}
     </button>
-  </div>
 
-  <!-- ═════════════════════ SAVED CUSTOM DAYS section ════════════════════ -->
-  <div style="max-width: 640px; margin: 0 auto; padding: 0 16px">
+    <!-- SAVED CUSTOM DAYS LIST -->
     <div v-if="Object.keys(savedWorkouts).length > 0">
-      <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 10px">
+      <div style="font-size: 11px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 12px; font-weight: 600">
         Saved Custom Days
       </div>
 
       <div v-for="(dayData, day) in savedWorkouts" :key="day"
-        style="margin-bottom: 8px; border: 1px solid oklch(17% 0.008 45); border-radius: 8px; overflow: hidden"
+        style="margin-bottom: 12px; border: 1px solid oklch(18% 0.008 45); border-radius: 10px; overflow: hidden; background: oklch(10% 0.01 45)"
       >
         <!-- Card header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: oklch(10% 0.01 45)">
-          <div style="display: flex; flex-direction: column; gap: 3px">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: oklch(11% 0.01 45); flex-wrap: wrap; gap: 10px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
             <div style="display: flex; gap: 10px; align-items: center">
-              <span style="font-size: 11px; color: #555; letter-spacing: 2px; text-transform: uppercase; min-width: 72px">{{ day }}</span>
-              <span style="font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #a78bfa18; color: #a78bfa; letter-spacing: 1px; text-transform: uppercase">Custom</span>
+              <span style="font-size: 12px; color: #a3a3a3; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; min-width: 80px">{{ day }}</span>
+              <span style="font-size: 11px; padding: 3px 10px; border-radius: 20px; background: #a78bfa22; color: #c4b5fd; letter-spacing: 1px; text-transform: uppercase; font-weight: 500">Custom</span>
             </div>
-            <div v-if="dayData?.title" style="font-size: 0.9375rem; color: oklch(90% 0.005 45); font-weight: 500; letter-spacing: -0.2px; padding-left: 82px">
+            <div v-if="dayData?.title" style="font-size: 0.9375rem; color: #f5f5f5; font-weight: 500; letter-spacing: -0.2px; padding-left: 90px">
               {{ dayData.title }}
             </div>
           </div>
           <Transition name="confirm" mode="out-in">
             <div v-if="confirmDeleteDay === day" key="confirm" style="display: flex; align-items: center">
-              <span style="font-size: 11px; color: #888; font-family: Georgia, serif; margin-right: 8px">Remove?</span>
-              <button @click="deleteDay(day)" style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 11px; letter-spacing: 1px; margin-right: 8px">Yes</button>
-              <button @click="confirmDeleteDay = null" style="background: transparent; border: none; color: #777; cursor: pointer; font-size: 11px; letter-spacing: 1px">No</button>
+              <span style="font-size: 12px; color: #a3a3a3; margin-right: 10px">Remove?</span>
+              <button @click="deleteDay(day)" style="padding: 6px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px; margin-right: 8px">Yes</button>
+              <button @click="confirmDeleteDay = null" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">No</button>
             </div>
-            <div v-else key="actions" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end">
-              <button @click="openLogModal(day, dayData)" style="background: transparent; border: none; color: #4ade80; cursor: pointer; font-size: 11px; letter-spacing: 1px">Log</button>
-              <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
-              <button @click="editDay(day)" style="background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 11px; letter-spacing: 1px">Edit</button>
-              <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
-              <button @click="toggleRename(day)" style="background: transparent; border: none; color: #666; cursor: pointer; font-size: 11px; letter-spacing: 1px">Rename</button>
-              <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
-              <button @click="confirmDeleteDay = day" style="background: transparent; border: none; color: #666; cursor: pointer; font-size: 11px; letter-spacing: 1px">Delete</button>
+            <div v-else key="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end">
+              <button @click="openLogModal(day, dayData)" style="padding: 6px 14px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; min-height: 38px; display: inline-flex; align-items: center">Log</button>
+              <button @click="editDay(day)" style="padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Edit</button>
+              <button @click="toggleRename(day)" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Rename</button>
+              <button @click="confirmDeleteDay = day" style="padding: 6px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Delete</button>
             </div>
           </Transition>
         </div>
@@ -509,80 +603,74 @@
         <!-- Inline rename row -->
         <Transition name="rename-slide">
           <div v-if="renamingDay === day"
-            style="padding: 10px 16px; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(17% 0.008 45); display: flex; align-items: center; gap: 8px; flex-wrap: wrap"
+            style="padding: 12px 18px; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(18% 0.008 45); display: flex; align-items: center; gap: 10px; flex-wrap: wrap"
           >
-            <span style="font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase">Move to</span>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1">
+            <span style="font-size: 10px; letter-spacing: 2px; color: #a3a3a3; text-transform: uppercase; font-weight: 600">Move to</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; flex: 1">
               <button
                 v-for="d in days.filter((d) => d !== day && !savedWorkouts[d])"
                 :key="d"
                 @click="renameTarget = d"
                 :style="{
-                  padding: '4px 10px',
+                  padding: '6px 12px',
+                  minHeight: '38px',
                   background: renameTarget === d ? '#a78bfa22' : 'transparent',
                   border: renameTarget === d ? '1px solid #a78bfa' : '1px solid oklch(22% 0.008 45)',
                   borderRadius: '20px',
-                  color: renameTarget === d ? '#a78bfa' : '#666',
+                  color: renameTarget === d ? '#c4b5fd' : '#a3a3a3',
                   cursor: 'pointer',
-                  fontSize: '10px',
+                  fontSize: '11px',
+                  fontWeight: '600',
                   letterSpacing: '1px',
                   transition: 'color 150ms, border-color 150ms, background 150ms',
                 }"
               >{{ d }}</button>
               <span v-if="days.filter((d) => d !== day && !savedWorkouts[d]).length === 0"
-                style="font-size: 11px; color: #555; font-style: italic">All other days already have custom plans</span>
+                style="font-size: 12px; color: #737373; font-style: italic">All other days already have custom plans</span>
             </div>
             <button @click="confirmRename(day)" :disabled="!renameTarget"
               :style="{
-                padding: '4px 12px',
+                padding: '6px 16px',
+                minHeight: '38px',
                 background: renameTarget ? '#a78bfa' : 'oklch(14% 0.008 45)',
                 border: 'none',
-                borderRadius: '4px',
-                color: renameTarget ? '#fff' : '#444',
+                borderRadius: '20px',
+                color: renameTarget ? '#ffffff' : '#737373',
                 cursor: renameTarget ? 'pointer' : 'default',
-                fontSize: '10px',
+                fontSize: '11px',
+                fontWeight: '600',
                 letterSpacing: '1px',
                 transition: 'background 200ms, color 200ms',
               }"
             >Move</button>
             <button @click="renamingDay = null; renameTarget = null"
-              style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 11px">✕</button>
+              style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 16px; min-width: 38px; min-height: 38px">✕</button>
           </div>
         </Transition>
 
         <!-- Exercise table -->
-        <div style="padding: 0 16px 14px; background: oklch(10% 0.01 45)">
+        <div style="padding: 0 18px 16px; background: oklch(10% 0.01 45)">
           <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
             <thead>
-              <tr style="color: #777">
-                <th scope="col" style="padding: 8px 0 4px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 400; text-align: left">Exercise</th>
-                <th scope="col" style="padding: 8px 0 4px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; text-align: center; font-weight: 400">Sets</th>
-                <th scope="col" style="padding: 8px 0 4px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; text-align: center; font-weight: 400">Reps</th>
+              <tr style="color: #a3a3a3">
+                <th scope="col" style="padding: 10px 0 6px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: left">Exercise</th>
+                <th scope="col" style="padding: 10px 0 6px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; text-align: center; font-weight: 600">Sets</th>
+                <th scope="col" style="padding: 10px 0 6px; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; text-align: center; font-weight: 600">Reps</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(ex, j) in (dayData?.exercises ?? [])" :key="j" style="border-top: 1px solid oklch(15% 0.008 45)">
-                <td style="padding: 10px 8px 10px 0">
+                <td style="padding: 12px 8px 12px 0">
                   <a :href="yt(ex.name)" target="_blank" rel="noopener noreferrer"
-                    style="color: #a78bfa; text-decoration: none; border-bottom: 1px dashed #a78bfa55; padding-bottom: 1px; font-size: 0.875rem"
+                    style="color: #c4b5fd; text-decoration: none; border-bottom: 1px dashed #a78bfa77; padding-bottom: 1px; font-size: 0.9375rem; font-weight: 500"
                   >{{ ex.name }} ↗</a>
                 </td>
-                <td style="text-align: center; color: #a78bfa; font-weight: 700; font-variant-numeric: tabular-nums; padding: 10px 4px">{{ ex.sets || '—' }}</td>
-                <td style="text-align: center; color: #aaa; font-variant-numeric: tabular-nums; padding: 10px 0 10px 4px; white-space: nowrap">{{ ex.reps || '—' }}</td>
+                <td style="text-align: center; color: #a78bfa; font-weight: 700; font-variant-numeric: tabular-nums; padding: 12px 4px; font-size: 1rem">{{ ex.sets || '—' }}</td>
+                <td style="text-align: center; color: #e5e5e5; font-variant-numeric: tabular-nums; padding: 12px 0 12px 4px; white-space: nowrap">{{ ex.reps || '—' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
-
-    <div v-else
-      style="padding: 28px 20px; border: 1px dashed oklch(20% 0.008 45); border-radius: 8px; text-align: center; margin-bottom: 40px"
-    >
-      <div style="font-size: 22px; margin-bottom: 10px; opacity: 0.4">✎</div>
-      <div style="font-size: 0.875rem; color: #777; margin-bottom: 6px">No custom days saved yet.</div>
-      <div style="font-size: 12px; color: #555; line-height: 1.7; max-width: 320px; margin: 0 auto">
-        Use this when you're traveling, at a different gym, or want to swap in your own exercises for a day.
       </div>
     </div>
   </div>
@@ -592,34 +680,34 @@
     <Transition name="modal">
       <div v-if="logModal.open"
         @click.self="closeLogModal"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; padding: 0"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; padding: 0"
         role="dialog"
         aria-modal="true"
         :aria-label="`Log ${logModal.dayName} workout`"
       >
-        <div style="width: 100%; max-width: 640px; background: oklch(9% 0.012 45); border-radius: 16px 16px 0 0; border: 1px solid oklch(18% 0.008 45); max-height: 88vh; overflow-y: auto">
+        <div style="width: 100%; max-width: 640px; background: oklch(11% 0.01 45); border-radius: 16px 16px 0 0; border: 1px solid oklch(22% 0.008 45); max-height: 88vh; overflow-y: auto">
           <!-- Modal header -->
-          <div style="padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: flex-start; position: sticky; top: 0; background: oklch(9% 0.012 45); padding-bottom: 16px; border-bottom: 1px solid oklch(15% 0.008 45)">
+          <div style="padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: flex-start; position: sticky; top: 0; background: oklch(11% 0.01 45); padding-bottom: 16px; border-bottom: 1px solid oklch(16% 0.008 45); z-index: 10">
             <div>
-              <div style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin-bottom: 4px">Log Workout</div>
-              <div style="font-size: 1rem; color: #e8e8e8; font-weight: 400">{{ logModal.dayName }}<span v-if="logModal.title" style="color: #888"> — {{ logModal.title }}</span></div>
+              <div style="font-size: 10px; letter-spacing: 3px; color: #a3a3a3; text-transform: uppercase; margin-bottom: 4px; font-weight: 600">Log Workout</div>
+              <div style="font-size: 1.125rem; color: #ffffff; font-weight: 600">{{ logModal.dayName }}<span v-if="logModal.title" style="color: #a3a3a3"> — {{ logModal.title }}</span></div>
             </div>
-            <button @click="closeLogModal" style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 22px; line-height: 1; padding: 0 0 0 12px">✕</button>
+            <button @click="closeLogModal" style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 24px; line-height: 1; padding: 4px 8px; min-width: 44px; min-height: 44px">✕</button>
           </div>
 
           <!-- Exercise inputs -->
-          <div style="padding: 16px 20px">
-            <div v-for="(group, exName) in logModal.groups" :key="exName" style="margin-bottom: 16px">
-              <div style="font-size: 0.875rem; color: #e8e8e8; margin-bottom: 8px">{{ exName }}</div>
-              <div style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px">
-                <span style="font-size: 10px; color: #444"></span>
-                <span style="font-size: 10px; color: #555; text-align: center">Target</span>
-                <span style="font-size: 10px; color: #555; text-align: center">Done</span>
-                <span style="font-size: 10px; color: #555; text-align: center">Weight (lbs)</span>
+          <div style="padding: 20px">
+            <div v-for="(group, exName) in logModal.groups" :key="exName" style="margin-bottom: 20px">
+              <div style="font-size: 0.9375rem; color: #ffffff; margin-bottom: 10px; font-weight: 600">{{ exName }}</div>
+              <div style="display: grid; grid-template-columns: 50px 1fr 1fr 1fr; gap: 8px; margin-bottom: 6px">
+                <span style="font-size: 10px; color: #737373"></span>
+                <span style="font-size: 10px; color: #a3a3a3; text-align: center; text-transform: uppercase; font-weight: 600">Target</span>
+                <span style="font-size: 10px; color: #a3a3a3; text-align: center; text-transform: uppercase; font-weight: 600">Done</span>
+                <span style="font-size: 10px; color: #a3a3a3; text-align: center; text-transform: uppercase; font-weight: 600">Weight (lbs)</span>
               </div>
-              <div v-for="set in group" :key="set.setNumber" style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px; align-items: center">
-                <span style="font-size: 11px; color: #555">Set {{ set.setNumber }}</span>
-                <span style="font-size: 12px; color: #555; text-align: center; font-variant-numeric: tabular-nums">{{ set.reps }}</span>
+              <div v-for="set in group" :key="set.setNumber" style="display: grid; grid-template-columns: 50px 1fr 1fr 1fr; gap: 8px; margin-bottom: 6px; align-items: center">
+                <span style="font-size: 12px; color: #a3a3a3; font-weight: 500">Set {{ set.setNumber }}</span>
+                <span style="font-size: 13px; color: #a3a3a3; text-align: center; font-variant-numeric: tabular-nums">{{ set.reps }}</span>
                 <input
                   v-model.number="set.repsDone"
                   type="number" min="0"
@@ -637,23 +725,24 @@
               </div>
             </div>
 
-            <div v-if="logModal.error" style="font-size: 12px; color: #f87171; margin-bottom: 10px">{{ logModal.error }}</div>
+            <div v-if="logModal.error" style="font-size: 13px; color: #f87171; margin-bottom: 14px">{{ logModal.error }}</div>
 
             <button
               @click="confirmLog"
               :disabled="logModal.saving"
               :style="{
                 width: '100%',
-                padding: '13px',
-                background: logModal.saving ? 'oklch(14% 0.008 45)' : '#4ade80',
+                padding: '16px',
+                minHeight: '52px',
+                background: logModal.saving ? 'oklch(14% 0.008 45)' : '#22c55e',
                 border: 'none',
-                borderRadius: '8px',
-                color: logModal.saving ? '#444' : '#000',
+                borderRadius: '9999px',
+                color: logModal.saving ? '#737373' : '#ffffff',
                 cursor: logModal.saving ? 'wait' : 'pointer',
-                fontSize: '11px',
+                fontSize: '12px',
                 letterSpacing: '3px',
                 textTransform: 'uppercase',
-                fontWeight: '600',
+                fontWeight: '700',
                 transition: 'background 200ms',
               }"
             >
@@ -689,6 +778,18 @@ import { parseSetCount } from '@/lib/workout'
 const auth = useAuthStore()
 const queryClient = useQueryClient()
 
+const activeTab = ref('programs') // 'programs' | 'overrides'
+const toastMessage = ref(null)
+let _toastTimer = null
+
+function showToast(msg) {
+  toastMessage.value = msg
+  clearTimeout(_toastTimer)
+  _toastTimer = setTimeout(() => {
+    toastMessage.value = null
+  }, 4000)
+}
+
 const { data: customDaysData } = useCustomDaysQuery()
 const { data: programsData, isPending: programsLoading } = useCustomProgramsQuery()
 
@@ -699,12 +800,13 @@ const yt = (q) =>
 
 const inputStyle = {
   width: '100%',
-  background: 'oklch(11.5% 0.008 45)',
-  border: '1px solid oklch(20% 0.008 45)',
-  borderRadius: '4px',
-  padding: '8px 10px',
-  color: '#e8e8e8',
+  background: 'oklch(8% 0.012 45)',
+  border: '1px solid oklch(24% 0.008 45)',
+  borderRadius: '6px',
+  padding: '10px 12px',
+  color: '#ffffff',
   fontSize: '0.875rem',
+  minHeight: '44px',
   boxSizing: 'border-box',
   transition: 'border-color 150ms ease-out',
 }
@@ -769,6 +871,7 @@ async function handleActivateProgram(program) {
   try {
     await activateProgram(auth.user.id, days)
     await invalidateCustomDays(queryClient)
+    showToast(`"${program.name}" is now active in your program!`)
   } finally {
     activatingProgramId.value = null
   }
@@ -776,10 +879,8 @@ async function handleActivateProgram(program) {
 
 // ── Programs: expand editor ───────────────────────────────────
 const expandedProgramId = ref(null)
-const expandedProgramDay = ref(null) // "programId|dayName"
+const expandedProgramDay = ref(null)
 
-// Draft state for each program day being edited
-// { "programId|dayName": { title, exercises: [{_id, name, sets, reps}] } }
 const programDayDraft = ref({})
 let _draftId = 0
 
@@ -831,7 +932,7 @@ function removeProgramExercise(programId, dayName, idx) {
   }
 }
 
-const savingProgramDay = ref(null) // "programId|dayName" while saving
+const savingProgramDay = ref(null)
 
 async function saveProgramDayHandler(programId, dayName) {
   const key = `${programId}|${dayName}`
@@ -901,6 +1002,7 @@ async function saveWorkout() {
   await invalidateCustomDays(queryClient)
   exercises.value = [newEx()]
   planTitle.value = ''
+  showToast(`Custom workout for ${selectedDay.value} saved!`)
 }
 
 async function deleteDay(day) {
@@ -914,6 +1016,7 @@ function editDay(day) {
   exercises.value = exList.map((e) => ({ _id: _exId++, name: e.name, sets: e.sets, reps: e.reps }))
   planTitle.value = title ?? ''
   selectedDay.value = day
+  activeTab.value = 'overrides'
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -950,7 +1053,7 @@ const logModal = ref({
   open: false,
   dayName: '',
   title: '',
-  groups: {}, // { exerciseName: [{ setNumber, reps, repsDone, weightLbs }] }
+  groups: {},
   saving: false,
   error: null,
 })
@@ -1015,6 +1118,7 @@ async function confirmLog() {
     )
     await invalidateWorkoutHistory(queryClient)
     closeLogModal()
+    showToast(`Logged ${logModal.value.dayName} workout to History!`)
   } catch (err) {
     logModal.value.error = err?.message ?? 'Failed to log workout. Please try again.'
   } finally {
@@ -1027,11 +1131,12 @@ async function confirmLog() {
 .workout-input:focus-visible {
   outline: 2px solid #a78bfa;
   outline-offset: 0;
-  border-color: #a78bfa44;
+  border-color: #a78bfa;
 }
 
 .log-input {
   text-align: center;
+  min-height: 40px;
   -moz-appearance: textfield;
 }
 .log-input::-webkit-outer-spin-button,
@@ -1040,17 +1145,16 @@ async function confirmLog() {
   margin: 0;
 }
 .log-input:focus {
-  outline: none;
-  border-color: oklch(40% 0.008 45);
+  outline: 2px solid #a78bfa;
+  border-color: #a78bfa;
 }
 .log-input::placeholder {
-  color: #3a3a3a;
+  color: #737373;
 }
 
 button:focus-visible {
   outline: 2px solid #a78bfa;
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 a:focus-visible {
@@ -1098,14 +1202,14 @@ a:hover {
     opacity 200ms ease-out,
     max-height 200ms cubic-bezier(0.25, 1, 0.5, 1);
   overflow: hidden;
-  max-height: 600px;
+  max-height: 800px;
 }
 .rename-slide-leave-active {
   transition:
     opacity 140ms ease-in,
     max-height 140ms ease-in;
   overflow: hidden;
-  max-height: 600px;
+  max-height: 800px;
 }
 .rename-slide-enter-from,
 .rename-slide-leave-to {

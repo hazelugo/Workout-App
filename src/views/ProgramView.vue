@@ -803,18 +803,18 @@ onUnmounted(() => {
   width: 100%;
   padding: 16px 20px;
   background: oklch(12% 0.008 45);
-  border: 1px solid oklch(22% 0.008 45);
-  border-left: 4px solid #4ade80;
-  border-radius: 8px;
+  border: 1px solid #4ade8066;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   margin-bottom: 12px;
-  transition: background 150ms ease-out;
+  transition: all 150ms ease-out;
   min-height: 52px;
 }
 
 .btn-adopt-primary:hover {
   background: oklch(14% 0.008 45);
+  border-color: #4ade80;
 }
 
 .adopt-badge {
@@ -876,8 +876,7 @@ onUnmounted(() => {
   gap: 16px;
   padding: 14px 18px;
   background: oklch(11% 0.01 45);
-  border: 1px solid oklch(20% 0.008 45);
-  border-left: 4px solid #4ade80;
+  border: 1px solid #4ade8055;
   border-radius: 8px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.875rem;
@@ -1341,8 +1340,7 @@ onUnmounted(() => {
   padding: 14px 16px;
   background: oklch(8% 0.012 45);
   border-radius: 8px;
-  border: 1px solid oklch(16% 0.008 45);
-  border-left: 3px solid var(--phase-color, #4ade80);
+  border: 1px solid oklch(18% 0.008 45);
 }
 
 .tip-icon {

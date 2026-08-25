@@ -147,53 +147,66 @@
           :aria-expanded="expandedId === session.id"
           :style="{
             width: '100%',
-            padding: '14px 16px',
-            background: expandedId === session.id ? 'oklch(11.5% 0.008 45)' : 'oklch(10% 0.01 45)',
+            padding: '16px 16px',
+            background: expandedId === session.id ? 'oklch(12.5% 0.008 45)' : 'oklch(10% 0.01 45)',
             border: 'none',
-            borderLeft: `3px solid ${sessionAccentColor(session)}`,
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             gap: '12px',
             cursor: 'pointer',
             textAlign: 'left',
-            color: '#e8e8e8',
+            color: '#f5f5f5',
+            minHeight: '52px',
             transition: 'background 180ms ease-out',
           }"
         >
-          <div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px">
-              <span style="font-size: 0.9375rem">{{ session.day_name }}</span>
-              <!-- Custom session badge -->
-              <span v-if="session.phase == null"
-                style="font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #a78bfa18; color: #a78bfa; letter-spacing: 1px; text-transform: uppercase"
-              >Custom</span>
-              <!-- Program session badge -->
-              <span v-else
-                :style="{
-                  fontSize: '10px',
-                  padding: '2px 8px',
-                  borderRadius: '20px',
-                  background: `${phaseMeta(session.phase).color}18`,
-                  color: phaseMeta(session.phase).color,
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                }"
-              >{{ phaseMeta(session.phase).name }}</span>
-              <span v-if="session.track && session.track !== 'custom'" style="font-size: 10px; color: #666">
-                {{ session.track === 'gym' ? '🏋️ Gym' : '🏠 Home' }}
-              </span>
-            </div>
-            <div style="font-size: 12px; color: #666">
-              {{ formatSessionDate(session.completed_at) }}
-              <template v-if="session.week"> · Week {{ session.week }}</template>
-              · {{ session.set_logs?.length ?? 0 }} sets
-              <template v-if="session.cardio_minutes">
-                · <span style="color: #34d399">🏃 {{ session.cardio_minutes }} min</span>
-              </template>
+          <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1">
+            <span
+              :style="{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: sessionAccentColor(session),
+                marginTop: '6px',
+                flexShrink: 0,
+              }"
+            />
+            <div style="flex: 1">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px">
+                <span style="font-size: 0.9375rem; font-weight: 500">{{ session.day_name }}</span>
+                <!-- Custom session badge -->
+                <span v-if="session.phase == null"
+                  style="font-size: 10px; padding: 3px 10px; border-radius: 20px; background: #a78bfa22; color: #c4b5fd; letter-spacing: 1px; text-transform: uppercase; font-weight: 500"
+                >Custom</span>
+                <!-- Program session badge -->
+                <span v-else
+                  :style="{
+                    fontSize: '10px',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    background: `${phaseMeta(session.phase).color}22`,
+                    color: phaseMeta(session.phase).color,
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    fontWeight: '500',
+                  }"
+                >{{ phaseMeta(session.phase).name }}</span>
+                <span v-if="session.track && session.track !== 'custom'" style="font-size: 11px; color: #a3a3a3">
+                  {{ session.track === 'gym' ? '🏋️ Gym' : '🏠 Home' }}
+                </span>
+              </div>
+              <div style="font-size: 12px; color: #a3a3a3">
+                {{ formatSessionDate(session.completed_at) }}
+                <template v-if="session.week"> · Week {{ session.week }}</template>
+                · {{ session.set_logs?.length ?? 0 }} sets
+                <template v-if="session.cardio_minutes">
+                  · <span style="color: #34d399">🏃 {{ session.cardio_minutes }} min</span>
+                </template>
+              </div>
             </div>
           </div>
-          <span aria-hidden="true" style="color: #666; font-size: 18px; line-height: 1; flex-shrink: 0">
+          <span aria-hidden="true" style="color: #a3a3a3; font-size: 18px; line-height: 1; flex-shrink: 0">
             {{ expandedId === session.id ? '−' : '+' }}
           </span>
         </button>
@@ -208,8 +221,8 @@
                 font-size: 10px;
                 letter-spacing: 2px;
                 text-transform: uppercase;
-                color: #555;
-                padding: 10px 0 8px;
+                color: #a3a3a3;
+                padding: 12px 0 8px;
               "
             >
               {{ formatSessionTime(session.completed_at) }}
@@ -219,11 +232,11 @@
             <div
               v-for="(group, name) in groupSets(session.set_logs)"
               :key="name"
-              style="padding: 8px 0; border-top: 1px solid oklch(15% 0.008 45)"
+              style="padding: 10px 0; border-top: 1px solid oklch(15% 0.008 45)"
             >
               <!-- Group header -->
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px">
-                <div style="font-size: 0.875rem; color: #e8e8e8">{{ name }}</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px">
+                <div style="font-size: 0.9375rem; color: #f5f5f5; font-weight: 500">{{ name }}</div>
                 <button
                   v-if="!isEditing(session.id, name)"
                   @click="startEdit(session.id, name, group)"
@@ -583,36 +596,46 @@ a:hover {
 
 /* ── Inline edit controls ──────────────────────────────────── */
 .edit-btn {
-  background: transparent;
-  border: none;
-  color: #555;
+  background: oklch(14% 0.008 45);
+  border: 1px solid oklch(24% 0.008 45);
+  color: #d4d4d4;
   cursor: pointer;
   font-size: 11px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: color 120ms;
+  padding: 8px 14px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: color 120ms, border-color 120ms, background 120ms;
 }
 .edit-btn:hover {
-  color: #999;
+  color: #ffffff;
+  border-color: #a78bfa;
+  background: #a78bfa18;
 }
 
 .save-btn {
-  background: transparent;
-  border: 1px solid oklch(28% 0.008 45);
-  color: #aaa;
+  background: #a78bfa22;
+  border: 1px solid #a78bfa;
+  color: #c4b5fd;
   cursor: pointer;
   font-size: 11px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 4px;
-  transition: color 120ms, border-color 120ms;
+  padding: 8px 16px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: color 120ms, border-color 120ms, background 120ms;
 }
 .save-btn:hover:not(:disabled) {
-  color: #e8e8e8;
-  border-color: oklch(40% 0.008 45);
+  color: #ffffff;
+  background: #a78bfa;
 }
 .save-btn:disabled {
   opacity: 0.5;
@@ -621,30 +644,36 @@ a:hover {
 
 .cancel-btn {
   background: transparent;
-  border: none;
-  color: #555;
+  border: 1px solid oklch(20% 0.008 45);
+  color: #a3a3a3;
   cursor: pointer;
   font-size: 11px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 3px 6px;
-  border-radius: 4px;
-  transition: color 120ms;
+  padding: 8px 14px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: color 120ms, border-color 120ms;
 }
 .cancel-btn:hover {
-  color: #888;
+  color: #ffffff;
+  border-color: oklch(35% 0.008 45);
 }
 
 .history-input {
   width: 100%;
-  padding: 5px 8px;
+  padding: 8px 10px;
   background: oklch(8% 0.012 45);
-  border: 1px solid oklch(22% 0.008 45);
-  border-radius: 5px;
-  color: #e8e8e8;
-  font-size: 0.8125rem;
+  border: 1px solid oklch(24% 0.008 45);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
+  min-height: 40px;
   -moz-appearance: textfield;
 }
 .history-input::-webkit-outer-spin-button,
@@ -653,43 +682,52 @@ a:hover {
   margin: 0;
 }
 .history-input:focus {
-  outline: none;
-  border-color: oklch(40% 0.008 45);
+  outline: 2px solid #a78bfa;
+  border-color: #a78bfa;
 }
 .history-input::placeholder {
-  color: #3a3a3a;
+  color: #737373;
 }
 
 .delete-btn {
   background: transparent;
-  border: none;
-  color: #4a3030;
+  border: 1px solid #7f353555;
+  color: #fca5a5;
   cursor: pointer;
   font-size: 11px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: color 120ms;
+  padding: 8px 14px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: color 120ms, background 120ms;
 }
 .delete-btn:hover {
-  color: #f87171;
+  color: #ffffff;
+  background: #7f353544;
 }
 
 .delete-confirm-btn {
-  background: transparent;
-  border: 1px solid #7f3535;
-  color: #f87171;
+  background: #7f3535;
+  border: 1px solid #f87171;
+  color: #ffffff;
   cursor: pointer;
   font-size: 11px;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
   transition: background 120ms, border-color 120ms;
 }
 .delete-confirm-btn:hover:not(:disabled) {
-  background: #7f353522;
+  background: #991b1b;
 }
 .delete-confirm-btn:disabled {
   opacity: 0.5;
