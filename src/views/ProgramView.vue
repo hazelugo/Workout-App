@@ -122,7 +122,7 @@
           :key="dayName"
           class="day-card"
           :class="{
-            expanded: isDesktop || expandedDay === i,
+            expanded: isDayExpanded(i),
             isToday: dayName === today,
           }"
           style="--phase-color: #a78bfa"
@@ -143,13 +143,13 @@
               <span v-if="dayName === today" class="today-badge" style="background: #a78bfa; color: #000">Today</span>
             </div>
             <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
-              {{ expandedDay === i ? '−' : '+' }}
+              {{ isDayExpanded(i) ? '−' : '+' }}
             </span>
           </button>
 
           <!-- Day Content -->
           <Transition name="accordion">
-            <div v-if="isDesktop || expandedDay === i" class="day-content">
+            <div v-if="isDayExpanded(i)" class="day-content">
               <div v-if="activeCustomSchedule[dayName]?.exercises?.length" class="table-container">
                 <table class="exercise-table">
                   <thead>
@@ -236,7 +236,7 @@
             :key="d.day"
             class="day-card"
             :class="{
-              expanded: isDesktop || expandedDay === i,
+              expanded: isDayExpanded(i),
               isToday: d.day === today,
             }"
             :style="{
@@ -246,8 +246,8 @@
             <!-- Day Accordion Header Button -->
             <button
               class="day-header-btn"
-              :aria-expanded="isDesktop ? undefined : expandedDay === i"
-              :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${expandedDay === i ? 'collapse' : 'expand'}` : ''}`"
+              :aria-expanded="isDesktop ? undefined : isDayExpanded(i)"
+              :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${isDayExpanded(i) ? 'collapse' : 'expand'}` : ''}`"
               @click="toggleDay(i)"
             >
               <div class="day-header-left">
@@ -261,14 +261,14 @@
                 class="accordion-icon"
                 aria-hidden="true"
               >
-                {{ expandedDay === i ? '−' : '+' }}
+                {{ isDayExpanded(i) ? '−' : '+' }}
               </span>
             </button>
 
             <!-- Track Toggle (Home vs Gym) -->
             <Transition name="reveal">
               <div
-                v-if="(isDesktop || expandedDay === i) && d.gym"
+                v-if="isDayExpanded(i) && d.gym"
                 class="track-switcher"
                 role="group"
                 :aria-label="`Track selection for ${d.day}`"
@@ -290,7 +290,7 @@
             <!-- Exercise List / Table -->
             <Transition name="accordion">
               <div
-                v-if="isDesktop || expandedDay === i"
+                v-if="isDayExpanded(i)"
                 class="day-content"
               >
                 <div class="table-container">
@@ -602,16 +602,22 @@ const activeProgramTitle = computed(() => {
 
 const phase = computed(() => program.phases[activePhase.value])
 
+// All 7 days expanded by default so exercises are visible immediately
+const expandedDays = ref(new Set([0, 1, 2, 3, 4, 5, 6]))
+
+function isDayExpanded(i) {
+  return isDesktop.value || expandedDays.value.has(i)
+}
+
 function selectPhase(i) {
   activePhase.value = i
-  expandedDay.value = 0
 }
 
 function toggleDay(i) {
-  if (isDesktop.value) {
-    expandedDay.value = i
+  if (expandedDays.value.has(i)) {
+    expandedDays.value.delete(i)
   } else {
-    expandedDay.value = expandedDay.value === i ? -1 : i
+    expandedDays.value.add(i)
   }
 }
 
