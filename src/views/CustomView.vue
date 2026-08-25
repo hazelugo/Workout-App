@@ -335,23 +335,125 @@
                 No
               </button>
             </div>
+            <div v-else key="actions" style="display: flex; gap: 4px; align-items: center">
+              <button
+                @click="editDay(day)"
+                style="
+                  background: transparent;
+                  border: none;
+                  color: #a78bfa;
+                  cursor: pointer;
+                  font-size: 11px;
+                  letter-spacing: 1px;
+                "
+              >
+                Edit
+              </button>
+              <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
+              <button
+                @click="toggleRename(day)"
+                style="
+                  background: transparent;
+                  border: none;
+                  color: #666;
+                  cursor: pointer;
+                  font-size: 11px;
+                  letter-spacing: 1px;
+                "
+              >
+                Rename
+              </button>
+              <span style="color: oklch(22% 0.008 45); font-size: 10px">|</span>
+              <button
+                @click="confirmDeleteDay = day"
+                style="
+                  background: transparent;
+                  border: none;
+                  color: #666;
+                  cursor: pointer;
+                  font-size: 11px;
+                  letter-spacing: 1px;
+                "
+              >
+                Delete
+              </button>
+            </div>
+          </Transition>
+        </div>
+
+        <!-- Inline rename row -->
+        <Transition name="rename-slide">
+          <div
+            v-if="renamingDay === day"
+            style="
+              padding: 10px 16px;
+              background: oklch(8% 0.012 45);
+              border-bottom: 1px solid oklch(17% 0.008 45);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            "
+          >
+            <span style="font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase"
+              >Move to</span
+            >
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1">
+              <button
+                v-for="d in days.filter((d) => d !== day && !savedWorkouts[d])"
+                :key="d"
+                @click="renameTarget = d"
+                :style="{
+                  padding: '4px 10px',
+                  background: renameTarget === d ? '#a78bfa22' : 'transparent',
+                  border: renameTarget === d ? '1px solid #a78bfa' : '1px solid oklch(22% 0.008 45)',
+                  borderRadius: '20px',
+                  color: renameTarget === d ? '#a78bfa' : '#666',
+                  cursor: 'pointer',
+                  fontSize: '10px',
+                  letterSpacing: '1px',
+                  transition: 'color 150ms, border-color 150ms, background 150ms',
+                }"
+              >
+                {{ d }}
+              </button>
+              <span
+                v-if="days.filter((d) => d !== day && !savedWorkouts[d]).length === 0"
+                style="font-size: 11px; color: #555; font-style: italic"
+                >All other days already have custom plans</span
+              >
+            </div>
             <button
-              v-else
-              key="delete"
-              @click="confirmDeleteDay = day"
+              @click="confirmRename(day)"
+              :disabled="!renameTarget"
+              :style="{
+                padding: '4px 12px',
+                background: renameTarget ? '#a78bfa' : 'oklch(14% 0.008 45)',
+                border: 'none',
+                borderRadius: '4px',
+                color: renameTarget ? '#fff' : '#444',
+                cursor: renameTarget ? 'pointer' : 'default',
+                fontSize: '10px',
+                letterSpacing: '1px',
+                transition: 'background 200ms, color 200ms',
+              }"
+            >
+              Move
+            </button>
+            <button
+              @click="renamingDay = null; renameTarget = null"
               style="
                 background: transparent;
                 border: none;
-                color: #666;
+                color: #555;
                 cursor: pointer;
                 font-size: 11px;
-                letter-spacing: 1px;
               "
             >
-              Delete
+              ✕
             </button>
-          </Transition>
-        </div>
+          </div>
+        </Transition>
 
         <div style="padding: 0 16px 14px; background: oklch(10% 0.01 45)">
           <table
@@ -500,6 +602,8 @@ const inputStyle = {
 }
 
 const confirmDeleteDay = ref(null)
+const renamingDay = ref(null)
+const renameTarget = ref(null)
 
 const selectedDay = ref('Monday')
 
@@ -543,6 +647,46 @@ async function deleteDay(day) {
   await supabase.from('custom_days').delete().eq('day_name', day)
   await invalidateCustomDays(queryClient)
   confirmDeleteDay.value = null
+}
+
+function editDay(day) {
+  // Load saved exercises into the builder, pre-select the day
+  const exList = savedWorkouts.value[day]
+  exercises.value = exList.map((e) => ({ _id: _exId++, name: e.name, sets: e.sets, reps: e.reps }))
+  selectedDay.value = day
+  // Scroll to top of builder
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function toggleRename(day) {
+  if (renamingDay.value === day) {
+    renamingDay.value = null
+    renameTarget.value = null
+  } else {
+    renamingDay.value = day
+    renameTarget.value = null
+  }
+}
+
+async function confirmRename(day) {
+  if (!renameTarget.value) return
+  const newDay = renameTarget.value
+  const exList = savedWorkouts.value[day]
+
+  // Insert with new day name, then remove old
+  await supabase
+    .from('custom_days')
+    .upsert(
+      { user_id: auth.user.id, day_name: newDay, exercises: exList },
+      { onConflict: 'user_id,day_name' },
+    )
+  await supabase.from('custom_days').delete().eq('day_name', day).eq('user_id', auth.user.id)
+
+  const updated = { ...savedWorkouts.value, [newDay]: exList }
+  delete updated[day]
+  savedWorkouts.value = updated
+  renamingDay.value = null
+  renameTarget.value = null
 }
 </script>
 
@@ -597,5 +741,25 @@ a:hover {
 .confirm-enter-from,
 .confirm-leave-to {
   opacity: 0;
+}
+
+.rename-slide-enter-active {
+  transition:
+    opacity 200ms ease-out,
+    max-height 200ms cubic-bezier(0.25, 1, 0.5, 1);
+  overflow: hidden;
+  max-height: 120px;
+}
+.rename-slide-leave-active {
+  transition:
+    opacity 140ms ease-in,
+    max-height 140ms ease-in;
+  overflow: hidden;
+  max-height: 120px;
+}
+.rename-slide-enter-from,
+.rename-slide-leave-to {
+  opacity: 0;
+  max-height: 0;
 }
 </style>
