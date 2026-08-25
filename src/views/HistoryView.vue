@@ -347,6 +347,9 @@
                 {{ session.cardio_minutes ? 'Edit' : 'Add' }}
               </button>
             </div>
+            <div v-if="cardioError" style="font-size: 11px; color: #f87171; padding: 0 0 8px; margin-top: -4px">
+              {{ cardioError }}
+            </div>
 
             <!-- Delete session -->
             <div style="padding-top: 14px; border-top: 1px solid oklch(13% 0.008 45); margin-top: 6px">
@@ -499,14 +502,17 @@ async function saveEdit(sessionId, exerciseName, group) {
 const editingCardioId = ref(null)
 const cardioInput     = ref(null)
 const savingCardio    = ref(false)
+const cardioError     = ref(null)
 
 function startEditCardio(sessionId, current) {
   editingCardioId.value = sessionId
   cardioInput.value = current ?? null
+  cardioError.value = null
 }
 
 async function saveCardio(sessionId) {
   savingCardio.value = true
+  cardioError.value = null
   try {
     const { error } = await supabase
       .from('workout_sessions')
@@ -515,6 +521,8 @@ async function saveCardio(sessionId) {
     if (error) throw error
     await refetch()
     editingCardioId.value = null
+  } catch (err) {
+    cardioError.value = err?.message ?? 'Failed to save. Please try again.'
   } finally {
     savingCardio.value = false
   }
