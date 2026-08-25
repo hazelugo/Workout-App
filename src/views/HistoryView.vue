@@ -307,6 +307,34 @@
                 </div>
               </div>
             </div>
+
+            <!-- Delete session -->
+            <div style="padding-top: 14px; border-top: 1px solid oklch(13% 0.008 45); margin-top: 6px">
+              <div v-if="confirmDeleteId !== session.id" style="text-align: right">
+                <button
+                  @click="confirmDeleteId = session.id"
+                  class="delete-btn"
+                >
+                  Delete session
+                </button>
+              </div>
+              <div v-else style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
+                <span style="font-size: 12px; color: #777">Remove this session permanently?</span>
+                <div style="display: flex; gap: 8px; flex-shrink: 0">
+                  <button
+                    @click="deleteSession(session.id)"
+                    :disabled="deleting"
+                    class="delete-confirm-btn"
+                  >
+                    {{ deleting ? 'Deleting…' : 'Yes, delete' }}
+                  </button>
+                  <button @click="confirmDeleteId = null" class="cancel-btn">Cancel</button>
+                </div>
+              </div>
+              <div v-if="deleteError" style="font-size: 11px; color: #f87171; margin-top: 6px; text-align: right">
+                {{ deleteError }}
+              </div>
+            </div>
           </div>
         </Transition>
       </div>
@@ -421,6 +449,30 @@ async function saveEdit(sessionId, exerciseName, group) {
     saving.value = false
   }
 }
+
+// ── Delete session ───────────────────────────────────────────
+const confirmDeleteId = ref(null)
+const deleting = ref(false)
+const deleteError = ref(null)
+
+async function deleteSession(sessionId) {
+  deleting.value = true
+  deleteError.value = null
+  try {
+    const { error } = await supabase
+      .from('workout_sessions')
+      .delete()
+      .eq('id', sessionId)
+    if (error) throw error
+    confirmDeleteId.value = null
+    expandedId.value = null
+    await refetch()
+  } catch (err) {
+    deleteError.value = err?.message ?? 'Failed to delete. Please try again.'
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -529,5 +581,41 @@ a:hover {
 }
 .history-input::placeholder {
   color: #3a3a3a;
+}
+
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #4a3030;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 120ms;
+}
+.delete-btn:hover {
+  color: #f87171;
+}
+
+.delete-confirm-btn {
+  background: transparent;
+  border: 1px solid #7f3535;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 4px;
+  transition: background 120ms, border-color 120ms;
+}
+.delete-confirm-btn:hover:not(:disabled) {
+  background: #7f353522;
+}
+.delete-confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 </style>
