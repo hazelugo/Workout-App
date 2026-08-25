@@ -165,7 +165,7 @@
             <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px">
               <span style="font-size: 0.9375rem">{{ session.day_name }}</span>
               <!-- Custom session badge -->
-              <span v-if="session.source === 'custom' || session.phase == null"
+              <span v-if="session.phase == null"
                 style="font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #a78bfa18; color: #a78bfa; letter-spacing: 1px; text-transform: uppercase"
               >Custom</span>
               <!-- Program session badge -->
@@ -367,7 +367,7 @@ function phaseMeta(phase) {
 }
 
 function sessionAccentColor(session) {
-  if (session.source === 'custom' || session.phase == null) return '#a78bfa'
+  if (session.phase == null) return '#a78bfa'
   return phaseMeta(session.phase).color
 }
 
