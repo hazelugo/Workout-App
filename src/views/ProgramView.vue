@@ -1,600 +1,407 @@
 <template>
-  <div style="border-bottom: 1px solid oklch(15% 0.008 45); padding: 32px 24px 20px; text-align: center">
-    <div
-      style="
-        font-size: 11px;
-        letter-spacing: 4px;
-        color: #888;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      "
-    >
-      8-Week Program
-    </div>
-    <h1
-      style="
-        font-size: clamp(1.625rem, 5vw, 2.75rem);
-        font-weight: 400;
-        margin: 0;
-        color: oklch(96% 0.005 45);
-        letter-spacing: -1px;
-      "
-    >
-      Build From Zero
-    </h1>
-    <p style="font-size: 0.875rem; color: #888; margin-top: 8px; font-style: italic">
-      Home &amp; Gym Tracks · 5 days/week · 20–30 min
-    </p>
-    <div style="display: flex; gap: 20px; justify-content: center; margin-top: 12px">
-      <span style="font-size: 12px; color: #888">🏠 Home</span>
-      <span style="font-size: 12px; color: #888">🏋️ Gym</span>
-      <span style="font-size: 12px; color: #888">🔗 Tap exercise name for demo</span>
-    </div>
-  </div>
-  <div v-if="!showOnboarding" class="phase-tabs" style="display: flex; border-bottom: 1px solid oklch(15% 0.008 45)">
-    <button
-      v-for="(p, i) in program.phases"
-      :key="p.id"
-      @click="selectPhase(i)"
-      :style="{
-        flex: 1,
-        padding: '14px 8px',
-        background: activePhase === i ? 'oklch(11.5% 0.008 45)' : 'transparent',
-        border: 'none',
-        borderBottom: activePhase === i ? `2px solid ${p.color}` : '2px solid transparent',
-        color: activePhase === i ? p.color : '#777',
-        cursor: 'pointer',
-        fontSize: '11px',
-        letterSpacing: '2px',
-        textTransform: 'uppercase',
-        transition: 'color 0.15s, border-color 0.15s, background 0.15s',
-      }"
-    >
-      <div style="font-weight: 700">{{ p.name }}</div>
-      <div style="font-size: 10px; margin-top: 2px; opacity: 0.7">{{ p.weeks }}</div>
-    </button>
-  </div>
-  <div
-    v-if="showOnboarding"
-    :style="{
-      maxWidth: isDesktop ? '480px' : '100%',
-      margin: '56px auto',
-      padding: '0 24px',
-      textAlign: 'center',
-    }"
-  >
-    <div style="font-size: 40px; margin-bottom: 24px; line-height: 1">🏋️</div>
-    <h2
-      style="
-        font-size: 1.5rem;
-        font-weight: 400;
-        color: oklch(96% 0.005 45);
-        margin: 0 0 10px;
-        letter-spacing: -0.5px;
-      "
-    >
-      Welcome{{ authStore.profile?.display_name ? ', ' + authStore.profile.display_name.split(' ')[0] : '' }}
-    </h2>
-    <p style="color: #888; font-size: 0.9375rem; margin: 0 0 36px; line-height: 1.6">
-      You don't have a program yet. Start with our recommended plan or build your own.
-    </p>
-
-    <button
-      @click="handleAdoptProgram"
-      :disabled="adopting"
-      style="
-        display: block;
-        width: 100%;
-        padding: 16px 20px;
-        background: oklch(11.5% 0.008 45);
-        border: 1px solid oklch(22% 0.008 45);
-        border-left: 3px solid #4ade80;
-        border-radius: 8px;
-        cursor: pointer;
-        text-align: left;
-        margin-bottom: 10px;
-        opacity: 1;
-        transition: opacity 0.15s;
-      "
-    >
-      <div style="color: #4ade80; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px">
-        Recommended
-      </div>
-      <div style="color: oklch(96% 0.005 45); font-size: 1rem; margin-bottom: 4px">
-        Build From Zero — 8 Week Program
-      </div>
-      <div style="color: #666; font-size: 0.8125rem">
+  <!-- ── Program Hero & Context ────────────────────────────────── -->
+  <header class="program-header">
+    <div class="program-header-inner">
+      <h1 class="program-title">Build From Zero</h1>
+      <p class="program-subtitle">
         Home &amp; Gym Tracks · 5 days/week · 20–30 min
+      </p>
+      <div class="program-badges">
+        <span class="badge">🏠 Home</span>
+        <span class="badge">🏋️ Gym</span>
+        <span class="badge highlight">🔗 Tap exercise for demo</span>
       </div>
-    </button>
+    </div>
+  </header>
 
-    <button
-      @click="handleBuildOwn"
-      :disabled="adopting"
-      style="
-        display: block;
-        width: 100%;
-        padding: 14px 20px;
-        background: transparent;
-        border: 1px solid oklch(17% 0.008 45);
-        border-radius: 8px;
-        cursor: pointer;
-        color: #666;
-        font-size: 0.875rem;
-        text-align: center;
-      "
-    >
-      Build my own program
-    </button>
-  </div>
-  <Transition name="reveal">
-    <div
-      v-if="!firstRunSeen && !showOnboarding"
-      :style="{
-        maxWidth: isDesktop ? '860px' : '640px',
-        margin: '14px auto 0',
-        padding: '0 16px',
-      }"
-    >
-      <div
-        style="
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 11px 14px;
-          background: oklch(10% 0.01 45);
-          border: 1px solid oklch(17% 0.008 45);
-          border-left: 3px solid #4ade80;
-          border-radius: 6px;
-          font-size: 12px;
-          line-height: 1.6;
-          color: #888;
-        "
+  <!-- ── Phase Tabs Navigation (Tablist) ───────────────────────── -->
+  <nav
+    v-if="!showOnboarding"
+    class="phase-tabs-wrapper"
+    role="tablist"
+    aria-label="Workout program phases"
+  >
+    <div class="phase-tabs-container">
+      <button
+        v-for="(p, i) in program.phases"
+        :key="p.id"
+        :id="`phase-tab-${p.id}`"
+        role="tab"
+        :aria-selected="activePhase === i"
+        :aria-controls="`phase-panel-${p.id}`"
+        class="phase-tab-btn"
+        :class="{ active: activePhase === i }"
+        :style="{
+          '--phase-color': p.color,
+        }"
+        @click="selectPhase(i)"
       >
-        <span>
-          <span style="color: #4ade80; font-weight: 700; letter-spacing: 0.5px">Start at Week 1.</span>
-          Open any day to see your exercises. Tap an exercise name to watch a demo video.
+        <span class="phase-tab-name">{{ p.name }}</span>
+        <span class="phase-tab-weeks">{{ p.weeks }}</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Onboarding State ──────────────────────────────────────── -->
+  <section
+    v-if="showOnboarding"
+    class="onboarding-section"
+    aria-label="Welcome and program setup"
+  >
+    <div class="onboarding-card">
+      <div class="onboarding-icon" aria-hidden="true">🏋️</div>
+      <h2 class="onboarding-title">
+        Welcome{{ authStore.profile?.display_name ? ', ' + authStore.profile.display_name.split(' ')[0] : '' }}
+      </h2>
+      <p class="onboarding-desc">
+        You don't have a program yet. Start with our recommended 8-week plan or build your own custom routine.
+      </p>
+
+      <button
+        class="btn-adopt-primary"
+        :disabled="adopting"
+        @click="handleAdoptProgram"
+      >
+        <span class="adopt-badge">Recommended</span>
+        <span class="adopt-title">Build From Zero — 8 Week Program</span>
+        <span class="adopt-meta">Home &amp; Gym Tracks · 5 days/week · 20–30 min</span>
+      </button>
+
+      <button
+        class="btn-adopt-secondary"
+        :disabled="adopting"
+        @click="handleBuildOwn"
+      >
+        Build my own program
+      </button>
+    </div>
+  </section>
+
+  <!-- ── First-Run Tip Banner ──────────────────────────────────── -->
+  <Transition name="reveal">
+    <aside
+      v-if="!firstRunSeen && !showOnboarding"
+      class="first-run-banner"
+      aria-label="Getting started tip"
+    >
+      <div class="first-run-content">
+        <span class="first-run-text">
+          <strong class="first-run-highlight">Start at Week 1.</strong>
+          Open any day to see your programmed exercises. Tap any exercise name to watch a video demonstration.
         </span>
         <button
+          class="first-run-dismiss"
+          aria-label="Dismiss tip"
           @click="dismissFirstRun"
-          aria-label="Dismiss"
-          style="
-            background: transparent;
-            border: none;
-            color: #555;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            padding: 0;
-            flex-shrink: 0;
-            margin-top: 1px;
-          "
-        >×</button>
-      </div>
-    </div>
-  </Transition>
-  <Transition v-if="!showOnboarding" name="phase-switch" mode="out-in">
-  <div :key="activePhase">
-  <div :style="{ padding: '14px 20px 4px', maxWidth: isDesktop ? '860px' : '640px', margin: '0 auto' }">
-    <div style="display: flex; align-items: center; gap: 10px">
-      <div
-        :style="{
-          width: '7px',
-          height: '7px',
-          borderRadius: '50%',
-          background: phase.color,
-          flexShrink: 0,
-        }"
-      />
-      <span style="color: #888; font-size: 12px; font-style: italic">{{ phase.subtitle }}</span>
-    </div>
-  </div>
-  <div :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '8px auto 0', padding: '0 16px' }">
-    <div
-      v-for="(d, i) in phase.days"
-      :key="d.day"
-      :style="{
-        marginBottom: '8px',
-        border: expandedDay === i ? `1px solid ${phase.color}44` : '1px solid oklch(17% 0.008 45)',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        transition: 'border-color 220ms ease-out',
-      }"
-    >
-      <button
-        @click="toggleDay(i)"
-        class="day-header-btn"
-        :aria-expanded="isDesktop ? undefined : expandedDay === i"
-        :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${expandedDay === i ? 'collapse' : 'expand'}` : ''}`"
-        :style="{
-          width: '100%',
-          padding: '13px 16px',
-          background: expandedDay === i ? 'oklch(11.5% 0.008 45)' : 'oklch(10% 0.01 45)',
-          border: 'none',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          cursor: 'pointer',
-          color: '#e8e8e8',
-          transition: 'background 180ms ease-out',
-        }"
-      >
-        <div style="display: flex; gap: 10px; align-items: center">
-          <span
-            style="
-              font-size: 11px;
-              color: #777;
-              letter-spacing: 2px;
-              text-transform: uppercase;
-              min-width: 72px;
-              text-align: left;
-            "
-          >
-            {{ d.day }}
-          </span>
-          <span
-            :style="{
-              fontSize: '11px',
-              padding: '2px 8px',
-              borderRadius: '20px',
-              background: `${phase.color}18`,
-              color: phase.color,
-              letterSpacing: '1px',
-              textTransform: 'uppercase',
-            }"
-            >{{ d.label }}</span
-          >
-          <span v-if="!d.gym" style="font-size: 10px; color: #666">🏠 only</span>
-          <span
-            v-if="d.day === today"
-            :style="{
-              fontSize: '9px',
-              padding: '2px 6px',
-              borderRadius: '20px',
-              background: `${phase.color}22`,
-              color: phase.color,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-            }"
-          >Today</span>
-        </div>
-        <span
-          v-if="!isDesktop"
-          aria-hidden="true"
-          style="color: #888; font-size: 18px; line-height: 1"
-        >{{ expandedDay === i ? '−' : '+' }}</span>
-      </button>
-      <Transition name="reveal">
-      <div
-        v-if="(isDesktop || expandedDay === i) && d.gym"
-        style="display: flex; background: oklch(8% 0.012 45); border-bottom: 1px solid oklch(15% 0.008 45)"
-      >
-        <button
-          v-for="t in ['home', 'gym']"
-          :key="t"
-          @click="setDayTrack(i, t)"
-          :style="{
-            flex: 1,
-            padding: '9px 8px',
-            background: getTrack(i, true) === t ? 'oklch(13% 0.008 45)' : 'transparent',
-            border: 'none',
-            borderBottom:
-              getTrack(i, true) === t ? `2px solid ${phase.color}` : '2px solid transparent',
-            color: getTrack(i, true) === t ? '#e8e8e8' : '#777',
-            cursor: 'pointer',
-            fontSize: '11px',
-            letterSpacing: '2px',
-            textTransform: 'uppercase',
-            transition: 'color 0.15s, border-color 0.15s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-          }"
         >
-          {{ t === 'home' ? '🏠' : '🏋️' }} {{ t }}
+          <span aria-hidden="true">×</span>
         </button>
       </div>
-      </Transition>
-      <Transition name="accordion">
-      <div v-if="isDesktop || expandedDay === i" style="padding: 0 16px 16px; background: oklch(10% 0.01 45)">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4">
-          <thead>
-            <tr style="color: #777">
-              <th
-                scope="col"
-                style="
-                  padding: 8px 0 4px;
-                  font-size: 10px;
-                  letter-spacing: 2px;
-                  text-transform: uppercase;
-                  font-weight: 400;
-                  text-align: left;
-                "
-              >
-                Exercise
-              </th>
-              <th
-                scope="col"
-                style="
-                  padding: 8px 0 4px;
-                  font-size: 10px;
-                  letter-spacing: 2px;
-                  text-transform: uppercase;
-                  text-align: center;
-                  font-weight: 400;
-                "
-              >
-                Sets
-              </th>
-              <th
-                scope="col"
-                style="
-                  padding: 8px 0 4px;
-                  font-size: 10px;
-                  letter-spacing: 2px;
-                  text-transform: uppercase;
-                  text-align: center;
-                  font-weight: 400;
-                "
-              >
-                Reps
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(ex, j) in getExercises(i, d)"
-              :key="j"
-              style="border-top: 1px solid oklch(15% 0.008 45)"
-            >
-              <td style="padding: 10px 8px 10px 0">
-                <a
-                  v-if="ex.link"
-                  :href="ex.link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  :style="{
-                    color: phase.color,
-                    textDecoration: 'none',
-                    borderBottom: `1px dashed ${phase.color}66`,
-                    paddingBottom: '1px',
-                    fontSize: '0.875rem',
-                  }"
-                  >{{ ex.name }} ↗</a
-                >
-                <span v-else style="color: #e8e8e8">{{ ex.name }}</span>
-                <div
-                  v-if="ex.note"
-                  style="color: #777; font-size: 0.6875rem; line-height: 1.5; margin-top: 3px; font-style: italic"
-                >
-                  {{ ex.note }}
-                </div>
-              </td>
-              <td
-                :style="{
-                  textAlign: 'center',
-                  color: phase.color,
-                  fontWeight: 700,
-                  fontVariantNumeric: 'tabular-nums',
-                  padding: '10px 4px',
-                }"
-              >
-                {{ ex.sets }}
-              </td>
-              <td
-                style="
-                  text-align: center;
-                  color: #aaa;
-                  font-variant-numeric: tabular-nums;
-                  padding: 10px 0 10px 4px;
-                  white-space: nowrap;
-                "
-              >
-                {{ ex.reps }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div style="padding-top: 12px; display: flex; align-items: center; gap: 10px">
-          <button
-            @click="openLogModal(i, d)"
-            :disabled="loggingDay === i"
+    </aside>
+  </Transition>
+
+  <!-- ── Main Phase & Workout Content ──────────────────────────── -->
+  <main
+    v-if="!showOnboarding"
+    :id="`phase-panel-${phase.id}`"
+    role="tabpanel"
+    :aria-labelledby="`phase-tab-${phase.id}`"
+    class="program-main"
+  >
+    <Transition name="phase-switch" mode="out-in">
+      <div :key="activePhase" class="phase-container">
+        <!-- Phase Subtitle Info -->
+        <div class="phase-info-bar">
+          <span
+            class="phase-dot"
+            :style="{ background: phase.color }"
+            aria-hidden="true"
+          />
+          <span class="phase-subtitle-text">{{ phase.subtitle }}</span>
+        </div>
+
+        <!-- Days Accordion List -->
+        <div class="days-list">
+          <article
+            v-for="(d, i) in phase.days"
+            :key="d.day"
+            class="day-card"
+            :class="{
+              expanded: isDesktop || expandedDay === i,
+              isToday: d.day === today,
+            }"
             :style="{
-              padding: '9px 16px',
-              background:
-                loggedDay === i || queuedDay === i ? `${phase.color}22` : 'transparent',
-              border: `1px solid ${loggedDay === i || queuedDay === i ? phase.color : 'oklch(22% 0.008 45)'}`,
-              borderRadius: '6px',
-              color: loggedDay === i || queuedDay === i ? phase.color : '#888',
-              cursor: loggingDay === i ? 'wait' : 'pointer',
-              fontSize: '11px',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              transition: 'color 150ms ease-out, border-color 150ms ease-out, background 150ms ease-out',
+              '--phase-color': phase.color,
             }"
           >
-            {{
-              loggingDay === i
-                ? 'Saving…'
-                : loggedDay === i
-                  ? 'Logged ✓'
-                  : queuedDay === i
-                    ? 'Queued ✓'
-                    : 'Log workout'
-            }}
-          </button>
-          <RouterLink
-            v-if="loggedDay === i"
-            to="/history"
-            style="font-size: 11px; color: #666; text-decoration: none; letter-spacing: 0.5px"
-          >
-            View history →
-          </RouterLink>
-          <span
-            v-if="queuedDay === i && !connectivity.isOnline"
-            style="font-size: 11px; color: #facc15"
-          >
-            Saved offline — will sync when online
-          </span>
-          <span v-if="logError === i" style="font-size: 11px; color: #f87171">{{ logErrorMsg }}</span>
+            <!-- Day Accordion Header Button -->
+            <button
+              class="day-header-btn"
+              :aria-expanded="isDesktop ? undefined : expandedDay === i"
+              :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${expandedDay === i ? 'collapse' : 'expand'}` : ''}`"
+              @click="toggleDay(i)"
+            >
+              <div class="day-header-left">
+                <span class="day-name">{{ d.day }}</span>
+                <span class="day-label-pill">{{ d.label }}</span>
+                <span v-if="!d.gym" class="home-only-badge">🏠 only</span>
+                <span v-if="d.day === today" class="today-badge">Today</span>
+              </div>
+              <span
+                v-if="!isDesktop"
+                class="accordion-icon"
+                aria-hidden="true"
+              >
+                {{ expandedDay === i ? '−' : '+' }}
+              </span>
+            </button>
+
+            <!-- Track Toggle (Home vs Gym) -->
+            <Transition name="reveal">
+              <div
+                v-if="(isDesktop || expandedDay === i) && d.gym"
+                class="track-switcher"
+                role="group"
+                :aria-label="`Track selection for ${d.day}`"
+              >
+                <button
+                  v-for="t in ['home', 'gym']"
+                  :key="t"
+                  class="track-btn"
+                  :class="{ active: getTrack(i, true) === t }"
+                  :aria-pressed="getTrack(i, true) === t"
+                  @click="setDayTrack(i, t)"
+                >
+                  <span aria-hidden="true">{{ t === 'home' ? '🏠' : '🏋️' }}</span>
+                  <span class="track-label">{{ t }}</span>
+                </button>
+              </div>
+            </Transition>
+
+            <!-- Exercise List / Table -->
+            <Transition name="accordion">
+              <div
+                v-if="isDesktop || expandedDay === i"
+                class="day-content"
+              >
+                <div class="table-container">
+                  <table class="exercise-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" class="th-exercise">Exercise</th>
+                        <th scope="col" class="th-sets">Sets</th>
+                        <th scope="col" class="th-reps">Reps</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(ex, j) in getExercises(i, d)"
+                        :key="j"
+                        class="exercise-row"
+                      >
+                        <td class="td-exercise">
+                          <a
+                            v-if="ex.link"
+                            :href="ex.link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="exercise-link"
+                            :aria-label="`Watch demonstration for ${ex.name}`"
+                          >
+                            <span class="exercise-name">{{ ex.name }}</span>
+                            <span class="demo-icon" aria-hidden="true">↗</span>
+                          </a>
+                          <span v-else class="exercise-name-plain">{{ ex.name }}</span>
+                          <p v-if="ex.note" class="exercise-note">
+                            {{ ex.note }}
+                          </p>
+                        </td>
+                        <td class="td-sets">
+                          {{ ex.sets }}
+                        </td>
+                        <td class="td-reps">
+                          {{ ex.reps }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Day Action Bar (Log Workout CTA) -->
+                <div class="day-action-bar">
+                  <button
+                    class="btn-log-action"
+                    :class="{
+                      isLogged: loggedDay === i,
+                      isQueued: queuedDay === i,
+                    }"
+                    :disabled="loggingDay === i"
+                    @click="openLogModal(i, d)"
+                  >
+                    <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
+                    <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
+                    <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
+                    <span v-else class="btn-text">Log workout</span>
+                  </button>
+
+                  <RouterLink
+                    v-if="loggedDay === i"
+                    to="/history"
+                    class="view-history-link"
+                  >
+                    View history →
+                  </RouterLink>
+
+                  <div
+                    v-if="queuedDay === i && !connectivity.isOnline"
+                    class="offline-notice"
+                  >
+                    Saved offline — will sync automatically when reconnected
+                  </div>
+
+                  <div
+                    v-if="logError === i"
+                    class="log-error-msg"
+                    role="alert"
+                  >
+                    {{ logErrorMsg }}
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </article>
         </div>
       </div>
-      </Transition>
-    </div>
-  </div>
+    </Transition>
 
-  </div>
-  </Transition>
-  <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
-    <div
-      style="
-        font-size: 10px;
-        letter-spacing: 3px;
-        color: #666;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-      "
-    >
-      Gym Substitutions
-    </div>
-    <div
-      style="
-        padding: 14px 16px;
-        border: 1px dashed oklch(22% 0.008 45);
-        border-radius: 6px;
-        font-size: 12px;
-        line-height: 1.9;
-        color: #888;
-      "
-    >
-      <div v-for="(sub, i) in subs" :key="i">
-        <span style="color: #aaa">{{ sub[0] }}</span>
-        <span style="color: #555; margin: 0 8px">→</span>
-        <span style="color: #888">{{ sub[1] }}</span>
+    <!-- ── Reference: Substitutions & Keys ─────────────────────── -->
+    <section class="reference-section" aria-label="Gym substitutions and training tips">
+      <div class="reference-card">
+        <h2 class="reference-heading">Gym Substitutions</h2>
+        <div class="subs-list">
+          <div v-for="(sub, i) in subs" :key="i" class="sub-item">
+            <span class="sub-from">{{ sub[0] }}</span>
+            <span class="sub-arrow" aria-hidden="true">→</span>
+            <span class="sub-to">{{ sub[1] }}</span>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <div v-if="!showOnboarding" :style="{ maxWidth: isDesktop ? '860px' : '640px', margin: '20px auto 0', padding: '0 16px' }">
-    <div
-      style="
-        font-size: 10px;
-        letter-spacing: 3px;
-        color: #666;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-      "
-    >
-      Keys to Success
-    </div>
-    <div class="tips-grid">
-      <div
-        v-for="(t, i) in tips"
-        :key="i"
-        :style="{
-          display: 'flex',
-          gap: '12px',
-          alignItems: 'flex-start',
-          padding: '12px 14px',
-          background: 'oklch(10% 0.01 45)',
-          borderRadius: '6px',
-          border: '1px solid oklch(17% 0.008 45)',
-          borderLeft: `3px solid ${phase.color}88`,
-          fontSize: '0.875rem',
-          lineHeight: 1.5,
-          color: '#888',
-          transition: 'border-left-color 300ms ease-out',
-        }"
-      >
-        <span style="font-size: 16px; line-height: 1.4">{{ t.icon }}</span>
-        <span>{{ t.text }}</span>
-      </div>
-    </div>
-  </div>
 
-  <!-- ── Pre-log modal ──────────────────────────────────────── -->
+      <div class="reference-card">
+        <h2 class="reference-heading">Keys to Success</h2>
+        <div class="tips-grid">
+          <div
+            v-for="(t, i) in tips"
+            :key="i"
+            class="tip-card"
+            :style="{ '--phase-color': phase.color }"
+          >
+            <span class="tip-icon" aria-hidden="true">{{ t.icon }}</span>
+            <p class="tip-text">{{ t.text }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ── Pre-log Modal / Bottom Sheet ────────────────────────── -->
   <Teleport to="body">
     <Transition name="modal-fade">
       <div
         v-if="showLogModal"
         class="modal-backdrop"
-        @click.self="closeLogModal"
         role="dialog"
         aria-modal="true"
-        aria-label="Log workout details"
+        aria-labelledby="modal-title"
+        @click.self="closeLogModal"
       >
         <div class="modal-sheet">
-          <!-- Header -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px">
-            <div>
-              <div style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 4px">
-                Log workout
-              </div>
-              <div style="font-size: 1rem; color: #e8e8e8">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <div class="modal-header-titles">
+              <span class="modal-eyebrow">Log workout session</span>
+              <h2 id="modal-title" class="modal-title">
                 {{ pendingLogDay?.day.day }} · {{ pendingLogDay?.day.label }}
-              </div>
+              </h2>
             </div>
             <button
+              class="modal-close-btn"
+              aria-label="Close modal"
               @click="closeLogModal"
-              aria-label="Close"
-              style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px"
-            >×</button>
+            >
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
 
-          <!-- Exercise groups -->
+          <!-- Modal Body / Exercise Sets Inputs -->
           <div class="modal-body">
             <div
               v-for="group in logModalInputs"
               :key="group.exerciseName"
-              style="margin-bottom: 20px"
+              class="modal-exercise-group"
             >
-              <div style="font-size: 0.8125rem; color: #e8e8e8; margin-bottom: 8px; font-weight: 500">
-                {{ group.exerciseName }}
+              <h3 class="group-exercise-title">{{ group.exerciseName }}</h3>
+              
+              <!-- Column Header Labels -->
+              <div class="set-grid-header">
+                <span class="col-label col-set">Set</span>
+                <span class="col-label col-reps">Reps</span>
+                <span class="col-label col-weight">Weight (lbs)</span>
               </div>
+
+              <!-- Set Input Rows -->
               <div
                 v-for="s in group.sets"
                 :key="s.setNumber"
-                style="display: grid; grid-template-columns: 44px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px"
+                class="set-input-row"
               >
-                <span style="font-size: 11px; color: #666; letter-spacing: 1px">Set {{ s.setNumber }}</span>
-                <input
-                  v-model.number="s.repsDone"
-                  type="number"
-                  min="0"
-                  :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
-                  class="modal-input"
-                  aria-label="Reps done"
-                />
-                <input
-                  v-model.number="s.weightLbs"
-                  type="number"
-                  min="0"
-                  step="2.5"
-                  placeholder="lbs"
-                  class="modal-input"
-                  aria-label="Weight in lbs"
-                />
+                <span class="set-number-label">{{ s.setNumber }}</span>
+                <div class="input-wrapper">
+                  <input
+                    v-model.number="s.repsDone"
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
+                    class="modal-input"
+                    :aria-label="`${group.exerciseName} set ${s.setNumber} reps`"
+                  />
+                </div>
+                <div class="input-wrapper">
+                  <input
+                    v-model.number="s.weightLbs"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="2.5"
+                    placeholder="lbs"
+                    class="modal-input"
+                    :aria-label="`${group.exerciseName} set ${s.setNumber} weight in lbs`"
+                  />
+                </div>
               </div>
-              <!-- column labels on first group -->
             </div>
 
-            <div style="font-size: 11px; color: #555; margin-top: 4px">
-              All fields optional — leave blank to skip tracking.
-            </div>
+            <p class="modal-helper-text">
+              All set inputs are optional. Leave fields empty to record default programmed reps without weight.
+            </p>
           </div>
 
-          <!-- Footer -->
-          <div style="display: flex; gap: 10px; margin-top: 20px">
+          <!-- Modal Footer CTA -->
+          <div class="modal-footer">
             <button
-              @click="confirmLog"
-              :disabled="loggingDay === pendingLogDay?.dayIndex"
               class="modal-btn-primary"
+              :disabled="loggingDay === pendingLogDay?.dayIndex"
+              @click="confirmLog"
             >
-              {{ loggingDay === pendingLogDay?.dayIndex ? 'Saving…' : 'Log workout' }}
+              {{ loggingDay === pendingLogDay?.dayIndex ? 'Saving workout…' : 'Save workout' }}
             </button>
-            <button @click="closeLogModal" class="modal-btn-ghost">Cancel</button>
+            <button
+              class="modal-btn-secondary"
+              @click="closeLogModal"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
@@ -608,7 +415,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useConnectivityStore } from '@/stores/connectivity'
 import { supabase } from '@/lib/supabase'
-import { buildSetLogs } from '@/lib/workout'
+import { buildSetLogs, parseSetCount, parseRepsProgrammed } from '@/lib/workout'
 import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
 import { invalidateWorkoutHistory } from '@/queries/history'
@@ -653,7 +460,9 @@ function dismissFirstRun() {
 
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 375)
 const isDesktop = computed(() => windowWidth.value >= 900)
-function onResize() { windowWidth.value = window.innerWidth }
+function onResize() {
+  windowWidth.value = window.innerWidth
+}
 
 const phase = computed(() => program.phases[activePhase.value])
 
@@ -664,7 +473,7 @@ function selectPhase(i) {
 
 function toggleDay(i) {
   if (isDesktop.value) {
-    expandedDay.value = i // select/highlight only — no collapsing on desktop
+    expandedDay.value = i
   } else {
     expandedDay.value = expandedDay.value === i ? -1 : i
   }
@@ -771,12 +580,10 @@ async function logWorkout(dayIndex, day, setOverrides = []) {
   }, 4000)
 }
 
-// ── Pre-log modal ────────────────────────────────────────────
-import { parseSetCount, parseRepsProgrammed } from '@/lib/workout'
-
+// ── Pre-log modal state & handlers ───────────────────────────
 const showLogModal = ref(false)
-const pendingLogDay = ref(null)  // { dayIndex, day }
-const logModalInputs = ref([])   // [{ exerciseName, sets: [{ setNumber, repsProgrammed, repsDone, weightLbs }] }]
+const pendingLogDay = ref(null)
+const logModalInputs = ref([])
 
 function openLogModal(dayIndex, day) {
   if (!authStore.user) return
@@ -805,7 +612,6 @@ function closeLogModal() {
 async function confirmLog() {
   if (!pendingLogDay.value) return
 
-  // Flatten modal inputs into the setOverrides format buildSetLogs expects
   const setOverrides = []
   for (const group of logModalInputs.value) {
     for (const s of group.sets) {
@@ -843,21 +649,969 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid #e8e8e8;
-  outline-offset: 2px;
-  border-radius: 2px;
+/* ── Layout & Typography Base ─────────────────────────────── */
+.program-header {
+  border-bottom: 1px solid oklch(16% 0.008 45);
+  padding: clamp(20px, 4vw, 32px) 20px clamp(16px, 3vw, 24px);
+  text-align: center;
+  background: oklch(9% 0.01 45);
 }
 
-a {
-  transition: opacity 100ms ease-out;
-}
-a:hover {
-  opacity: 0.75;
+.program-header-inner {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-/* Phase switch — content fades + rises when switching phases */
+.program-title {
+  font-family: Georgia, serif;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 400;
+  margin: 0;
+  color: #f5f5f5;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.program-subtitle {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9375rem;
+  color: #a3a3a3;
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+.program-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.badge {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  color: #a3a3a3;
+  padding: 4px 10px;
+  background: oklch(12% 0.008 45);
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 9999px;
+}
+
+.badge.highlight {
+  color: #e5e5e5;
+  border-color: oklch(24% 0.008 45);
+}
+
+/* ── Phase Tabs Navigation ───────────────────────────────── */
+.phase-tabs-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: oklch(8% 0.012 45);
+  border-bottom: 1px solid oklch(16% 0.008 45);
+  backdrop-filter: blur(12px);
+}
+
+.phase-tabs-container {
+  display: flex;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.phase-tab-btn {
+  flex: 1;
+  min-height: 52px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 180ms ease-out;
+}
+
+.phase-tab-btn:hover {
+  color: #d4d4d4;
+  background: oklch(11% 0.008 45);
+}
+
+.phase-tab-btn.active {
+  background: oklch(11% 0.008 45);
+  border-bottom-color: var(--phase-color, #4ade80);
+  color: #ffffff;
+}
+
+.phase-tab-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.phase-tab-weeks {
+  font-size: 0.6875rem;
+  color: #a3a3a3;
+  opacity: 0.9;
+}
+
+/* ── Onboarding ─────────────────────────────────────────── */
+.onboarding-section {
+  max-width: 520px;
+  margin: 48px auto;
+  padding: 0 20px;
+}
+
+.onboarding-card {
+  text-align: center;
+  background: oklch(10% 0.01 45);
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 12px;
+  padding: 32px 24px;
+}
+
+.onboarding-icon {
+  font-size: 44px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.onboarding-title {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #f5f5f5;
+  margin: 0 0 8px;
+}
+
+.onboarding-desc {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #a3a3a3;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin: 0 0 28px;
+}
+
+.btn-adopt-primary {
+  display: block;
+  width: 100%;
+  padding: 16px 20px;
+  background: oklch(12% 0.008 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-left: 4px solid #4ade80;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 12px;
+  transition: background 150ms ease-out;
+  min-height: 52px;
+}
+
+.btn-adopt-primary:hover {
+  background: oklch(14% 0.008 45);
+}
+
+.adopt-badge {
+  display: block;
+  color: #4ade80;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.adopt-title {
+  display: block;
+  color: #f5f5f5;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.adopt-meta {
+  display: block;
+  color: #a3a3a3;
+  font-size: 0.8125rem;
+}
+
+.btn-adopt-secondary {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 20px;
+  background: transparent;
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 8px;
+  cursor: pointer;
+  color: #a3a3a3;
+  font-size: 0.875rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 150ms;
+}
+
+.btn-adopt-secondary:hover {
+  color: #ffffff;
+  border-color: oklch(26% 0.008 45);
+}
+
+/* ── First Run Banner ────────────────────────────────────── */
+.first-run-banner {
+  max-width: 860px;
+  margin: 16px auto 0;
+  padding: 0 16px;
+}
+
+.first-run-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: oklch(11% 0.01 45);
+  border: 1px solid oklch(20% 0.008 45);
+  border-left: 4px solid #4ade80;
+  border-radius: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #d4d4d4;
+}
+
+.first-run-highlight {
+  color: #4ade80;
+  margin-right: 4px;
+}
+
+.first-run-dismiss {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 150ms;
+}
+
+.first-run-dismiss:hover {
+  color: #ffffff;
+}
+
+/* ── Program Main Container ──────────────────────────────── */
+.program-main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.phase-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 16px;
+}
+
+.phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.phase-subtitle-text {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  color: #a3a3a3;
+  font-style: italic;
+}
+
+/* ── Day Cards Accordion ─────────────────────────────────── */
+.days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.day-card {
+  background: oklch(10% 0.01 45);
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+.day-card.expanded {
+  border-color: oklch(24% 0.008 45);
+}
+
+.day-card.isToday {
+  border-color: var(--phase-color, #4ade80);
+  box-shadow: 0 0 0 1px var(--phase-color, #4ade80);
+}
+
+.day-header-btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  color: #f5f5f5;
+  font-family: system-ui, -apple-system, sans-serif;
+  text-align: left;
+  transition: background 160ms ease-out;
+}
+
+.day-card.expanded .day-header-btn {
+  background: oklch(11.5% 0.008 45);
+}
+
+.day-header-btn:hover {
+  background: oklch(12.5% 0.008 45);
+}
+
+.day-header-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.day-name {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  min-width: 84px;
+}
+
+.day-label-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: oklch(14% 0.008 45);
+  color: var(--phase-color, #4ade80);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.home-only-badge {
+  font-size: 0.75rem;
+  color: #a3a3a3;
+}
+
+.today-badge {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: var(--phase-color, #4ade80);
+  color: #000000;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.accordion-icon {
+  color: #a3a3a3;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 300;
+  margin-left: 8px;
+}
+
+/* ── Track Switcher Segmented Control ────────────────────── */
+.track-switcher {
+  display: flex;
+  background: oklch(8% 0.012 45);
+  border-top: 1px solid oklch(15% 0.008 45);
+  border-bottom: 1px solid oklch(15% 0.008 45);
+  padding: 4px;
+  gap: 4px;
+}
+
+.track-btn {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 160ms ease-out;
+}
+
+.track-btn:hover {
+  color: #ffffff;
+  background: oklch(12% 0.008 45);
+}
+
+.track-btn.active {
+  background: oklch(16% 0.008 45);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* ── Exercise Table Layout ───────────────────────────────── */
+.day-content {
+  padding: 16px 18px 20px;
+  background: oklch(10% 0.01 45);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.exercise-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.th-exercise,
+.th-sets,
+.th-reps {
+  padding: 10px 8px 10px 0;
+  font-size: 0.6875rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #a3a3a3;
+  border-bottom: 1px solid oklch(16% 0.008 45);
+}
+
+.th-exercise {
+  text-align: left;
+}
+
+.th-sets,
+.th-reps {
+  text-align: center;
+}
+
+.exercise-row {
+  border-bottom: 1px solid oklch(14% 0.008 45);
+}
+
+.exercise-row:last-child {
+  border-bottom: none;
+}
+
+.td-exercise {
+  padding: 14px 12px 14px 0;
+}
+
+.exercise-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--phase-color, #4ade80);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--phase-color, #4ade80);
+  transition: opacity 150ms;
+}
+
+.exercise-link:hover {
+  opacity: 0.8;
+}
+
+.demo-icon {
+  font-size: 0.8125rem;
+  opacity: 0.8;
+}
+
+.exercise-name-plain {
+  color: #f5f5f5;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.exercise-note {
+  font-size: 0.75rem;
+  color: #a3a3a3;
+  line-height: 1.5;
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
+.td-sets {
+  padding: 14px 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--phase-color, #4ade80);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.td-reps {
+  padding: 14px 0 14px 12px;
+  text-align: center;
+  font-size: 0.9375rem;
+  color: #e5e5e5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Day Action Bar (Primary CTA) ────────────────────────── */
+.day-action-bar {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid oklch(16% 0.008 45);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-log-action {
+  min-height: 48px;
+  padding: 12px 24px;
+  background: oklch(14% 0.008 45);
+  border: 1px solid oklch(24% 0.008 45);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease-out;
+}
+
+.btn-log-action:hover:not(:disabled) {
+  background: oklch(18% 0.008 45);
+  border-color: oklch(30% 0.008 45);
+}
+
+.btn-log-action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.btn-log-action.isLogged {
+  background: oklch(16% 0.01 140);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.btn-log-action.isQueued {
+  background: oklch(16% 0.01 90);
+  border-color: #facc15;
+  color: #facc15;
+}
+
+.view-history-link {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  color: #a3a3a3;
+  text-decoration: none;
+  padding: 12px 8px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  transition: color 150ms;
+}
+
+.view-history-link:hover {
+  color: #ffffff;
+}
+
+.offline-notice {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  color: #facc15;
+}
+
+.log-error-msg {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  color: #f87171;
+}
+
+/* ── Reference Section (Substitutions & Tips) ────────────── */
+.reference-section {
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.reference-card {
+  background: oklch(10% 0.01 45);
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 10px;
+  padding: 20px 22px;
+}
+
+.reference-heading {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #d4d4d4;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+}
+
+.subs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sub-item {
+  display: flex;
+  align-items: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sub-from {
+  color: #d4d4d4;
+  font-weight: 500;
+}
+
+.sub-arrow {
+  color: #737373;
+  margin: 0 10px;
+}
+
+.sub-to {
+  color: #a3a3a3;
+}
+
+.tips-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 768px) {
+  .tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+.tip-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: oklch(8% 0.012 45);
+  border-radius: 8px;
+  border: 1px solid oklch(16% 0.008 45);
+  border-left: 3px solid var(--phase-color, #4ade80);
+}
+
+.tip-icon {
+  font-size: 18px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #a3a3a3;
+  margin: 0;
+}
+
+/* ── Pre-log Modal / Bottom Sheet ────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 600px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 540px;
+  background: oklch(11% 0.01 45);
+  border: 1px solid oklch(20% 0.008 45);
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px clamp(24px, 5vw, 36px);
+  max-height: 88dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.6);
+}
+
+@media (min-width: 600px) {
+  .modal-sheet {
+    border-radius: 14px;
+    padding: 28px 24px;
+    max-height: 82dvh;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid oklch(16% 0.008 45);
+}
+
+.modal-eyebrow {
+  display: block;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.6875rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  margin-bottom: 4px;
+}
+
+.modal-title {
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #f5f5f5;
+  margin: 0;
+}
+
+.modal-close-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0;
+  border-radius: 6px;
+  transition: color 150ms;
+}
+
+.modal-close-btn:hover {
+  color: #ffffff;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.modal-exercise-group {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid oklch(15% 0.008 45);
+}
+
+.modal-exercise-group:last-of-type {
+  border-bottom: none;
+  margin-bottom: 8px;
+}
+
+.group-exercise-title {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.9375rem;
+  color: #f5f5f5;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+
+.set-grid-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.col-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.6875rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  font-weight: 600;
+}
+
+.col-set {
+  text-align: center;
+}
+
+.set-input-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.set-number-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  color: #a3a3a3;
+  text-align: center;
+  font-weight: 600;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.modal-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  background: oklch(8% 0.012 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px; /* Essential: prevents iOS viewport zoom on focus */
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  box-sizing: border-box;
+  transition: border-color 150ms;
+}
+
+.modal-input::-webkit-outer-spin-button,
+.modal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #4ade80;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
+}
+
+.modal-input::placeholder {
+  color: #737373;
+}
+
+.modal-helper-text {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.75rem;
+  color: #a3a3a3;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid oklch(16% 0.008 45);
+}
+
+.modal-btn-primary {
+  flex: 1;
+  min-height: 48px;
+  padding: 12px 20px;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 8px;
+  color: #000000;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: background 150ms;
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+  background: #e5e5e5;
+}
+
+.modal-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.modal-btn-secondary {
+  min-height: 48px;
+  min-width: 90px;
+  padding: 12px 18px;
+  background: transparent;
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 8px;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: all 150ms;
+}
+
+.modal-btn-secondary:hover {
+  color: #ffffff;
+  border-color: oklch(30% 0.008 45);
+}
+
+/* ── Transitions ─────────────────────────────────────────── */
 .phase-switch-enter-active {
   transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
 }
@@ -872,12 +1626,11 @@ a:hover {
   opacity: 0;
 }
 
-/* Accordion — exercise content fades in from above */
 .accordion-enter-active {
-  transition: opacity 220ms ease-out, transform 220ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition: opacity 200ms ease-out, transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .accordion-leave-active {
-  transition: opacity 130ms ease-in;
+  transition: opacity 120ms ease-in;
 }
 .accordion-enter-from {
   opacity: 0;
@@ -887,9 +1640,8 @@ a:hover {
   opacity: 0;
 }
 
-/* Reveal — track toggle fades in */
 .reveal-enter-active {
-  transition: opacity 160ms ease-out;
+  transition: opacity 150ms ease-out;
 }
 .reveal-leave-active {
   transition: opacity 100ms ease-in;
@@ -899,149 +1651,11 @@ a:hover {
   opacity: 0;
 }
 
-/* ── Desktop adaptations ─────────────────────────────────── */
-
-/* Phase tabs: sticky so you can switch phases while scrolling the week */
-.phase-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: oklch(8% 0.012 45);
-}
-
-/* Day header hover feedback (desktop) */
-@media (min-width: 900px) {
-  .day-header-btn:hover {
-    filter: brightness(1.1);
-  }
-}
-
-/* Tips: 2-column grid on desktop */
-.tips-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-@media (min-width: 900px) {
-  .tips-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* ── Pre-log modal ───────────────────────────────────────── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-}
-
-@media (min-width: 560px) {
-  .modal-backdrop {
-    align-items: center;
-    padding: 24px;
-  }
-}
-
-.modal-sheet {
-  width: 100%;
-  max-width: 520px;
-  background: oklch(11% 0.01 45);
-  border: 1px solid oklch(20% 0.008 45);
-  border-radius: 14px 14px 0 0;
-  padding: 24px 20px 32px;
-  max-height: 85dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-@media (min-width: 560px) {
-  .modal-sheet {
-    border-radius: 12px;
-    padding: 24px;
-    max-height: 80dvh;
-  }
-}
-
-.modal-body {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.modal-input {
-  width: 100%;
-  padding: 7px 10px;
-  background: oklch(8% 0.012 45);
-  border: 1px solid oklch(22% 0.008 45);
-  border-radius: 6px;
-  color: #e8e8e8;
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-  -moz-appearance: textfield;
-}
-.modal-input::-webkit-outer-spin-button,
-.modal-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.modal-input:focus {
-  outline: none;
-  border-color: oklch(40% 0.008 45);
-}
-.modal-input::placeholder {
-  color: #444;
-}
-
-.modal-btn-primary {
-  flex: 1;
-  padding: 11px 16px;
-  background: oklch(22% 0.008 45);
-  border: 1px solid oklch(30% 0.008 45);
-  border-radius: 6px;
-  color: #e8e8e8;
-  cursor: pointer;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: background 150ms;
-}
-.modal-btn-primary:hover:not(:disabled) {
-  background: oklch(26% 0.008 45);
-}
-.modal-btn-primary:disabled {
-  opacity: 0.5;
-  cursor: wait;
-}
-
-.modal-btn-ghost {
-  padding: 11px 16px;
-  background: transparent;
-  border: 1px solid oklch(18% 0.008 45);
-  border-radius: 6px;
-  color: #666;
-  cursor: pointer;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transition: color 150ms;
-}
-.modal-btn-ghost:hover {
-  color: #999;
-}
-
-/* Modal fade transition */
 .modal-fade-enter-active {
-  transition: opacity 160ms ease-out;
+  transition: opacity 180ms ease-out;
 }
 .modal-fade-leave-active {
-  transition: opacity 120ms ease-in;
+  transition: opacity 140ms ease-in;
 }
 .modal-fade-enter-from,
 .modal-fade-leave-to {
