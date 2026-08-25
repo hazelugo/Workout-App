@@ -150,7 +150,7 @@
             padding: '14px 16px',
             background: expandedId === session.id ? 'oklch(11.5% 0.008 45)' : 'oklch(10% 0.01 45)',
             border: 'none',
-            borderLeft: `3px solid ${phaseMeta(session.phase).color}`,
+            borderLeft: `3px solid ${sessionAccentColor(session)}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
@@ -164,7 +164,12 @@
           <div>
             <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px">
               <span style="font-size: 0.9375rem">{{ session.day_name }}</span>
-              <span
+              <!-- Custom session badge -->
+              <span v-if="session.source === 'custom' || session.phase == null"
+                style="font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #a78bfa18; color: #a78bfa; letter-spacing: 1px; text-transform: uppercase"
+              >Custom</span>
+              <!-- Program session badge -->
+              <span v-else
                 :style="{
                   fontSize: '10px',
                   padding: '2px 8px',
@@ -174,16 +179,14 @@
                   letterSpacing: '1px',
                   textTransform: 'uppercase',
                 }"
-              >
-                {{ phaseMeta(session.phase).name }}
-              </span>
-              <span style="font-size: 10px; color: #666">
+              >{{ phaseMeta(session.phase).name }}</span>
+              <span v-if="session.track && session.track !== 'custom'" style="font-size: 10px; color: #666">
                 {{ session.track === 'gym' ? '🏋️ Gym' : '🏠 Home' }}
               </span>
             </div>
             <div style="font-size: 12px; color: #666">
               {{ formatSessionDate(session.completed_at) }}
-              · Week {{ session.week }}
+              <template v-if="session.week"> · Week {{ session.week }}</template>
               · {{ session.set_logs?.length ?? 0 }} sets
             </div>
           </div>
@@ -361,6 +364,11 @@ const totalSets = computed(() =>
 
 function phaseMeta(phase) {
   return PHASES[phase] ?? { name: `Phase ${phase}`, color: '#888' }
+}
+
+function sessionAccentColor(session) {
+  if (session.source === 'custom' || session.phase == null) return '#a78bfa'
+  return phaseMeta(session.phase).color
 }
 
 function toggleSession(id) {

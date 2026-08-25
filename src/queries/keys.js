@@ -7,6 +7,10 @@ export const queryKeys = {
     all: ['customDays'],
     list: () => [...queryKeys.customDays.all, 'list'],
   },
+  programs: {
+    all: ['programs'],
+    list: () => [...queryKeys.programs.all, 'list'],
+  },
   profile: {
     all: ['profile'],
     detail: (userId) => [...queryKeys.profile.all, userId],

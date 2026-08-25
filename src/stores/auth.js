@@ -27,6 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
   function _clearUserQueries() {
     queryClient.removeQueries({ queryKey: queryKeys.history.all })
     queryClient.removeQueries({ queryKey: queryKeys.customDays.all })
+    queryClient.removeQueries({ queryKey: queryKeys.programs.all })
     queryClient.removeQueries({ queryKey: queryKeys.profile.all })
   }
 

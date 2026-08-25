@@ -14,6 +14,7 @@ export async function fetchWorkoutHistory() {
       week,
       day_name,
       track,
+      source,
       set_logs (
         id,
         exercise_name,
