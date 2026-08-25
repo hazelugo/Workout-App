@@ -70,6 +70,28 @@
       </div>
     </div>
 
+    <!-- Plan Title -->
+    <div style="margin-bottom: 24px">
+      <div
+        style="
+          font-size: 10px;
+          letter-spacing: 3px;
+          color: #666;
+          text-transform: uppercase;
+          margin-bottom: 10px;
+        "
+      >
+        Plan Title <span style="color: #555; letter-spacing: 1px; text-transform: none">(optional)</span>
+      </div>
+      <input
+        v-model="planTitle"
+        placeholder="e.g. Upper Body, Leg Day, Push Day…"
+        aria-label="Plan title"
+        class="workout-input"
+        :style="inputStyle"
+      />
+    </div>
+
     <div
       style="
         font-size: 10px;
@@ -273,29 +295,43 @@
             background: oklch(10% 0.01 45);
           "
         >
-          <div style="display: flex; gap: 10px; align-items: center">
-            <span
+          <div style="display: flex; flex-direction: column; gap: 3px">
+            <div style="display: flex; gap: 10px; align-items: center">
+              <span
+                style="
+                  font-size: 11px;
+                  color: #555;
+                  letter-spacing: 2px;
+                  text-transform: uppercase;
+                  min-width: 72px;
+                "
+                >{{ day }}</span
+              >
+              <span
+                style="
+                  font-size: 11px;
+                  padding: 2px 8px;
+                  border-radius: 20px;
+                  background: #a78bfa18;
+                  color: #a78bfa;
+                  letter-spacing: 1px;
+                  text-transform: uppercase;
+                "
+                >Custom</span
+              >
+            </div>
+            <div
+              v-if="savedWorkouts[day]?.title"
               style="
-                font-size: 11px;
-                color: #555;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                min-width: 72px;
+                font-size: 0.9375rem;
+                color: oklch(90% 0.005 45);
+                font-weight: 500;
+                letter-spacing: -0.2px;
+                padding-left: 82px;
               "
-              >{{ day }}</span
             >
-            <span
-              style="
-                font-size: 11px;
-                padding: 2px 8px;
-                border-radius: 20px;
-                background: #a78bfa18;
-                color: #a78bfa;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-              "
-              >Custom</span
-            >
+              {{ savedWorkouts[day].title }}
+            </div>
           </div>
           <Transition name="confirm" mode="out-in">
             <div
@@ -504,7 +540,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="(ex, j) in exList"
+                v-for="(ex, j) in savedWorkouts[day]?.exercises ?? exList"
                 :key="j"
                 style="border-top: 1px solid oklch(15% 0.008 45)"
               >
@@ -606,6 +642,7 @@ const renamingDay = ref(null)
 const renameTarget = ref(null)
 
 const selectedDay = ref('Monday')
+const planTitle = ref('')
 
 let _exId = 0
 const newEx = () => ({ _id: _exId++, name: '', sets: '', reps: '' })
@@ -635,12 +672,13 @@ async function saveWorkout() {
   await supabase
     .from('custom_days')
     .upsert(
-      { user_id: auth.user.id, day_name: selectedDay.value, exercises: clean },
+      { user_id: auth.user.id, day_name: selectedDay.value, title: planTitle.value.trim(), exercises: clean },
       { onConflict: 'user_id,day_name' },
     )
 
   await invalidateCustomDays(queryClient)
   exercises.value = [newEx()]
+  planTitle.value = ''
 }
 
 async function deleteDay(day) {
@@ -650,9 +688,10 @@ async function deleteDay(day) {
 }
 
 function editDay(day) {
-  // Load saved exercises into the builder, pre-select the day
-  const exList = savedWorkouts.value[day]
+  // Load saved exercises and title into the builder, pre-select the day
+  const { title, exercises: exList } = savedWorkouts.value[day]
   exercises.value = exList.map((e) => ({ _id: _exId++, name: e.name, sets: e.sets, reps: e.reps }))
+  planTitle.value = title ?? ''
   selectedDay.value = day
   // Scroll to top of builder
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -671,20 +710,18 @@ function toggleRename(day) {
 async function confirmRename(day) {
   if (!renameTarget.value) return
   const newDay = renameTarget.value
-  const exList = savedWorkouts.value[day]
+  const { title, exercises: exList } = savedWorkouts.value[day]
 
   // Insert with new day name, then remove old
   await supabase
     .from('custom_days')
     .upsert(
-      { user_id: auth.user.id, day_name: newDay, exercises: exList },
+      { user_id: auth.user.id, day_name: newDay, title, exercises: exList },
       { onConflict: 'user_id,day_name' },
     )
   await supabase.from('custom_days').delete().eq('day_name', day).eq('user_id', auth.user.id)
 
-  const updated = { ...savedWorkouts.value, [newDay]: exList }
-  delete updated[day]
-  savedWorkouts.value = updated
+  await invalidateCustomDays(queryClient)
   renamingDay.value = null
   renameTarget.value = null
 }

@@ -55,6 +55,7 @@ create table public.custom_days (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
   day_name text not null,
+  title text,
   exercises jsonb not null default '[]',
   created_at timestamptz default now(),
   unique(user_id, day_name)
