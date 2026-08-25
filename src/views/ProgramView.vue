@@ -2,21 +2,25 @@
   <!-- ── Program Hero & Context ────────────────────────────────── -->
   <header class="program-header">
     <div class="program-header-inner">
-      <h1 class="program-title">Build From Zero</h1>
+      <h1 class="program-title">{{ activeProgramTitle }}</h1>
       <p class="program-subtitle">
-        Home &amp; Gym Tracks · 5 days/week · 20–30 min
+        {{ hasActiveCustomProgram ? 'Active Custom Schedule · 7 Days' : 'Home & Gym Tracks · 5 days/week · 20–30 min' }}
       </p>
       <div class="program-badges">
-        <span class="badge">🏠 Home</span>
-        <span class="badge">🏋️ Gym</span>
+        <span v-if="hasActiveCustomProgram" class="badge highlight" style="background: #a78bfa22; color: #c4b5fd; border-color: #a78bfa">⚡ Active Custom Plan</span>
+        <span v-else class="badge">🏠 Home</span>
+        <span v-if="!hasActiveCustomProgram" class="badge">🏋️ Gym</span>
         <span class="badge highlight">🔗 Tap exercise for demo</span>
+        <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge" style="color: #c4b5fd; text-decoration: none; border-color: #a78bfa66">
+          Edit in Studio →
+        </RouterLink>
       </div>
     </div>
   </header>
 
   <!-- ── Phase Tabs Navigation (Tablist) ───────────────────────── -->
   <nav
-    v-if="!showOnboarding"
+    v-if="!showOnboarding && !hasActiveCustomProgram"
     class="phase-tabs-wrapper"
     role="tablist"
     aria-label="Workout program phases"
@@ -103,12 +107,117 @@
   <!-- ── Main Phase & Workout Content ──────────────────────────── -->
   <main
     v-if="!showOnboarding"
-    :id="`phase-panel-${phase.id}`"
-    role="tabpanel"
-    :aria-labelledby="`phase-tab-${phase.id}`"
     class="program-main"
   >
-    <Transition name="phase-switch" mode="out-in">
+    <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
+    <div v-if="hasActiveCustomProgram" class="phase-container">
+      <div class="phase-info-bar">
+        <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
+        <span class="phase-subtitle-text">Your activated custom schedule (7 Days)</span>
+      </div>
+
+      <div class="days-list">
+        <article
+          v-for="(dayName, i) in WEEKDAYS"
+          :key="dayName"
+          class="day-card"
+          :class="{
+            expanded: isDesktop || expandedDay === i,
+            isToday: dayName === today,
+          }"
+          style="--phase-color: #a78bfa"
+        >
+          <!-- Day Accordion Header Button -->
+          <button
+            class="day-header-btn"
+            @click="toggleDay(i)"
+          >
+            <div class="day-header-left">
+              <span class="day-name">{{ dayName }}</span>
+              <span v-if="activeCustomSchedule[dayName]" class="day-label-pill" style="background: #a78bfa22; color: #c4b5fd">
+                {{ activeCustomSchedule[dayName].title || `${activeCustomSchedule[dayName].exercises?.length ?? 0} exercises` }}
+              </span>
+              <span v-else class="day-label-pill" style="background: oklch(14% 0.008 45); color: #737373">
+                Rest Day
+              </span>
+              <span v-if="dayName === today" class="today-badge" style="background: #a78bfa; color: #000">Today</span>
+            </div>
+            <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
+              {{ expandedDay === i ? '−' : '+' }}
+            </span>
+          </button>
+
+          <!-- Day Content -->
+          <Transition name="accordion">
+            <div v-if="isDesktop || expandedDay === i" class="day-content">
+              <div v-if="activeCustomSchedule[dayName]?.exercises?.length" class="table-container">
+                <table class="exercise-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="th-exercise">Exercise</th>
+                      <th scope="col" class="th-sets">Sets</th>
+                      <th scope="col" class="th-reps">Reps</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(ex, j) in activeCustomSchedule[dayName].exercises"
+                      :key="j"
+                      class="exercise-row"
+                    >
+                      <td class="td-exercise">
+                        <a
+                          :href="yt(ex.name)"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="exercise-link"
+                          style="color: #c4b5fd; border-bottom-color: #a78bfa77"
+                        >
+                          <span class="exercise-name">{{ ex.name }}</span>
+                          <span class="demo-icon" aria-hidden="true">↗</span>
+                        </a>
+                      </td>
+                      <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
+                      <td class="td-reps">{{ ex.reps || '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Day Action Bar (Log Custom Workout CTA) -->
+                <div class="day-action-bar">
+                  <button
+                    class="btn-log-action"
+                    :class="{
+                      isLogged: loggedDay === i,
+                      isQueued: queuedDay === i,
+                    }"
+                    :disabled="loggingDay === i"
+                    @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName].title, exercises: activeCustomSchedule[dayName].exercises }, true)"
+                  >
+                    <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
+                    <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
+                    <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
+                    <span v-else class="btn-text">Log workout</span>
+                  </button>
+
+                  <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
+                    View history →
+                  </RouterLink>
+                </div>
+              </div>
+
+              <!-- Rest Day Message -->
+              <div v-else style="padding: 20px 0; text-align: center; color: #737373; font-style: italic; font-size: 0.875rem">
+                Rest & recovery day — no exercises scheduled.
+              </div>
+            </div>
+          </Transition>
+        </article>
+      </div>
+    </div>
+
+    <!-- MODE 2: DEFAULT PROGRAM (BUILD FROM ZERO) -->
+    <Transition v-else name="phase-switch" mode="out-in">
       <div :key="activePhase" class="phase-container">
         <!-- Phase Subtitle Info -->
         <div class="phase-info-bar">
@@ -419,11 +528,15 @@ import { buildSetLogs, parseSetCount, parseRepsProgrammed } from '@/lib/workout'
 import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
 import { invalidateWorkoutHistory } from '@/queries/history'
+import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
+import { logCustomDay } from '@/queries/customLog'
 import { program, tips, subs, WEEKDAYS } from '@/data/program'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const router = useRouter()
+
+const { data: customDaysData } = useCustomDaysQuery()
 
 const showOnboarding = computed(() =>
   authStore.isAuthenticated &&
@@ -463,6 +576,29 @@ const isDesktop = computed(() => windowWidth.value >= 900)
 function onResize() {
   windowWidth.value = window.innerWidth
 }
+
+// ── Active Custom Days Schedule ────────────────────────────────
+const activeCustomDaysList = computed(() => customDaysData.value ?? [])
+
+const activeCustomSchedule = computed(() => {
+  const map = {}
+  for (const item of activeCustomDaysList.value) {
+    if (!map[item.day_name] && item.exercises?.length) {
+      map[item.day_name] = item
+    }
+  }
+  return map
+})
+
+const hasActiveCustomProgram = computed(() => {
+  return Object.keys(activeCustomSchedule.value).length > 0
+})
+
+const activeProgramTitle = computed(() => {
+  if (!hasActiveCustomProgram.value) return 'Build From Zero'
+  const firstWithTitle = Object.values(activeCustomSchedule.value).find((d) => d.title)
+  return firstWithTitle?.title ? `Custom: ${firstWithTitle.title}` : 'My Active Custom Program'
+})
 
 const phase = computed(() => program.phases[activePhase.value])
 
@@ -585,9 +721,9 @@ const showLogModal = ref(false)
 const pendingLogDay = ref(null)
 const logModalInputs = ref([])
 
-function openLogModal(dayIndex, day) {
+function openLogModal(dayIndex, day, isCustom = false) {
   if (!authStore.user) return
-  const exercises = getExercises(dayIndex, day)
+  const exercises = isCustom ? (day.exercises ?? []) : getExercises(dayIndex, day)
   if (!exercises?.length) return
 
   logModalInputs.value = exercises.map((ex) => ({
@@ -599,7 +735,7 @@ function openLogModal(dayIndex, day) {
       weightLbs: null,
     })),
   }))
-  pendingLogDay.value = { dayIndex, day }
+  pendingLogDay.value = { dayIndex, day, isCustom }
   showLogModal.value = true
 }
 
@@ -626,9 +762,34 @@ async function confirmLog() {
     }
   }
 
-  const { dayIndex, day } = pendingLogDay.value
+  const { dayIndex, day, isCustom } = pendingLogDay.value
   closeLogModal()
-  await logWorkout(dayIndex, day, setOverrides)
+
+  if (isCustom) {
+    loggingDay.value = dayIndex
+    try {
+      await logCustomDay(
+        authStore.user.id,
+        day.day,
+        day.title ?? '',
+        day.exercises ?? [],
+        setOverrides,
+      )
+      await invalidateWorkoutHistory(queryClient)
+      loggedDay.value = dayIndex
+      clearTimeout(_loggedTimer)
+      _loggedTimer = setTimeout(() => {
+        if (loggedDay.value === dayIndex) loggedDay.value = null
+      }, 4000)
+    } catch (err) {
+      logError.value = dayIndex
+      logErrorMsg.value = err?.message ?? 'Failed to log workout.'
+    } finally {
+      loggingDay.value = null
+    }
+  } else {
+    await logWorkout(dayIndex, day, setOverrides)
+  }
 }
 
 const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
