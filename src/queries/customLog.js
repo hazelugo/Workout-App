@@ -44,8 +44,7 @@ export async function logCustomDay(userId, dayName, title, exercises, setOverrid
       started_at: now,
       completed_at: now,
       day_name: title ? `${dayName} — ${title}` : dayName,
-      source: 'custom',
-      // phase, week, track intentionally null for custom sessions
+      // phase, week, track are null for custom sessions (requires migration to drop NOT NULL)
     })
     .select('id')
     .single()
