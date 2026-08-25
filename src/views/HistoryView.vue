@@ -188,6 +188,9 @@
               {{ formatSessionDate(session.completed_at) }}
               <template v-if="session.week"> · Week {{ session.week }}</template>
               · {{ session.set_logs?.length ?? 0 }} sets
+              <template v-if="session.cardio_minutes">
+                · <span style="color: #34d399">🏃 {{ session.cardio_minutes }} min</span>
+              </template>
             </div>
           </div>
           <span aria-hidden="true" style="color: #666; font-size: 18px; line-height: 1; flex-shrink: 0">
@@ -309,6 +312,40 @@
                   />
                 </div>
               </div>
+            </div>
+
+            <!-- Cardio row -->
+            <div style="padding: 12px 0; border-top: 1px solid oklch(15% 0.008 45); display: flex; align-items: center; justify-content: space-between; gap: 12px">
+              <div style="display: flex; align-items: center; gap: 10px; flex: 1">
+                <span style="font-size: 12px; color: #555; white-space: nowrap">🏃 Cardio</span>
+                <div v-if="editingCardioId === session.id" style="display: flex; align-items: center; gap: 6px; flex: 1">
+                  <input
+                    v-model.number="cardioInput"
+                    type="number"
+                    min="0"
+                    max="999"
+                    placeholder="mins"
+                    class="history-input"
+                    style="width: 72px"
+                    aria-label="Cardio minutes"
+                    @keydown.enter="saveCardio(session.id)"
+                    @keydown.escape="editingCardioId = null"
+                  />
+                  <span style="font-size: 11px; color: #555">min</span>
+                  <button @click="saveCardio(session.id)" :disabled="savingCardio" class="save-btn">{{ savingCardio ? '…' : 'Save' }}</button>
+                  <button @click="editingCardioId = null" class="cancel-btn">Cancel</button>
+                </div>
+                <span v-else-if="session.cardio_minutes" style="font-size: 13px; color: #34d399; font-variant-numeric: tabular-nums">{{ session.cardio_minutes }} min</span>
+                <span v-else style="font-size: 11px; color: #3a3a3a; font-style: italic">Not logged</span>
+              </div>
+              <button
+                v-if="editingCardioId !== session.id"
+                @click="startEditCardio(session.id, session.cardio_minutes)"
+                class="edit-btn"
+                :aria-label="session.cardio_minutes ? 'Edit cardio minutes' : 'Add cardio minutes'"
+              >
+                {{ session.cardio_minutes ? 'Edit' : 'Add' }}
+              </button>
             </div>
 
             <!-- Delete session -->
@@ -458,7 +495,31 @@ async function saveEdit(sessionId, exerciseName, group) {
   }
 }
 
-// ── Delete session ───────────────────────────────────────────
+// ── Cardio ───────────────────────────────────────────────────
+const editingCardioId = ref(null)
+const cardioInput     = ref(null)
+const savingCardio    = ref(false)
+
+function startEditCardio(sessionId, current) {
+  editingCardioId.value = sessionId
+  cardioInput.value = current ?? null
+}
+
+async function saveCardio(sessionId) {
+  savingCardio.value = true
+  try {
+    const { error } = await supabase
+      .from('workout_sessions')
+      .update({ cardio_minutes: cardioInput.value ?? null })
+      .eq('id', sessionId)
+    if (error) throw error
+    await refetch()
+    editingCardioId.value = null
+  } finally {
+    savingCardio.value = false
+  }
+}
+
 const confirmDeleteId = ref(null)
 const deleting = ref(false)
 const deleteError = ref(null)

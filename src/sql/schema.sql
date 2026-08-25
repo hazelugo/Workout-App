@@ -30,10 +30,11 @@ create table public.workout_sessions (
   user_id uuid references auth.users on delete cascade not null,
   date date not null,
   started_at timestamptz not null default now(),
-  phase int not null check (phase between 1 and 3),
-  week int not null check (week between 1 and 8),
+  phase int check (phase between 1 and 3),
+  week int check (week between 1 and 8),
   day_name text not null,
-  track text not null check (track in ('home', 'gym')),
+  track text check (track in ('home', 'gym', 'custom')),
+  cardio_minutes int,
   completed_at timestamptz
 );
 
