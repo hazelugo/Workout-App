@@ -539,6 +539,7 @@ const router = useRouter()
 const { data: customDaysData } = useCustomDaysQuery()
 
 const showOnboarding = computed(() =>
+  !hasActiveCustomProgram.value &&
   authStore.isAuthenticated &&
   authStore.profile !== null &&
   authStore.profile.program_adopted === false,

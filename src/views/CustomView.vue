@@ -847,6 +847,7 @@ async function handleActivateProgram(program) {
   try {
     await activateProgram(auth.user.id, days)
     await invalidateCustomDays(queryClient)
+    await auth.adoptProgram()
     showToast(`"${program.name}" is now active in your program!`)
   } finally {
     activatingProgramId.value = null
