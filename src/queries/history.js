@@ -15,9 +15,12 @@ export async function fetchWorkoutHistory() {
       day_name,
       track,
       set_logs (
+        id,
         exercise_name,
         set_number,
         reps_programmed,
+        reps_done,
+        weight_kg,
         completed
       )
     `,

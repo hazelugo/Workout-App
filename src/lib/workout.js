@@ -14,17 +14,35 @@ export function parseRepsProgrammed(reps) {
   return match ? parseInt(match[0], 10) : 0
 }
 
-export function buildSetLogs(sessionId, exercises) {
+/**
+ * Build set_logs rows for a session.
+ *
+ * @param {string} sessionId
+ * @param {Array}  exercises        - program exercise objects { name, sets, reps, … }
+ * @param {Array}  [setOverrides]   - optional per-set actuals:
+ *                                    [{ exerciseName, setNumber, repsDone, weightLbs }]
+ *                                    Unmatched sets keep reps_done/weight_kg as null.
+ */
+export function buildSetLogs(sessionId, exercises, setOverrides = []) {
+  // Build a quick-lookup map: "exerciseName|setNumber" → override
+  const overrideMap = {}
+  for (const o of setOverrides) {
+    overrideMap[`${o.exerciseName}|${o.setNumber}`] = o
+  }
+
   const logs = []
   for (const ex of exercises) {
     const count = parseSetCount(ex.sets)
     const reps = parseRepsProgrammed(ex.reps)
     for (let setNum = 1; setNum <= count; setNum++) {
+      const override = overrideMap[`${ex.name}|${setNum}`]
       logs.push({
         session_id: sessionId,
         exercise_name: ex.name,
         set_number: setNum,
         reps_programmed: reps,
+        reps_done: override?.repsDone ?? null,
+        weight_kg: override?.weightLbs ?? null,
         completed: true,
       })
     }

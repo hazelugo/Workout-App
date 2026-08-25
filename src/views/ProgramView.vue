@@ -400,7 +400,7 @@
         </table>
         <div style="padding-top: 12px; display: flex; align-items: center; gap: 10px">
           <button
-            @click="logWorkout(i, d)"
+            @click="openLogModal(i, d)"
             :disabled="loggingDay === i"
             :style="{
               padding: '9px 16px',
@@ -513,6 +513,93 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Pre-log modal ──────────────────────────────────────── -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div
+        v-if="showLogModal"
+        class="modal-backdrop"
+        @click.self="closeLogModal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Log workout details"
+      >
+        <div class="modal-sheet">
+          <!-- Header -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px">
+            <div>
+              <div style="font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 4px">
+                Log workout
+              </div>
+              <div style="font-size: 1rem; color: #e8e8e8">
+                {{ pendingLogDay?.day.day }} · {{ pendingLogDay?.day.label }}
+              </div>
+            </div>
+            <button
+              @click="closeLogModal"
+              aria-label="Close"
+              style="background: transparent; border: none; color: #555; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px"
+            >×</button>
+          </div>
+
+          <!-- Exercise groups -->
+          <div class="modal-body">
+            <div
+              v-for="group in logModalInputs"
+              :key="group.exerciseName"
+              style="margin-bottom: 20px"
+            >
+              <div style="font-size: 0.8125rem; color: #e8e8e8; margin-bottom: 8px; font-weight: 500">
+                {{ group.exerciseName }}
+              </div>
+              <div
+                v-for="s in group.sets"
+                :key="s.setNumber"
+                style="display: grid; grid-template-columns: 44px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px"
+              >
+                <span style="font-size: 11px; color: #666; letter-spacing: 1px">Set {{ s.setNumber }}</span>
+                <input
+                  v-model.number="s.repsDone"
+                  type="number"
+                  min="0"
+                  :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
+                  class="modal-input"
+                  aria-label="Reps done"
+                />
+                <input
+                  v-model.number="s.weightLbs"
+                  type="number"
+                  min="0"
+                  step="2.5"
+                  placeholder="lbs"
+                  class="modal-input"
+                  aria-label="Weight in lbs"
+                />
+              </div>
+              <!-- column labels on first group -->
+            </div>
+
+            <div style="font-size: 11px; color: #555; margin-top: 4px">
+              All fields optional — leave blank to skip tracking.
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="display: flex; gap: 10px; margin-top: 20px">
+            <button
+              @click="confirmLog"
+              :disabled="loggingDay === pendingLogDay?.dayIndex"
+              class="modal-btn-primary"
+            >
+              {{ loggingDay === pendingLogDay?.dayIndex ? 'Saving…' : 'Log workout' }}
+            </button>
+            <button @click="closeLogModal" class="modal-btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup>
@@ -605,7 +692,7 @@ const logErrorMsg = ref('')
 let _loggedTimer = null
 let _queuedTimer = null
 
-async function queueWorkoutOffline(dayIndex, sessionPayload, exercises) {
+async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides) {
   await enqueueWorkout(authStore.user.id, sessionPayload, exercises)
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
@@ -616,7 +703,7 @@ async function queueWorkoutOffline(dayIndex, sessionPayload, exercises) {
   }, 4000)
 }
 
-async function logWorkout(dayIndex, day) {
+async function logWorkout(dayIndex, day, setOverrides = []) {
   if (!authStore.user || loggingDay.value !== null) return
 
   const exercises = getExercises(dayIndex, day)
@@ -638,7 +725,7 @@ async function logWorkout(dayIndex, day) {
   }
 
   if (!connectivity.isOnline) {
-    await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+    await queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides)
     return
   }
 
@@ -650,7 +737,7 @@ async function logWorkout(dayIndex, day) {
 
   if (error) {
     if (isNetworkError(error)) {
-      await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+      await queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides)
       return
     }
     logError.value = dayIndex
@@ -659,13 +746,13 @@ async function logWorkout(dayIndex, day) {
     return
   }
 
-  const setLogs = buildSetLogs(session.id, exercises)
+  const setLogs = buildSetLogs(session.id, exercises, setOverrides)
   if (setLogs.length) {
     const { error: setsError } = await supabase.from('set_logs').insert(setLogs)
     if (setsError) {
       if (isNetworkError(setsError)) {
         await supabase.from('workout_sessions').delete().eq('id', session.id)
-        await queueWorkoutOffline(dayIndex, sessionPayload, exercises)
+        await queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides)
         return
       }
       logError.value = dayIndex
@@ -682,6 +769,60 @@ async function logWorkout(dayIndex, day) {
   _loggedTimer = setTimeout(() => {
     if (loggedDay.value === dayIndex) loggedDay.value = null
   }, 4000)
+}
+
+// ── Pre-log modal ────────────────────────────────────────────
+import { parseSetCount, parseRepsProgrammed } from '@/lib/workout'
+
+const showLogModal = ref(false)
+const pendingLogDay = ref(null)  // { dayIndex, day }
+const logModalInputs = ref([])   // [{ exerciseName, sets: [{ setNumber, repsProgrammed, repsDone, weightLbs }] }]
+
+function openLogModal(dayIndex, day) {
+  if (!authStore.user) return
+  const exercises = getExercises(dayIndex, day)
+  if (!exercises?.length) return
+
+  logModalInputs.value = exercises.map((ex) => ({
+    exerciseName: ex.name,
+    sets: Array.from({ length: parseSetCount(ex.sets) }, (_, idx) => ({
+      setNumber: idx + 1,
+      repsProgrammed: parseRepsProgrammed(ex.reps),
+      repsDone: null,
+      weightLbs: null,
+    })),
+  }))
+  pendingLogDay.value = { dayIndex, day }
+  showLogModal.value = true
+}
+
+function closeLogModal() {
+  showLogModal.value = false
+  pendingLogDay.value = null
+  logModalInputs.value = []
+}
+
+async function confirmLog() {
+  if (!pendingLogDay.value) return
+
+  // Flatten modal inputs into the setOverrides format buildSetLogs expects
+  const setOverrides = []
+  for (const group of logModalInputs.value) {
+    for (const s of group.sets) {
+      if (s.repsDone != null || s.weightLbs != null) {
+        setOverrides.push({
+          exerciseName: group.exerciseName,
+          setNumber: s.setNumber,
+          repsDone: s.repsDone ?? null,
+          weightLbs: s.weightLbs ?? null,
+        })
+      }
+    }
+  }
+
+  const { dayIndex, day } = pendingLogDay.value
+  closeLogModal()
+  await logWorkout(dayIndex, day, setOverrides)
 }
 
 const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
@@ -787,5 +928,123 @@ a:hover {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ── Pre-log modal ───────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (min-width: 560px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.modal-sheet {
+  width: 100%;
+  max-width: 520px;
+  background: oklch(11% 0.01 45);
+  border: 1px solid oklch(20% 0.008 45);
+  border-radius: 14px 14px 0 0;
+  padding: 24px 20px 32px;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 560px) {
+  .modal-sheet {
+    border-radius: 12px;
+    padding: 24px;
+    max-height: 80dvh;
+  }
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: oklch(8% 0.012 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 6px;
+  color: #e8e8e8;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+}
+.modal-input::-webkit-outer-spin-button,
+.modal-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.modal-input:focus {
+  outline: none;
+  border-color: oklch(40% 0.008 45);
+}
+.modal-input::placeholder {
+  color: #444;
+}
+
+.modal-btn-primary {
+  flex: 1;
+  padding: 11px 16px;
+  background: oklch(22% 0.008 45);
+  border: 1px solid oklch(30% 0.008 45);
+  border-radius: 6px;
+  color: #e8e8e8;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: background 150ms;
+}
+.modal-btn-primary:hover:not(:disabled) {
+  background: oklch(26% 0.008 45);
+}
+.modal-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.modal-btn-ghost {
+  padding: 11px 16px;
+  background: transparent;
+  border: 1px solid oklch(18% 0.008 45);
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 150ms;
+}
+.modal-btn-ghost:hover {
+  color: #999;
+}
+
+/* Modal fade transition */
+.modal-fade-enter-active {
+  transition: opacity 160ms ease-out;
+}
+.modal-fade-leave-active {
+  transition: opacity 120ms ease-in;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 }
 </style>
