@@ -871,17 +871,26 @@ async function handleActivateProgram(program) {
     await invalidateCustomDays(queryClient)
     await auth.adoptProgram()
 
+    // Build cache rows — ensure exercises is always a plain array
+    const rows = days.map((d) => {
+      let exList = d.exercises
+      if (typeof exList === 'string') { try { exList = JSON.parse(exList) } catch { exList = [] } }
+      if (!Array.isArray(exList)) exList = []
+      return {
+        user_id: auth.user?.id,
+        day_name: d.day_name,
+        title: d.title ?? '',
+        programTitle: program.name,
+        exercises: exList,
+      }
+    })
+
     // Save to instant local cache so ProgramView renders synchronously without delay
-    const rows = days.map((d) => ({
-      user_id: auth.user?.id,
-      day_name: d.day_name,
-      title: d.title ?? '',
-      exercises: d.exercises,
-    }))
     try {
       const k = auth.user?.id ? `active-custom-days-v1-${auth.user.id}` : 'active-custom-days-v1-anon'
       localStorage.setItem(k, JSON.stringify(rows))
       localStorage.setItem('active-custom-days-v1-last', JSON.stringify(rows))
+      if (auth.user?.id) localStorage.setItem(`active-program-id-${auth.user.id}`, program.id)
     } catch (e) {}
 
     showToast(`"${program.name}" is now active in your program!`)

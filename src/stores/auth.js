@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const session = ref(null)
   const user = ref(null)
   const profile = ref(null)
+  const isReady = ref(false)
   let _subscription = null
 
   const isAuthenticated = computed(() => !!session.value)
@@ -36,6 +37,8 @@ export const useAuthStore = defineStore('auth', () => {
     session.value = data.session
     user.value = data.session?.user ?? null
     if (user.value) await _loadProfile(user.value.id)
+    // Signal that auth is fully resolved — components can now safely render
+    isReady.value = true
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       session.value = newSession
@@ -98,6 +101,7 @@ export const useAuthStore = defineStore('auth', () => {
     session,
     user,
     profile,
+    isReady,
     isAuthenticated,
     userInitials,
     init,

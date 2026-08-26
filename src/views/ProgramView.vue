@@ -78,8 +78,19 @@
 
   <!-- ── Main Phase & Workout Content ──────────────────────────── -->
   <main class="program-main">
+    <!-- LOADING STATE: auth + queries resolving, show skeleton instead of wrong mode -->
+    <div v-if="isLoadingProgram" class="phase-container" style="padding: 24px 0">
+      <div v-for="n in 7" :key="n" class="day-card" style="margin-bottom: 8px; opacity: 0.5">
+        <div class="day-header-btn" style="pointer-events: none">
+          <div class="day-header-left">
+            <span class="day-name" style="background: oklch(20% 0.008 45); color: transparent; border-radius: 4px; min-width: 80px">Loading</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
-    <div v-if="hasActiveCustomProgram" class="phase-container">
+    <div v-else-if="hasActiveCustomProgram" class="phase-container">
       <div class="phase-info-bar">
         <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
         <span class="phase-subtitle-text">Your activated custom schedule (7 Days)</span>
@@ -535,8 +546,9 @@ function onResize() {
 }
 
 const userId = computed(() => authStore.user?.id)
+const authIsReady = computed(() => authStore.isReady)
 const { data: customDaysData } = useCustomDaysQuery(userId)
-const { data: customProgramsData } = useCustomProgramsQuery(userId)
+const { data: customProgramsData, isLoading: programsLoading } = useCustomProgramsQuery(userId)
 
 // Synchronous local cache backup to prevent split-second layout flashes on refresh
 const cachedDays = ref([])
@@ -607,6 +619,15 @@ const activeCustomSchedule = computed(() => {
 
 const hasActiveCustomProgram = computed(() => {
   return Object.keys(activeCustomSchedule.value).length > 0
+})
+
+// True while we're still waiting for auth OR for program data to load
+// — prevents flashing the wrong mode during the auth restore window
+const isLoadingProgram = computed(() => {
+  if (!authIsReady.value) return true
+  // If logged in and programs query is still in-flight, hold
+  if (userId.value && programsLoading.value) return true
+  return false
 })
 
 const activeProgramTitle = computed(() => {
