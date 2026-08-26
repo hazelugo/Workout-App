@@ -673,11 +673,11 @@ export const program = {
 }
 
 export const tips = [
-  { icon: '💤', text: "Sleep 7–8 hrs. That's when you grow." },
-  { icon: '🥩', text: '0.7–1g protein per lb bodyweight daily.' },
-  { icon: '📈', text: 'Add weight to barbell lifts weekly — even 5lbs counts.' },
-  { icon: '🏠', text: 'Home day ≠ easy day. These are real progressions.' },
-  { icon: '🎯', text: 'Miss a session? Pick up the next one. Never restart the week.' },
+  { tag: 'Recovery', text: "Sleep 7–8 hrs. That's when you grow." },
+  { tag: 'Nutrition', text: '0.7–1g protein per lb bodyweight daily.' },
+  { tag: 'Progression', text: 'Add weight to barbell lifts weekly — even 5lbs counts.' },
+  { tag: 'Intensity', text: 'Home day ≠ easy day. These are real progressions.' },
+  { tag: 'Consistency', text: 'Miss a session? Pick up the next one. Never restart the week.' },
 ]
 
 export const subs = [

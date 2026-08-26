@@ -7,16 +7,16 @@
         {{ hasActiveCustomProgram ? activeCustomSubtitle : 'Home & Gym Tracks · 5 days/week · 20–30 min' }}
       </p>
       <div class="program-badges">
-        <span v-if="hasActiveCustomProgram" class="badge highlight" style="background: #a78bfa22; color: #c4b5fd; border-color: #a78bfa">⚡ Active Custom Plan</span>
-        <span v-else class="badge">🏠 Home</span>
-        <span v-if="!hasActiveCustomProgram" class="badge">🏋️ Gym</span>
-        <span class="badge highlight">🔗 Tap exercise for demo</span>
+        <span v-if="hasActiveCustomProgram" class="badge highlight" style="background: #a78bfa22; color: #c4b5fd; border-color: #a78bfa">Active Custom Plan</span>
+        <span v-else class="badge">Home Track</span>
+        <span v-if="!hasActiveCustomProgram" class="badge">Gym Track</span>
+        <span class="badge highlight">Tap exercise for demo</span>
         <button
           class="badge highlight export-badge-btn"
           @click="showExportModal = true"
           aria-label="Export workout program"
         >
-          <span aria-hidden="true">📤</span> Export Plan
+          Export Plan
         </button>
         <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge" style="color: #c4b5fd; text-decoration: none; border-color: #a78bfa66">
           Edit in Studio →
@@ -230,7 +230,7 @@
               <div class="day-header-left">
                 <span class="day-name">{{ d.day }}</span>
                 <span class="day-label-pill">{{ d.label }}</span>
-                <span v-if="!d.gym" class="home-only-badge">🏠 only</span>
+                <span v-if="!d.gym" class="home-only-badge">Home only</span>
                 <span v-if="d.day === today" class="today-badge">Today</span>
               </div>
               <span
@@ -258,8 +258,7 @@
                   :aria-pressed="getTrack(i, true) === t"
                   @click="setDayTrack(i, t)"
                 >
-                  <span aria-hidden="true">{{ t === 'home' ? '🏠' : '🏋️' }}</span>
-                  <span class="track-label">{{ t }}</span>
+                  <span class="track-label">{{ t === 'home' ? 'Home' : 'Gym' }}</span>
                 </button>
               </div>
             </Transition>
@@ -382,7 +381,7 @@
             class="tip-card"
             :style="{ '--phase-color': phase.color }"
           >
-            <span class="tip-icon" aria-hidden="true">{{ t.icon }}</span>
+            <span class="tip-tag" style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--phase-color, #a78bfa); margin-bottom: 4px; display: block">{{ t.tag }}</span>
             <p class="tip-text">{{ t.text }}</p>
           </div>
         </div>

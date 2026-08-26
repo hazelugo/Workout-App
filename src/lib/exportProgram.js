@@ -207,7 +207,7 @@ export function exportProgramToPdf(program, options = {}) {
 
               ${(track === 'all' || track === 'home') && day.home?.length ? `
                 <div class="track-group">
-                  ${track === 'all' && day.gym ? '<div class="track-name">🏠 Home Track</div>' : ''}
+                  ${track === 'all' && day.gym ? '<div class="track-name">Home Track</div>' : ''}
                   <table class="workout-table">
                     <thead>
                       <tr>
@@ -234,7 +234,7 @@ export function exportProgramToPdf(program, options = {}) {
 
               ${(track === 'all' || track === 'gym') && day.gym?.length ? `
                 <div class="track-group">
-                  ${track === 'all' ? '<div class="track-name">🏋️ Gym Track</div>' : ''}
+                  ${track === 'all' ? '<div class="track-name">Gym Track</div>' : ''}
                   <table class="workout-table">
                     <thead>
                       <tr>

@@ -61,10 +61,9 @@
         text-align: center;
       "
     >
-      <div style="font-size: 28px; margin-bottom: 12px; opacity: 0.5">📋</div>
-      <div style="font-size: 0.9375rem; color: #888; margin-bottom: 8px">No workouts logged yet</div>
-      <div style="font-size: 12px; color: #555; line-height: 1.7; max-width: 300px; margin: 0 auto 20px">
-        Open a day on the Program page and tap <strong style="color: #aaa; font-weight: 400">Log workout</strong>
+      <div style="font-size: 0.9375rem; color: #a3a3a3; margin-bottom: 8px; font-weight: 500">No workouts logged yet</div>
+      <div style="font-size: 12px; color: #737373; line-height: 1.7; max-width: 300px; margin: 0 auto 20px">
+        Open a day on the Program page and tap <strong style="color: #d4d4d4; font-weight: 500">Log workout</strong>
         when you're done.
       </div>
       <RouterLink
@@ -193,7 +192,7 @@
                   }"
                 >{{ phaseMeta(session.phase).name }}</span>
                 <span v-if="session.track && session.track !== 'custom'" style="font-size: 11px; color: #a3a3a3">
-                  {{ session.track === 'gym' ? '🏋️ Gym' : '🏠 Home' }}
+                  {{ session.track === 'gym' ? 'Gym' : 'Home' }}
                 </span>
               </div>
               <div style="font-size: 12px; color: #a3a3a3">
@@ -201,7 +200,7 @@
                 <template v-if="session.week"> · Week {{ session.week }}</template>
                 · {{ session.set_logs?.length ?? 0 }} sets
                 <template v-if="session.cardio_minutes">
-                  · <span style="color: #34d399">🏃 {{ session.cardio_minutes }} min</span>
+                  · <span style="color: #34d399">Cardio: {{ session.cardio_minutes }} min</span>
                 </template>
               </div>
             </div>
@@ -330,7 +329,7 @@
             <!-- Cardio row -->
             <div style="padding: 12px 0; border-top: 1px solid oklch(15% 0.008 45); display: flex; align-items: center; justify-content: space-between; gap: 12px">
               <div style="display: flex; align-items: center; gap: 10px; flex: 1">
-                <span style="font-size: 12px; color: #555; white-space: nowrap">🏃 Cardio</span>
+                <span style="font-size: 12px; color: #a3a3a3; font-weight: 500; white-space: nowrap">Cardio</span>
                 <div v-if="editingCardioId === session.id" style="display: flex; align-items: center; gap: 6px; flex: 1">
                   <input
                     v-model.number="cardioInput"

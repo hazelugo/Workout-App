@@ -86,7 +86,7 @@
               :class="{ copied: isCopied }"
               @click="handleCopy"
             >
-              <span aria-hidden="true">{{ isCopied ? '✓' : '📋' }}</span>
+              <span v-if="isCopied" aria-hidden="true">✓ </span>
               <span>{{ isCopied ? 'Copied to Clipboard' : 'Copy Text' }}</span>
             </button>
 
@@ -94,7 +94,6 @@
               class="btn-action btn-download"
               @click="handleDownload"
             >
-              <span aria-hidden="true">📄</span>
               <span>Download .txt</span>
             </button>
 
@@ -102,7 +101,6 @@
               class="btn-action btn-pdf"
               @click="handlePdf"
             >
-              <span aria-hidden="true">📑</span>
               <span>Export PDF</span>
             </button>
           </div>

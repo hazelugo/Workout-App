@@ -65,7 +65,7 @@
           transition: 'all 180ms ease-out',
         }"
       >
-        📋 My Programs ({{ programs.length }})
+        My Programs ({{ programs.length }})
       </button>
       <button
         @click="activeTab = 'overrides'"
@@ -85,7 +85,7 @@
           transition: 'all 180ms ease-out',
         }"
       >
-        ⚡ Day Builder ({{ savedWorkouts.length }})
+        Day Builder ({{ savedWorkouts.length }})
       </button>
     </div>
   </div>
@@ -212,7 +212,6 @@
         margin-bottom: 36px;
       "
     >
-      <div style="font-size: 28px; margin-bottom: 12px; opacity: 0.6">📋</div>
       <div style="font-size: 0.9375rem; color: #e5e5e5; font-weight: 500">No custom programs yet</div>
       <div style="font-size: 13px; color: #a3a3a3; margin-top: 6px; line-height: 1.5">
         Create a program to save a full 7-day training schedule as a reusable template.
@@ -269,9 +268,9 @@
               <!-- Active Badge -->
               <span
                 v-if="isProgramActive(program)"
-                style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: #22c55e22; color: #4ade80; border: 1px solid #22c55e55; font-weight: 700; display: inline-flex; align-items: center; gap: 4px"
+                style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: #22c55e22; color: #4ade80; border: 1px solid #22c55e55; font-weight: 700"
               >
-                <span aria-hidden="true">⚡</span> Active
+                Active
               </span>
               <span style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: oklch(16% 0.008 45); color: #a3a3a3; font-weight: 500">
                 {{ program.custom_program_days?.length ?? 0 }} day{{ (program.custom_program_days?.length ?? 0) !== 1 ? 's' : '' }}
@@ -303,9 +302,9 @@
             </button>
             
             <button @click="openExportProgram(program)"
-              style="padding: 8px 12px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center; gap: 4px"
+              style="padding: 8px 12px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center"
               aria-label="Export this custom program">
-              <span aria-hidden="true">📤</span> Export
+              Export
             </button>
             <button @click="renamingProgramId = program.id; renameProgramName = program.name"
               style="padding: 8px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
@@ -376,7 +375,7 @@
                   <!-- COPY / IMPORT FROM SAVED CUSTOM DAYS -->
                   <div v-if="savedWorkouts.length > 0" style="margin-bottom: 16px; padding: 12px; background: oklch(12% 0.008 45); border: 1px solid #a78bfa44; border-radius: 8px">
                     <div style="font-size: 10px; letter-spacing: 1.5px; color: #c4b5fd; text-transform: uppercase; font-weight: 600; margin-bottom: 8px">
-                      📥 Copy from Saved Custom Days
+                      Copy from Saved Custom Days
                     </div>
                     <select
                       @change="importSavedDayIntoProgram(program.id, d, $event.target.value); $event.target.value = ''"
@@ -586,10 +585,9 @@
         </div>
 
         <div v-if="ex.name.trim()" style="display: flex; align-items: center; gap: 6px">
-          <span aria-hidden="true" style="font-size: 10px; color: #a78bfa">▶</span>
           <a :href="yt(ex.name)" target="_blank" rel="noopener noreferrer"
             style="font-size: 12px; color: #c4b5fd; text-decoration: none; border-bottom: 1px dashed #a78bfa77; padding-bottom: 1px"
-          >Watch demo ↗</a>
+          >Watch demo</a>
         </div>
         <div v-else style="font-size: 12px; color: #737373; font-style: italic">Type a name to get a demo link</div>
       </div>
@@ -671,7 +669,7 @@
                 <td style="padding: 12px 8px 12px 0">
                   <a :href="yt(ex.name)" target="_blank" rel="noopener noreferrer"
                     style="color: #c4b5fd; text-decoration: none; border-bottom: 1px dashed #a78bfa77; padding-bottom: 1px; font-size: 0.9375rem; font-weight: 500"
-                  >{{ ex.name }} ↗</a>
+                  >{{ ex.name }}</a>
                 </td>
                 <td style="text-align: center; color: #a78bfa; font-weight: 700; font-variant-numeric: tabular-nums; padding: 12px 4px; font-size: 1rem">{{ ex.sets || '—' }}</td>
                 <td style="text-align: center; color: #e5e5e5; font-variant-numeric: tabular-nums; padding: 12px 0 12px 4px; white-space: nowrap">{{ ex.reps || '—' }}</td>

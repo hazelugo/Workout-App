@@ -171,12 +171,61 @@ async function handleSignOut() {
 </script>
 
 <style>
+/* Modern, accessible, high-legibility typography stack */
+:root {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: oklch(8% 0.012 45);
+  color: #e8e8e8;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 button,
 input,
 select,
 textarea {
-  font-family: Georgia, serif;
+  font-family: var(--font-sans);
 }
+
+/* Tabular numbers for all weights, sets, reps, and metrics */
+table,
+.tabular-nums,
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(24% 0.008 45);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(32% 0.008 45);
+}
+
+/* Text selection accent */
+::selection {
+  background: #a78bfa44;
+  color: #ffffff;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -191,31 +240,38 @@ textarea {
 <style scoped>
 .nav-link {
   flex-shrink: 0;
-  padding: 12px 8px;
-  min-width: 72px;
+  padding: 14px 18px;
+  min-width: 76px;
+  min-height: 48px;
   background: transparent;
   border-bottom: 2px solid transparent;
-  color: #e8440a;
-  font-size: 11px;
-  letter-spacing: 2px;
+  color: #a3a3a3;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   text-align: center;
   text-decoration: none;
-  display: block;
-  font-family: Georgia, serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
   transition:
     color 0.15s,
     background 0.15s,
     border-color 0.15s;
 }
+.nav-link:hover {
+  color: #f5f5f5;
+}
 .nav-link:focus-visible {
-  outline: 2px solid #e8e8e8;
+  outline: 2px solid #a78bfa;
   outline-offset: -2px;
 }
 .nav-link.router-link-exact-active {
   background: oklch(11.5% 0.008 45);
-  border-bottom-color: #e8e8e8;
-  color: #e8e8e8;
+  border-bottom-color: #a78bfa;
+  color: #f5f5f5;
 }
 .page-enter-active {
   transition: opacity 120ms ease-out;
