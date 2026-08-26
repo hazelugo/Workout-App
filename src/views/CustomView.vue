@@ -223,19 +223,27 @@
       <div
         v-for="program in programs"
         :key="program.id"
-        style="margin-bottom: 14px; border: 1px solid oklch(18% 0.008 45); border-radius: 12px; overflow: hidden; background: oklch(10% 0.01 45)"
+        :style="{
+          marginBottom: '14px',
+          border: isProgramActive(program) ? '1px solid #22c55e' : '1px solid oklch(18% 0.008 45)',
+          boxShadow: isProgramActive(program) ? '0 0 0 1px #22c55e44, 0 4px 20px -4px #22c55e22' : 'none',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          background: 'oklch(10% 0.01 45)',
+          transition: 'border-color 200ms ease, box-shadow 200ms ease',
+        }"
       >
         <!-- Program card header -->
         <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 18px;
-            background: oklch(11% 0.01 45);
-            gap: 12px;
-            flex-wrap: wrap;
-          "
+          :style="{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '16px 18px',
+            background: isProgramActive(program) ? 'oklch(12% 0.02 145)' : 'oklch(11% 0.01 45)',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }"
         >
           <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1">
             <!-- Editable program name -->
@@ -256,8 +264,15 @@
                 ✕
               </button>
             </div>
-            <div v-else style="display: flex; align-items: center; gap: 12px">
+            <div v-else style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
               <span style="font-size: 1rem; color: #f5f5f5; font-weight: 600">{{ program.name }}</span>
+              <!-- Active Badge -->
+              <span
+                v-if="isProgramActive(program)"
+                style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: #22c55e22; color: #4ade80; border: 1px solid #22c55e55; font-weight: 700; display: inline-flex; align-items: center; gap: 4px"
+              >
+                <span aria-hidden="true">⚡</span> Active
+              </span>
               <span style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: oklch(16% 0.008 45); color: #a3a3a3; font-weight: 500">
                 {{ program.custom_program_days?.length ?? 0 }} day{{ (program.custom_program_days?.length ?? 0) !== 1 ? 's' : '' }}
               </span>
@@ -270,11 +285,23 @@
               style="padding: 8px 14px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
               {{ expandedProgramId === program.id ? 'Close' : 'Edit Days' }}
             </button>
-            <button @click="handleActivateProgram(program)"
+            
+            <!-- Activate / Active status button -->
+            <button
+              v-if="isProgramActive(program)"
+              disabled
+              style="padding: 8px 16px; background: #14532d; border: 1px solid #22c55e; border-radius: 20px; color: #4ade80; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center; gap: 4px; opacity: 1; cursor: default"
+            >
+              <span>✓</span> Active Plan
+            </button>
+            <button
+              v-else
+              @click="handleActivateProgram(program)"
               :disabled="activatingProgramId === program.id"
               style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
               {{ activatingProgramId === program.id ? 'Applying…' : 'Activate Plan' }}
             </button>
+            
             <button @click="openExportProgram(program)"
               style="padding: 8px 12px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center; gap: 4px"
               aria-label="Export this custom program">
@@ -744,7 +771,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
@@ -838,13 +865,42 @@ async function saveNewProgram() {
   }
 }
 
+// ── Active Program Tracking ──────────────────────────────────
+const activeProgramId = ref(null)
+
+function syncActiveProgramId() {
+  const uid = auth.user?.id
+  const savedId = (uid ? localStorage.getItem(`active-program-id-${uid}`) : null) || localStorage.getItem('active-program-id-last')
+  activeProgramId.value = savedId
+}
+
+syncActiveProgramId()
+onMounted(syncActiveProgramId)
+watch(() => auth.user?.id, syncActiveProgramId)
+
+function isProgramActive(program) {
+  if (!program) return false
+  if (activeProgramId.value && program.id === activeProgramId.value) return true
+  const uid = auth.user?.id
+  const savedName = (uid ? localStorage.getItem(`active-program-name-${uid}`) : null) || localStorage.getItem('active-program-name-last')
+  if (savedName && program.name === savedName) return true
+  if (programs.value?.length === 1 && auth.profile?.program_adopted) return true
+  return false
+}
+
 // ── Programs: rename ──────────────────────────────────────────
 const renamingProgramId = ref(null)
 const renameProgramName = ref('')
 
 async function confirmProgramRename(programId) {
   if (!renameProgramName.value.trim()) return
-  await renameProgram(programId, renameProgramName.value.trim())
+  const newName = renameProgramName.value.trim()
+  await renameProgram(programId, newName)
+  if (activeProgramId.value === programId) {
+    const uid = auth.user?.id
+    if (uid) localStorage.setItem(`active-program-name-${uid}`, newName)
+    localStorage.setItem('active-program-name-last', newName)
+  }
   await invalidateCustomPrograms(queryClient)
   renamingProgramId.value = null
 }
@@ -854,6 +910,16 @@ const confirmDeleteProgramId = ref(null)
 
 async function handleDeleteProgram(programId) {
   await deleteProgram(programId)
+  if (activeProgramId.value === programId) {
+    activeProgramId.value = null
+    const uid = auth.user?.id
+    if (uid) {
+      localStorage.removeItem(`active-program-id-${uid}`)
+      localStorage.removeItem(`active-program-name-${uid}`)
+    }
+    localStorage.removeItem('active-program-id-last')
+    localStorage.removeItem('active-program-name-last')
+  }
   await invalidateCustomPrograms(queryClient)
   confirmDeleteProgramId.value = null
   if (expandedProgramId.value === programId) expandedProgramId.value = null
@@ -870,6 +936,7 @@ async function handleActivateProgram(program) {
     await activateProgram(auth.user.id, days)
     await invalidateCustomDays(queryClient)
     await auth.adoptProgram()
+    activeProgramId.value = program.id
 
     // Build cache rows — ensure exercises is always a plain array
     const rows = days.map((d) => {
