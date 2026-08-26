@@ -96,19 +96,6 @@
         <span class="phase-subtitle-text">Your activated custom schedule (7 Days)</span>
       </div>
 
-      <!-- DEBUG PANEL: remove after diagnosis -->
-      <details style="margin: 8px 0; padding: 8px 12px; background: oklch(18% 0.01 45); border-radius: 8px; font-size: 0.7rem; color: #a78bfa; cursor: pointer;">
-        <summary style="font-weight: 600;">🔍 Debug: tap to inspect schedule data</summary>
-        <div style="margin-top: 8px; white-space: pre-wrap; color: #e5e5e5; font-family: monospace; font-size: 0.65rem; overflow-x: auto;">
-          <div><strong>Keys in schedule:</strong> {{ Object.keys(activeCustomSchedule).join(', ') || 'NONE' }}</div>
-          <div style="margin-top:4px"><strong>Source (customDaysData rows):</strong> {{ customDaysData?.length ?? 'undefined' }}</div>
-          <div><strong>Source (cachedDays rows):</strong> {{ cachedDays.length }}</div>
-          <div><strong>Source (customProgramsData):</strong> {{ customProgramsData?.length ?? 'undefined' }} programs</div>
-          <div style="margin-top:4px" v-for="(val, key) in activeCustomSchedule" :key="key">
-            <strong>{{ key }}:</strong> title="{{ val.title }}", exercises={{ val.exercises?.length ?? 'null' }}, first={{ JSON.stringify(val.exercises?.[0]) }}
-          </div>
-        </div>
-      </details>
 
       <div class="days-list">
         <article
@@ -160,7 +147,7 @@
                   >
                     <td class="td-exercise">
                       <a
-                        :href="yt(ex.name)"
+                        :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="exercise-link"
