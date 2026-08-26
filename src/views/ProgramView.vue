@@ -103,8 +103,8 @@
           >
             <div class="day-header-left">
               <span class="day-name">{{ dayName }}</span>
-              <span v-if="activeCustomSchedule[dayName]" class="day-label-pill" style="background: #a78bfa22; color: #c4b5fd">
-                {{ activeCustomSchedule[dayName].title || `${activeCustomSchedule[dayName].exercises?.length ?? 0} exercises` }}
+              <span v-if="activeCustomSchedule[dayName.toLowerCase()]" class="day-label-pill" style="background: #a78bfa22; color: #c4b5fd">
+                {{ activeCustomSchedule[dayName.toLowerCase()].title || `${activeCustomSchedule[dayName.toLowerCase()].exercises?.length ?? 0} exercises` }}
               </span>
               <span v-else class="day-label-pill" style="background: oklch(14% 0.008 45); color: #737373">
                 Rest Day
@@ -119,7 +119,7 @@
           <!-- Day Content -->
           <Transition name="accordion">
             <div v-if="isDayExpanded(i)" class="day-content">
-              <div v-if="activeCustomSchedule[dayName]?.exercises?.length" class="table-container">
+              <div v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length" class="table-container">
                 <table class="exercise-table">
                   <thead>
                     <tr>
@@ -130,7 +130,7 @@
                   </thead>
                   <tbody>
                     <tr
-                      v-for="(ex, j) in activeCustomSchedule[dayName].exercises"
+                      v-for="(ex, j) in activeCustomSchedule[dayName.toLowerCase()].exercises"
                       :key="j"
                       class="exercise-row"
                     >
@@ -161,7 +161,7 @@
                       isQueued: queuedDay === i,
                     }"
                     :disabled="loggingDay === i"
-                    @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName].title, exercises: activeCustomSchedule[dayName].exercises }, true)"
+                    @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName.toLowerCase()].title, exercises: activeCustomSchedule[dayName.toLowerCase()].exercises }, true)"
                   >
                     <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
                     <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
@@ -543,11 +543,29 @@ function onResize() {
 // ── Active Custom Days Schedule ────────────────────────────────
 const activeCustomDaysList = computed(() => customDaysData.value ?? [])
 
+function getCustomExercises(dayItem) {
+  if (!dayItem || !dayItem.exercises) return []
+  if (typeof dayItem.exercises === 'string') {
+    try {
+      return JSON.parse(dayItem.exercises)
+    } catch (e) {
+      return []
+    }
+  }
+  return Array.isArray(dayItem.exercises) ? dayItem.exercises : []
+}
+
 const activeCustomSchedule = computed(() => {
   const map = {}
   for (const item of activeCustomDaysList.value) {
-    if (!map[item.day_name] && item.exercises?.length) {
-      map[item.day_name] = item
+    if (!item.day_name) continue
+    const key = item.day_name.trim().toLowerCase()
+    const exList = getCustomExercises(item)
+    if (exList.length) {
+      map[key] = {
+        ...item,
+        exercises: exList,
+      }
     }
   }
   return map
@@ -575,11 +593,11 @@ const exportProgramData = computed(() => {
 
 const phase = computed(() => program.phases[activePhase.value])
 
-// All 7 days expanded by default so exercises are visible immediately
-const expandedDays = ref(new Set([0, 1, 2, 3, 4, 5, 6]))
+// Reactive object tracking day expansion state (0 to 6 all true by default)
+const expandedDaysMap = ref({ 0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true })
 
 function isDayExpanded(i) {
-  return isDesktop.value || expandedDays.value.has(i)
+  return isDesktop.value || !!expandedDaysMap.value[i]
 }
 
 function selectPhase(i) {
@@ -587,10 +605,9 @@ function selectPhase(i) {
 }
 
 function toggleDay(i) {
-  if (expandedDays.value.has(i)) {
-    expandedDays.value.delete(i)
-  } else {
-    expandedDays.value.add(i)
+  expandedDaysMap.value = {
+    ...expandedDaysMap.value,
+    [i]: !expandedDaysMap.value[i],
   }
 }
 
