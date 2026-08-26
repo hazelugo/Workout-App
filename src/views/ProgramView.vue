@@ -145,16 +145,16 @@
                     class="exercise-row"
                   >
                     <td class="td-exercise">
-                      <button
-                        type="button"
+                      <a
+                        :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         class="exercise-link"
-                        style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer; color: #c4b5fd; border-bottom: 1px dashed #a78bfa77; display: inline-flex; align-items: center; gap: 4px"
-                        @click="openExerciseDemo(ex.name)"
-                        :aria-label="`View demonstration details for ${ex.name}`"
+                        style="color: #c4b5fd; border-bottom-color: #a78bfa77"
                       >
                         <span class="exercise-name">{{ ex.name }}</span>
                         <span class="demo-icon" aria-hidden="true">↗</span>
-                      </button>
+                      </a>
                     </td>
                     <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
                     <td class="td-reps">{{ ex.reps || '—' }}</td>
@@ -285,17 +285,17 @@
                         class="exercise-row"
                       >
                         <td class="td-exercise">
-                          <button
-                            v-if="ex.link || ex.name"
-                            type="button"
+                          <a
+                            v-if="ex.link"
+                            :href="ex.link"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             class="exercise-link"
-                            style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer; color: inherit; display: inline-flex; align-items: center; gap: 4px"
-                            @click="openExerciseDemo(ex.name, ex.link, ex.note)"
                             :aria-label="`Watch demonstration for ${ex.name}`"
                           >
                             <span class="exercise-name">{{ ex.name }}</span>
                             <span class="demo-icon" aria-hidden="true">↗</span>
-                          </button>
+                          </a>
                           <span v-else class="exercise-name-plain">{{ ex.name }}</span>
                           <p v-if="ex.note" class="exercise-note">
                             {{ ex.note }}
@@ -486,70 +486,6 @@
               @click="closeLogModal"
             >
               Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
-
-  <!-- ── Exercise Demonstration In-App Modal ───────────────────── -->
-  <Teleport to="body">
-    <Transition name="modal-fade">
-      <div
-        v-if="demoModal.open"
-        class="modal-backdrop"
-        role="dialog"
-        aria-modal="true"
-        :aria-labelledby="'demo-title-' + demoModal.exerciseName"
-        @click.self="closeExerciseDemo"
-        @keydown.esc="closeExerciseDemo"
-      >
-        <div class="modal-sheet">
-          <div class="modal-header">
-            <div>
-              <span class="modal-eyebrow">Exercise Demonstration</span>
-              <h2 :id="'demo-title-' + demoModal.exerciseName" class="modal-title">
-                {{ demoModal.exerciseName }}
-              </h2>
-            </div>
-            <button
-              class="modal-close-btn"
-              aria-label="Close demo details"
-              @click="closeExerciseDemo"
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
-
-          <div class="modal-body" style="padding: 20px 24px">
-            <div v-if="demoModal.note" style="margin-bottom: 20px; padding: 14px 18px; background: oklch(12% 0.01 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px">
-              <span style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a78bfa; font-weight: 700; display: block; margin-bottom: 6px">Form Cues & Technique</span>
-              <p style="margin: 0; font-size: 0.875rem; line-height: 1.5; color: #f5f5f5">{{ demoModal.note }}</p>
-            </div>
-
-            <div style="margin-bottom: 24px; padding: 18px; background: oklch(10% 0.01 45); border: 1px solid oklch(18% 0.008 45); border-radius: 10px; text-align: center">
-              <p style="margin: 0 0 14px; font-size: 0.875rem; color: #a3a3a3; line-height: 1.5">
-                Watch video demonstrations and coaching cues for <strong>{{ demoModal.exerciseName }}</strong>:
-              </p>
-              <a
-                :href="demoModal.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px 20px; background: #a78bfa; color: #000000; border-radius: 9999px; text-decoration: none; font-size: 0.8125rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: opacity 150ms"
-              >
-                <span>Watch Demonstration Video ↗</span>
-              </a>
-            </div>
-          </div>
-
-          <div class="modal-footer">
-            <button
-              class="modal-btn-primary"
-              @click="closeExerciseDemo"
-              style="width: 100%"
-            >
-              Back to Workout
             </button>
           </div>
         </div>
@@ -1015,28 +951,6 @@ async function confirmLog() {
 
 const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
 const currentWeek = ref(1)
-// ── In-App Exercise Demonstration Modal ──────────────────────
-const demoModal = ref({
-  open: false,
-  exerciseName: '',
-  link: '',
-  note: '',
-})
-
-function openExerciseDemo(name, link = null, note = null) {
-  const url = link || `https://www.youtube.com/results?search_query=${encodeURIComponent((name || '') + ' exercise demonstration')}`
-  demoModal.value = {
-    open: true,
-    exerciseName: name,
-    link: url,
-    note: note || '',
-  }
-}
-
-function closeExerciseDemo() {
-  demoModal.value.open = false
-}
-
 // ── Rest Timer Interval Widget ──────────────────────────────
 const restTimerSeconds = ref(90)
 const restTimerRunning = ref(false)
