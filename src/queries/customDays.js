@@ -1,20 +1,25 @@
+import { unref, computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys } from './keys'
 
-export async function fetchCustomDays() {
+export async function fetchCustomDays(userId) {
+  if (!userId) return []
   const { data, error } = await supabase
     .from('custom_days')
     .select('id, day_name, title, exercises, created_at')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
 
-export function useCustomDaysQuery() {
+export function useCustomDaysQuery(userIdRef) {
+  const uid = computed(() => unref(userIdRef))
   return useQuery({
-    queryKey: queryKeys.customDays.list(),
-    queryFn: fetchCustomDays,
+    queryKey: computed(() => queryKeys.customDays.list(uid.value)),
+    queryFn: () => fetchCustomDays(uid.value),
+    enabled: computed(() => !!uid.value),
   })
 }
 

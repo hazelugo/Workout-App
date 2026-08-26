@@ -87,15 +87,16 @@ export async function deleteProgram(programId) {
 // ── Activate: copy program days → active custom_days ──────────
 
 export async function activateProgram(userId, programDays) {
-  if (!programDays?.length) return
+  if (!userId || !programDays?.length) return
+  // Clear existing active custom days for this user
+  await supabase.from('custom_days').delete().eq('user_id', userId)
+
   const rows = programDays.map((d) => ({
     user_id: userId,
     day_name: d.day_name,
     title: d.title ?? '',
     exercises: d.exercises,
   }))
-  const { error } = await supabase
-    .from('custom_days')
-    .upsert(rows, { onConflict: 'user_id,day_name' })
+  const { error } = await supabase.from('custom_days').insert(rows)
   if (error) throw error
 }

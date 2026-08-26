@@ -787,7 +787,8 @@ function showToast(msg) {
   }, 4000)
 }
 
-const { data: customDaysData } = useCustomDaysQuery()
+const userId = computed(() => auth.user?.id)
+const { data: customDaysData } = useCustomDaysQuery(userId)
 const { data: programsData, isPending: programsLoading } = useCustomProgramsQuery()
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -869,6 +870,20 @@ async function handleActivateProgram(program) {
     await activateProgram(auth.user.id, days)
     await invalidateCustomDays(queryClient)
     await auth.adoptProgram()
+
+    // Save to instant local cache so ProgramView renders synchronously without delay
+    const rows = days.map((d) => ({
+      user_id: auth.user?.id,
+      day_name: d.day_name,
+      title: d.title ?? '',
+      exercises: d.exercises,
+    }))
+    try {
+      const k = auth.user?.id ? `active-custom-days-v1-${auth.user.id}` : 'active-custom-days-v1-anon'
+      localStorage.setItem(k, JSON.stringify(rows))
+      localStorage.setItem('active-custom-days-v1-last', JSON.stringify(rows))
+    } catch (e) {}
+
     showToast(`"${program.name}" is now active in your program!`)
   } finally {
     activatingProgramId.value = null

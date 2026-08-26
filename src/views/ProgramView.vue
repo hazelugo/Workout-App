@@ -514,17 +514,10 @@ const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const router = useRouter()
 
-const showExportModal = ref(false)
-
-const { data: customDaysData } = useCustomDaysQuery()
-
-
-
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today)
 
 const activePhase = ref(0)
-const expandedDay = ref(todayIndex >= 0 ? todayIndex : 0)
 const track = ref({})
 
 const _onboardKey = `onboard-v1-${authStore.user?.id ?? 'anon'}`
@@ -540,8 +533,28 @@ function onResize() {
   windowWidth.value = window.innerWidth
 }
 
-// ── Active Custom Days Schedule ────────────────────────────────
-const activeCustomDaysList = computed(() => customDaysData.value ?? [])
+const userId = computed(() => authStore.user?.id)
+const { data: customDaysData } = useCustomDaysQuery(userId)
+
+// Synchronous local cache backup to prevent split-second layout flashes on refresh
+const cachedDays = ref([])
+try {
+  const localKey = authStore.user?.id ? `active-custom-days-v1-${authStore.user.id}` : 'active-custom-days-v1-anon'
+  const raw = localStorage.getItem(localKey) || localStorage.getItem('active-custom-days-v1-last')
+  if (raw) cachedDays.value = JSON.parse(raw)
+} catch (e) {}
+
+const activeCustomDaysList = computed(() => {
+  if (customDaysData.value && customDaysData.value.length > 0) {
+    try {
+      const k = authStore.user?.id ? `active-custom-days-v1-${authStore.user.id}` : 'active-custom-days-v1-anon'
+      localStorage.setItem(k, JSON.stringify(customDaysData.value))
+      localStorage.setItem('active-custom-days-v1-last', JSON.stringify(customDaysData.value))
+    } catch (e) {}
+    return customDaysData.value
+  }
+  return cachedDays.value
+})
 
 function getCustomExercises(dayItem) {
   if (!dayItem || !dayItem.exercises) return []
