@@ -275,6 +275,11 @@
               style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
               {{ activatingProgramId === program.id ? 'Applying…' : 'Activate Plan' }}
             </button>
+            <button @click="openExportProgram(program)"
+              style="padding: 8px 12px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center; gap: 4px"
+              aria-label="Export this custom program">
+              <span aria-hidden="true">📤</span> Export
+            </button>
             <button @click="renamingProgramId = program.id; renameProgramName = program.name"
               style="padding: 8px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
               Rename
@@ -729,6 +734,13 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- ── Export Program Modal ─────────────────────────────────── -->
+  <ExportModal
+    :show="showExportModal"
+    :program="exportingProgram"
+    @close="showExportModal = false"
+  />
 </template>
 
 <script setup>
@@ -750,6 +762,7 @@ import {
 import { logCustomDay } from '@/queries/customLog'
 import { invalidateWorkoutHistory } from '@/queries/history'
 import { parseSetCount } from '@/lib/workout'
+import ExportModal from '@/components/ExportModal.vue'
 
 const auth = useAuthStore()
 const queryClient = useQueryClient()
@@ -757,6 +770,14 @@ const queryClient = useQueryClient()
 const activeTab = ref('programs')
 const toastMessage = ref(null)
 let _toastTimer = null
+
+const showExportModal = ref(false)
+const exportingProgram = ref(null)
+
+function openExportProgram(prog) {
+  exportingProgram.value = prog
+  showExportModal.value = true
+}
 
 function showToast(msg) {
   toastMessage.value = msg

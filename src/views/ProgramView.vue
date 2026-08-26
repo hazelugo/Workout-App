@@ -11,6 +11,13 @@
         <span v-else class="badge">🏠 Home</span>
         <span v-if="!hasActiveCustomProgram" class="badge">🏋️ Gym</span>
         <span class="badge highlight">🔗 Tap exercise for demo</span>
+        <button
+          class="badge highlight export-badge-btn"
+          @click="showExportModal = true"
+          aria-label="Export workout program"
+        >
+          <span aria-hidden="true">📤</span> Export Plan
+        </button>
         <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge" style="color: #c4b5fd; text-decoration: none; border-color: #a78bfa66">
           Edit in Studio →
         </RouterLink>
@@ -516,6 +523,14 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- ── Export Program Modal ─────────────────────────────────── -->
+  <ExportModal
+    :show="showExportModal"
+    :program="exportProgramData"
+    :initial-phase-index="activePhase"
+    @close="showExportModal = false"
+  />
 </template>
 
 <script setup>
@@ -531,10 +546,13 @@ import { invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
 import { logCustomDay } from '@/queries/customLog'
 import { program, tips, subs, WEEKDAYS } from '@/data/program'
+import ExportModal from '@/components/ExportModal.vue'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const router = useRouter()
+
+const showExportModal = ref(false)
 
 const { data: customDaysData } = useCustomDaysQuery()
 
@@ -599,6 +617,16 @@ const activeProgramTitle = computed(() => {
   if (!hasActiveCustomProgram.value) return 'Build From Zero'
   const firstWithTitle = Object.values(activeCustomSchedule.value).find((d) => d.title)
   return firstWithTitle?.title ? `Custom: ${firstWithTitle.title}` : 'My Active Custom Program'
+})
+
+const exportProgramData = computed(() => {
+  if (hasActiveCustomProgram.value) {
+    return {
+      name: activeProgramTitle.value || 'Active Custom Plan',
+      custom_program_days: activeCustomDaysList.value || [],
+    }
+  }
+  return program
 })
 
 const phase = computed(() => program.phases[activePhase.value])
@@ -1826,5 +1854,23 @@ onUnmounted(() => {
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
+}
+
+.export-badge-btn {
+  cursor: pointer;
+  background: oklch(14% 0.008 45);
+  color: #f5f5f5;
+  border-color: oklch(24% 0.008 45);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 150ms ease-out;
+}
+.export-badge-btn:hover {
+  background: oklch(18% 0.008 45);
+  border-color: oklch(30% 0.008 45);
+  color: #ffffff;
 }
 </style>
