@@ -35,6 +35,10 @@ create table public.workout_sessions (
   day_name text not null,
   track text check (track in ('home', 'gym', 'custom')),
   cardio_minutes int,
+  calories int,
+  protein_g int,
+  carbs_g int,
+  fat_g int,
   completed_at timestamptz
 );
 

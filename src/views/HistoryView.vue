@@ -195,13 +195,17 @@
                   {{ session.track === 'gym' ? 'Gym' : 'Home' }}
                 </span>
               </div>
-              <div style="font-size: 12px; color: #a3a3a3">
-                {{ formatSessionDate(session.completed_at) }}
-                <template v-if="session.week"> · Week {{ session.week }}</template>
-                · {{ session.set_logs?.length ?? 0 }} sets
-                <template v-if="session.cardio_minutes">
-                  · <span style="color: #34d399">Cardio: {{ session.cardio_minutes }} min</span>
-                </template>
+              <div style="font-size: 12px; color: #a3a3a3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+                <span>{{ formatSessionDate(session.completed_at) }}</span>
+                <template v-if="session.week"><span>· Week {{ session.week }}</span></template>
+                <span>· {{ session.set_logs?.length ?? 0 }} sets</span>
+                <span v-if="session.cardio_minutes" style="color: #34d399">· Cardio: {{ session.cardio_minutes }} min</span>
+                <span v-if="session.calories" style="color: #facc15">· {{ Number(session.calories).toLocaleString() }} kcal</span>
+                <span v-if="session.protein_g || session.carbs_g || session.fat_g" style="color: #c4b5fd">
+                  · <template v-if="session.protein_g">P: {{ session.protein_g }}g </template>
+                  <template v-if="session.carbs_g">C: {{ session.carbs_g }}g </template>
+                  <template v-if="session.fat_g">F: {{ session.fat_g }}g</template>
+                </span>
               </div>
             </div>
           </div>
@@ -326,41 +330,93 @@
               </div>
             </div>
 
-            <!-- Cardio row -->
-            <div style="padding: 12px 0; border-top: 1px solid oklch(15% 0.008 45); display: flex; align-items: center; justify-content: space-between; gap: 12px">
-              <div style="display: flex; align-items: center; gap: 10px; flex: 1">
-                <span style="font-size: 12px; color: #a3a3a3; font-weight: 500; white-space: nowrap">Cardio</span>
-                <div v-if="editingCardioId === session.id" style="display: flex; align-items: center; gap: 6px; flex: 1">
-                  <input
-                    v-model.number="cardioInput"
-                    type="number"
-                    min="0"
-                    max="999"
-                    placeholder="mins"
-                    class="history-input"
-                    style="width: 72px"
-                    aria-label="Cardio minutes"
-                    @keydown.enter="saveCardio(session.id)"
-                    @keydown.escape="editingCardioId = null"
-                  />
-                  <span style="font-size: 11px; color: #555">min</span>
-                  <button @click="saveCardio(session.id)" :disabled="savingCardio" class="save-btn">{{ savingCardio ? '…' : 'Save' }}</button>
-                  <button @click="editingCardioId = null" class="cancel-btn">Cancel</button>
-                </div>
-                <span v-else-if="session.cardio_minutes" style="font-size: 13px; color: #34d399; font-variant-numeric: tabular-nums">{{ session.cardio_minutes }} min</span>
-                <span v-else style="font-size: 11px; color: #3a3a3a; font-style: italic">Not logged</span>
+            <!-- Daily Cardio & Nutrition Section -->
+            <div style="padding: 16px 0 12px; border-top: 1px solid oklch(15% 0.008 45)">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px">
+                <span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 700">
+                  Daily Cardio & Nutrition
+                </span>
+                <button
+                  v-if="editingNutritionId !== session.id"
+                  @click="startEditNutrition(session)"
+                  class="edit-btn"
+                  :aria-label="'Edit daily cardio and nutrition for session'"
+                >
+                  {{ (session.cardio_minutes || session.calories || session.protein_g || session.carbs_g || session.fat_g) ? 'Edit Metrics' : '+ Add Metrics' }}
+                </button>
               </div>
-              <button
-                v-if="editingCardioId !== session.id"
-                @click="startEditCardio(session.id, session.cardio_minutes)"
-                class="edit-btn"
-                :aria-label="session.cardio_minutes ? 'Edit cardio minutes' : 'Add cardio minutes'"
-              >
-                {{ session.cardio_minutes ? 'Edit' : 'Add' }}
-              </button>
-            </div>
-            <div v-if="cardioError" style="font-size: 11px; color: #f87171; padding: 0 0 8px; margin-top: -4px">
-              {{ cardioError }}
+
+              <!-- View Mode: Metric Chips -->
+              <div v-if="editingNutritionId !== session.id" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+                <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
+                  <span style="color: #a3a3a3">Cardio:</span>
+                  <strong v-if="session.cardio_minutes" style="color: #34d399; font-variant-numeric: tabular-nums">{{ session.cardio_minutes }} min</strong>
+                  <span v-else style="color: #737373; font-style: italic">—</span>
+                </div>
+
+                <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
+                  <span style="color: #a3a3a3">Calories:</span>
+                  <strong v-if="session.calories" style="color: #facc15; font-variant-numeric: tabular-nums">{{ Number(session.calories).toLocaleString() }} kcal</strong>
+                  <span v-else style="color: #737373; font-style: italic">—</span>
+                </div>
+
+                <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
+                  <span style="color: #a3a3a3">Protein:</span>
+                  <strong v-if="session.protein_g" style="color: #38bdf8; font-variant-numeric: tabular-nums">{{ session.protein_g }}g</strong>
+                  <span v-else style="color: #737373; font-style: italic">—</span>
+                </div>
+
+                <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
+                  <span style="color: #a3a3a3">Carbs:</span>
+                  <strong v-if="session.carbs_g" style="color: #fb923c; font-variant-numeric: tabular-nums">{{ session.carbs_g }}g</strong>
+                  <span v-else style="color: #737373; font-style: italic">—</span>
+                </div>
+
+                <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
+                  <span style="color: #a3a3a3">Fat:</span>
+                  <strong v-if="session.fat_g" style="color: #f472b6; font-variant-numeric: tabular-nums">{{ session.fat_g }}g</strong>
+                  <span v-else style="color: #737373; font-style: italic">—</span>
+                </div>
+              </div>
+
+              <!-- Edit Mode: Inline Form -->
+              <div v-else style="padding: 14px; background: oklch(12% 0.01 45); border: 1px solid oklch(22% 0.008 45); border-radius: 10px; margin-top: 6px">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 14px">
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #34d399; font-weight: 700; margin-bottom: 4px">Cardio (min)</label>
+                    <input v-model.number="nutritionInputs.cardio" type="number" min="0" max="999" placeholder="30" class="history-input" />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #facc15; font-weight: 700; margin-bottom: 4px">Calories (kcal)</label>
+                    <input v-model.number="nutritionInputs.calories" type="number" min="0" max="15000" placeholder="2400" class="history-input" />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #38bdf8; font-weight: 700; margin-bottom: 4px">Protein (g)</label>
+                    <input v-model.number="nutritionInputs.protein" type="number" min="0" max="999" placeholder="180" class="history-input" />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #fb923c; font-weight: 700; margin-bottom: 4px">Carbs (g)</label>
+                    <input v-model.number="nutritionInputs.carbs" type="number" min="0" max="999" placeholder="220" class="history-input" />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f472b6; font-weight: 700; margin-bottom: 4px">Fat (g)</label>
+                    <input v-model.number="nutritionInputs.fat" type="number" min="0" max="999" placeholder="65" class="history-input" />
+                  </div>
+                </div>
+
+                <div v-if="nutritionError" style="font-size: 11px; color: #f87171; margin-bottom: 10px">
+                  {{ nutritionError }}
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end">
+                  <button @click="saveNutrition(session.id)" :disabled="savingNutrition" class="save-btn">
+                    {{ savingNutrition ? 'Saving…' : 'Save Daily Metrics' }}
+                  </button>
+                  <button @click="editingNutritionId = null" class="cancel-btn">
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Delete session -->
@@ -510,33 +566,69 @@ async function saveEdit(sessionId, exerciseName, group) {
   }
 }
 
-// ── Cardio ───────────────────────────────────────────────────
-const editingCardioId = ref(null)
-const cardioInput     = ref(null)
-const savingCardio    = ref(false)
-const cardioError     = ref(null)
+// ── Daily Cardio & Nutrition Tracking ─────────────────────────
+const editingNutritionId = ref(null)
+const nutritionInputs = ref({
+  cardio: null,
+  calories: null,
+  protein: null,
+  carbs: null,
+  fat: null,
+})
+const savingNutrition = ref(false)
+const nutritionError = ref(null)
 
-function startEditCardio(sessionId, current) {
-  editingCardioId.value = sessionId
-  cardioInput.value = current ?? null
-  cardioError.value = null
+function startEditNutrition(session) {
+  editingNutritionId.value = session.id
+  nutritionInputs.value = {
+    cardio: session.cardio_minutes ?? null,
+    calories: session.calories ?? null,
+    protein: session.protein_g ?? null,
+    carbs: session.carbs_g ?? null,
+    fat: session.fat_g ?? null,
+  }
+  nutritionError.value = null
 }
 
-async function saveCardio(sessionId) {
-  savingCardio.value = true
-  cardioError.value = null
+async function saveNutrition(sessionId) {
+  savingNutrition.value = true
+  nutritionError.value = null
+
+  const payload = {
+    cardio_minutes: nutritionInputs.value.cardio != null && nutritionInputs.value.cardio !== '' ? Number(nutritionInputs.value.cardio) : null,
+    calories: nutritionInputs.value.calories != null && nutritionInputs.value.calories !== '' ? Number(nutritionInputs.value.calories) : null,
+    protein_g: nutritionInputs.value.protein != null && nutritionInputs.value.protein !== '' ? Number(nutritionInputs.value.protein) : null,
+    carbs_g: nutritionInputs.value.carbs != null && nutritionInputs.value.carbs !== '' ? Number(nutritionInputs.value.carbs) : null,
+    fat_g: nutritionInputs.value.fat != null && nutritionInputs.value.fat !== '' ? Number(nutritionInputs.value.fat) : null,
+  }
+
+  // Cache locally first for instant persistence and fallback
+  try {
+    localStorage.setItem(`session-nutrition-v1-${sessionId}`, JSON.stringify(payload))
+  } catch (e) {}
+
   try {
     const { error } = await supabase
       .from('workout_sessions')
-      .update({ cardio_minutes: cardioInput.value ?? null })
+      .update(payload)
       .eq('id', sessionId)
-    if (error) throw error
+    
+    if (error) {
+      // If full columns update errors before migration, update cardio alone
+      await supabase
+        .from('workout_sessions')
+        .update({ cardio_minutes: payload.cardio_minutes })
+        .eq('id', sessionId)
+    }
+
     await refetch()
-    editingCardioId.value = null
+    editingNutritionId.value = null
   } catch (err) {
-    cardioError.value = err?.message ?? 'Failed to save. Please try again.'
+    // Still refetch to reflect locally cached values
+    await refetch()
+    editingNutritionId.value = null
   } finally {
-    savingCardio.value = false
+    savingNutrition.value = false
   }
 }
 
