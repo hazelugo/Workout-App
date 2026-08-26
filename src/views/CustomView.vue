@@ -789,7 +789,7 @@ function showToast(msg) {
 
 const userId = computed(() => auth.user?.id)
 const { data: customDaysData } = useCustomDaysQuery(userId)
-const { data: programsData, isPending: programsLoading } = useCustomProgramsQuery()
+const { data: programsData, isPending: programsLoading } = useCustomProgramsQuery(userId)
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 

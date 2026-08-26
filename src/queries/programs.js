@@ -1,22 +1,27 @@
+import { unref, computed } from 'vue'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys } from './keys'
 
 // ── Fetch ──────────────────────────────────────────────────────
 
-export async function fetchCustomPrograms() {
+export async function fetchCustomPrograms(userId) {
+  if (!userId) return []
   const { data, error } = await supabase
     .from('custom_programs')
     .select('id, name, created_at, updated_at, custom_program_days(id, day_name, title, exercises)')
+    .eq('user_id', userId)
     .order('updated_at', { ascending: false })
   if (error) throw error
   return data ?? []
 }
 
-export function useCustomProgramsQuery() {
+export function useCustomProgramsQuery(userIdRef) {
+  const uid = computed(() => unref(userIdRef))
   return useQuery({
-    queryKey: queryKeys.programs.list(),
-    queryFn: fetchCustomPrograms,
+    queryKey: computed(() => queryKeys.programs.list(uid.value)),
+    queryFn: () => fetchCustomPrograms(uid.value),
+    enabled: computed(() => !!uid.value),
   })
 }
 

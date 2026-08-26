@@ -506,6 +506,7 @@ import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
 import { invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
+import { useCustomProgramsQuery } from '@/queries/programs'
 import { logCustomDay } from '@/queries/customLog'
 import { program, tips, subs, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
@@ -535,6 +536,7 @@ function onResize() {
 
 const userId = computed(() => authStore.user?.id)
 const { data: customDaysData } = useCustomDaysQuery(userId)
+const { data: customProgramsData } = useCustomProgramsQuery(userId)
 
 // Synchronous local cache backup to prevent split-second layout flashes on refresh
 const cachedDays = ref([])
@@ -570,17 +572,36 @@ function getCustomExercises(dayItem) {
 
 const activeCustomSchedule = computed(() => {
   const map = {}
-  for (const item of activeCustomDaysList.value) {
+  
+  // 1. Primary: custom_days
+  const daysList = activeCustomDaysList.value ?? []
+  for (const item of daysList) {
     if (!item.day_name) continue
     const key = item.day_name.trim().toLowerCase()
     const exList = getCustomExercises(item)
-    if (exList.length) {
-      map[key] = {
-        ...item,
-        exercises: exList,
+    if (exList.length && !map[key]) {
+      map[key] = { ...item, exercises: exList }
+    }
+  }
+
+  // 2. Secondary: if custom_days is empty, use the user's latest custom program
+  if (Object.keys(map).length === 0 && customProgramsData.value?.length > 0) {
+    const latestProgram = customProgramsData.value[0]
+    const progDays = latestProgram.custom_program_days ?? []
+    for (const item of progDays) {
+      if (!item.day_name) continue
+      const key = item.day_name.trim().toLowerCase()
+      const exList = getCustomExercises(item)
+      if (exList.length && !map[key]) {
+        map[key] = {
+          ...item,
+          programTitle: latestProgram.name,
+          exercises: exList,
+        }
       }
     }
   }
+
   return map
 })
 
@@ -590,7 +611,8 @@ const hasActiveCustomProgram = computed(() => {
 
 const activeProgramTitle = computed(() => {
   if (!hasActiveCustomProgram.value) return 'Build From Zero'
-  const firstWithTitle = Object.values(activeCustomSchedule.value).find((d) => d.title)
+  const firstWithTitle = Object.values(activeCustomSchedule.value).find((d) => d.programTitle || d.title)
+  if (firstWithTitle?.programTitle) return firstWithTitle.programTitle
   return firstWithTitle?.title ? `Custom: ${firstWithTitle.title}` : 'My Active Custom Program'
 })
 
