@@ -602,8 +602,8 @@ a:hover {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 14px;
-  min-height: 38px;
+  padding: 8px 16px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -624,8 +624,8 @@ a:hover {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 16px;
-  min-height: 38px;
+  padding: 8px 18px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -649,8 +649,8 @@ a:hover {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 14px;
-  min-height: 38px;
+  padding: 8px 16px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -672,7 +672,7 @@ a:hover {
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  min-height: 40px;
+  min-height: 44px;
   -moz-appearance: textfield;
 }
 .history-input::-webkit-outer-spin-button,
@@ -696,8 +696,8 @@ a:hover {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 14px;
-  min-height: 38px;
+  padding: 8px 16px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -717,8 +717,8 @@ a:hover {
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 8px 16px;
-  min-height: 38px;
+  padding: 8px 18px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

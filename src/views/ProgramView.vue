@@ -145,16 +145,16 @@
                     class="exercise-row"
                   >
                     <td class="td-exercise">
-                      <a
-                        :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
                         class="exercise-link"
-                        style="color: #c4b5fd; border-bottom-color: #a78bfa77"
+                        style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer; color: #c4b5fd; border-bottom: 1px dashed #a78bfa77; display: inline-flex; align-items: center; gap: 4px"
+                        @click="openExerciseDemo(ex.name)"
+                        :aria-label="`View demonstration details for ${ex.name}`"
                       >
                         <span class="exercise-name">{{ ex.name }}</span>
                         <span class="demo-icon" aria-hidden="true">↗</span>
-                      </a>
+                      </button>
                     </td>
                     <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
                     <td class="td-reps">{{ ex.reps || '—' }}</td>
@@ -285,17 +285,17 @@
                         class="exercise-row"
                       >
                         <td class="td-exercise">
-                          <a
-                            v-if="ex.link"
-                            :href="ex.link"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            v-if="ex.link || ex.name"
+                            type="button"
                             class="exercise-link"
+                            style="background: transparent; border: none; padding: 0; text-align: left; cursor: pointer; color: inherit; display: inline-flex; align-items: center; gap: 4px"
+                            @click="openExerciseDemo(ex.name, ex.link, ex.note)"
                             :aria-label="`Watch demonstration for ${ex.name}`"
                           >
                             <span class="exercise-name">{{ ex.name }}</span>
                             <span class="demo-icon" aria-hidden="true">↗</span>
-                          </a>
+                          </button>
                           <span v-else class="exercise-name-plain">{{ ex.name }}</span>
                           <p v-if="ex.note" class="exercise-note">
                             {{ ex.note }}
@@ -492,6 +492,139 @@
       </div>
     </Transition>
   </Teleport>
+
+  <!-- ── Exercise Demonstration In-App Modal ───────────────────── -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div
+        v-if="demoModal.open"
+        class="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="'demo-title-' + demoModal.exerciseName"
+        @click.self="closeExerciseDemo"
+        @keydown.esc="closeExerciseDemo"
+      >
+        <div class="modal-sheet">
+          <div class="modal-header">
+            <div>
+              <span class="modal-eyebrow">Exercise Demonstration</span>
+              <h2 :id="'demo-title-' + demoModal.exerciseName" class="modal-title">
+                {{ demoModal.exerciseName }}
+              </h2>
+            </div>
+            <button
+              class="modal-close-btn"
+              aria-label="Close demo details"
+              @click="closeExerciseDemo"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <div class="modal-body" style="padding: 20px 24px">
+            <div v-if="demoModal.note" style="margin-bottom: 20px; padding: 14px 18px; background: oklch(12% 0.01 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px">
+              <span style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a78bfa; font-weight: 700; display: block; margin-bottom: 6px">Form Cues & Technique</span>
+              <p style="margin: 0; font-size: 0.875rem; line-height: 1.5; color: #f5f5f5">{{ demoModal.note }}</p>
+            </div>
+
+            <div style="margin-bottom: 24px; padding: 18px; background: oklch(10% 0.01 45); border: 1px solid oklch(18% 0.008 45); border-radius: 10px; text-align: center">
+              <p style="margin: 0 0 14px; font-size: 0.875rem; color: #a3a3a3; line-height: 1.5">
+                Watch video demonstrations and coaching cues for <strong>{{ demoModal.exerciseName }}</strong>:
+              </p>
+              <a
+                :href="demoModal.link"
+                target="_blank"
+                rel="noopener noreferrer"
+                style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px 20px; background: #a78bfa; color: #000000; border-radius: 9999px; text-decoration: none; font-size: 0.8125rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: opacity 150ms"
+              >
+                <span>Watch Demonstration Video ↗</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              class="modal-btn-primary"
+              @click="closeExerciseDemo"
+              style="width: 100%"
+            >
+              Back to Workout
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
+
+  <!-- ── Rest Timer Floating Bar ───────────────────────────────── -->
+  <div class="rest-timer-bar">
+    <div class="rest-timer-inner">
+      <div class="rest-timer-display" :class="{ isZero: restTimerSeconds === 0 }">
+        <span class="rest-timer-label">Rest Timer</span>
+        <span class="rest-timer-digits">{{ restTimerFormatted }}</span>
+      </div>
+
+      <div class="rest-timer-controls">
+        <button
+          v-if="!restTimerRunning"
+          type="button"
+          class="timer-ctrl-btn timer-btn-start"
+          @click="startRestTimer()"
+          aria-label="Start rest timer"
+        >
+          Start
+        </button>
+        <button
+          v-else
+          type="button"
+          class="timer-ctrl-btn timer-btn-pause"
+          @click="pauseRestTimer()"
+          aria-label="Pause rest timer"
+        >
+          Pause
+        </button>
+
+        <button
+          type="button"
+          class="timer-preset-btn"
+          @click="startRestTimer(60)"
+        >
+          60s
+        </button>
+        <button
+          type="button"
+          class="timer-preset-btn"
+          @click="startRestTimer(90)"
+        >
+          90s
+        </button>
+        <button
+          type="button"
+          class="timer-preset-btn"
+          @click="startRestTimer(120)"
+        >
+          2m
+        </button>
+        <button
+          type="button"
+          class="timer-preset-btn"
+          @click="addRestTime(30)"
+          aria-label="Add 30 seconds"
+        >
+          +30s
+        </button>
+        <button
+          type="button"
+          class="timer-reset-btn"
+          @click="resetRestTimer(90)"
+          aria-label="Reset rest timer"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ── Export Program Modal ─────────────────────────────────── -->
   <ExportModal
@@ -882,6 +1015,69 @@ async function confirmLog() {
 
 const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
 const currentWeek = ref(1)
+// ── In-App Exercise Demonstration Modal ──────────────────────
+const demoModal = ref({
+  open: false,
+  exerciseName: '',
+  link: '',
+  note: '',
+})
+
+function openExerciseDemo(name, link = null, note = null) {
+  const url = link || `https://www.youtube.com/results?search_query=${encodeURIComponent((name || '') + ' exercise demonstration')}`
+  demoModal.value = {
+    open: true,
+    exerciseName: name,
+    link: url,
+    note: note || '',
+  }
+}
+
+function closeExerciseDemo() {
+  demoModal.value.open = false
+}
+
+// ── Rest Timer Interval Widget ──────────────────────────────
+const restTimerSeconds = ref(90)
+const restTimerRunning = ref(false)
+let _timerInterval = null
+
+const restTimerFormatted = computed(() => {
+  const mins = Math.floor(restTimerSeconds.value / 60)
+  const secs = restTimerSeconds.value % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+})
+
+function startRestTimer(seconds) {
+  if (seconds != null) restTimerSeconds.value = seconds
+  restTimerRunning.value = true
+  clearInterval(_timerInterval)
+  _timerInterval = setInterval(() => {
+    if (restTimerSeconds.value > 0) {
+      restTimerSeconds.value--
+    } else {
+      pauseRestTimer()
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200])
+      }
+    }
+  }, 1000)
+}
+
+function pauseRestTimer() {
+  restTimerRunning.value = false
+  clearInterval(_timerInterval)
+}
+
+function addRestTime(secs = 30) {
+  restTimerSeconds.value += secs
+}
+
+function resetRestTimer(secs = 90) {
+  pauseRestTimer()
+  restTimerSeconds.value = secs
+}
+
 onMounted(() => {
   window.addEventListener('resize', onResize, { passive: true })
   const saved = localStorage.getItem(_weekKey.value)
@@ -892,6 +1088,7 @@ onMounted(() => {
 })
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  clearInterval(_timerInterval)
   clearTimeout(_loggedTimer)
   clearTimeout(_queuedTimer)
 })
@@ -1925,5 +2122,105 @@ onUnmounted(() => {
   background: oklch(18% 0.008 45);
   border-color: oklch(30% 0.008 45);
   color: #ffffff;
+}
+
+/* ── Rest Timer Bar ────────────────────────────────────────── */
+.rest-timer-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: oklch(9% 0.012 45);
+  border-top: 1px solid oklch(20% 0.008 45);
+  padding: 10px 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+.rest-timer-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.rest-timer-display {
+  display: flex;
+  flex-direction: column;
+}
+.rest-timer-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #a3a3a3;
+  font-weight: 600;
+}
+.rest-timer-digits {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4ade80;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.rest-timer-display.isZero .rest-timer-digits {
+  color: #f87171;
+}
+.rest-timer-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.timer-ctrl-btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+.timer-btn-start {
+  background: #166534;
+  border: 1px solid #22c55e;
+  color: #ffffff;
+}
+.timer-btn-pause {
+  background: oklch(18% 0.008 45);
+  border: 1px solid oklch(28% 0.008 45);
+  color: #f5f5f5;
+}
+.timer-preset-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  background: oklch(14% 0.008 45);
+  border: 1px solid oklch(24% 0.008 45);
+  border-radius: 20px;
+  color: #d4d4d4;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.timer-preset-btn:hover {
+  background: oklch(18% 0.008 45);
+  color: #ffffff;
+}
+.timer-reset-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid oklch(20% 0.008 45);
+  border-radius: 20px;
+  color: #a3a3a3;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
 }
 </style>

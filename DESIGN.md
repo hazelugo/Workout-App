@@ -74,11 +74,18 @@ typography:
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif"
     fontVariantNumeric: "tabular-nums"
     fontWeight: 700
+  mono:
+    fontFamily: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+    fontSize: "0.8125rem"
+    lineHeight: 1.4
 rounded:
   xs: "4px"
   sm: "6px"
-  md: "10px"
+  md: "8px"
+  base: "10px"
   lg: "12px"
+  sheet: "14px"
+  modal: "16px"
   badge: "20px"
   pill: "9999px"
 spacing:

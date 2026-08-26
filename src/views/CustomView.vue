@@ -281,7 +281,7 @@
           <!-- Action buttons with minimum 44px touch targets -->
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
             <button @click="toggleProgramEditor(program.id)"
-              style="padding: 8px 14px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
+              style="padding: 8px 16px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
               {{ expandedProgramId === program.id ? 'Close' : 'Edit Days' }}
             </button>
             
@@ -289,7 +289,7 @@
             <button
               v-if="isProgramActive(program)"
               disabled
-              style="padding: 8px 16px; background: #14532d; border: 1px solid #22c55e; border-radius: 20px; color: #4ade80; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center; gap: 4px; opacity: 1; cursor: default"
+              style="padding: 8px 16px; background: #14532d; border: 1px solid #22c55e; border-radius: 20px; color: #4ade80; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; opacity: 1; cursor: default"
             >
               <span>✓</span> Active Plan
             </button>
@@ -297,32 +297,32 @@
               v-else
               @click="handleActivateProgram(program)"
               :disabled="activatingProgramId === program.id"
-              style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 38px; display: inline-flex; align-items: center">
+              style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
               {{ activatingProgramId === program.id ? 'Applying…' : 'Activate Plan' }}
             </button>
             
             <button @click="openExportProgram(program)"
-              style="padding: 8px 12px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center"
+              style="padding: 8px 14px; background: transparent; border: 1px solid #a78bfa55; border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; justify-content: center"
               aria-label="Export this custom program">
               Export
             </button>
             <button @click="renamingProgramId = program.id; renameProgramName = program.name"
-              style="padding: 8px 12px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
+              style="padding: 8px 14px; background: transparent; border: 1px solid oklch(20% 0.008 45); border-radius: 20px; color: #a3a3a3; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
               Rename
             </button>
             <template v-if="confirmDeleteProgramId !== program.id">
               <button @click="confirmDeleteProgramId = program.id"
-                style="padding: 8px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">
+                style="padding: 8px 14px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
                 Delete
               </button>
             </template>
             <template v-else>
               <button @click="handleDeleteProgram(program.id)"
-                style="padding: 8px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px">
+                style="padding: 8px 16px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
                 Confirm
               </button>
               <button @click="confirmDeleteProgramId = null"
-                style="padding: 8px 10px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">
+                style="padding: 8px 14px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">
                 No
               </button>
             </template>
@@ -420,13 +420,36 @@
                           class="workout-input"
                           :style="inputStyle"
                         />
-                        <button
-                          @click="removeProgramExercise(program.id, d, i)"
-                          :aria-label="`Remove exercise ${i + 1}`"
-                          style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 20px; padding: 4px 8px; flex-shrink: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
-                        >
-                          <span aria-hidden="true">×</span>
-                        </button>
+                        <div style="display: flex; gap: 4px; flex-shrink: 0">
+                          <button
+                            type="button"
+                            @click="moveProgramExerciseUp(program.id, d, i)"
+                            :disabled="i === 0"
+                            :aria-label="`Move exercise ${i + 1} up`"
+                            style="background: oklch(14% 0.008 45); border: 1px solid oklch(22% 0.008 45); border-radius: 6px; color: #c4b5fd; cursor: pointer; font-size: 13px; font-weight: 700; width: 34px; height: 38px; display: inline-flex; align-items: center; justify-content: center"
+                            :style="{ opacity: i === 0 ? 0.3 : 1, cursor: i === 0 ? 'default' : 'pointer' }"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            @click="moveProgramExerciseDown(program.id, d, i)"
+                            :disabled="i === programDayDraft[`${program.id}|${d}`].exercises.length - 1"
+                            :aria-label="`Move exercise ${i + 1} down`"
+                            style="background: oklch(14% 0.008 45); border: 1px solid oklch(22% 0.008 45); border-radius: 6px; color: #c4b5fd; cursor: pointer; font-size: 13px; font-weight: 700; width: 34px; height: 38px; display: inline-flex; align-items: center; justify-content: center"
+                            :style="{ opacity: i === programDayDraft[`${program.id}|${d}`].exercises.length - 1 ? 0.3 : 1, cursor: i === programDayDraft[`${program.id}|${d}`].exercises.length - 1 ? 'default' : 'pointer' }"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            @click="removeProgramExercise(program.id, d, i)"
+                            :aria-label="`Remove exercise ${i + 1}`"
+                            style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 20px; width: 34px; height: 38px; display: flex; align-items: center; justify-content: center"
+                          >
+                            <span aria-hidden="true">×</span>
+                          </button>
+                        </div>
                       </div>
                       <div style="display: flex; gap: 10px">
                         <div style="flex: 1; text-align: center">
@@ -564,13 +587,36 @@
             class="workout-input"
             :style="inputStyle"
           />
-          <button
-            @click="removeExercise(i)"
-            :aria-label="`Remove exercise ${i + 1}`"
-            style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 22px; line-height: 1; padding: 4px 8px; flex-shrink: 0; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
+          <div style="display: flex; gap: 4px; flex-shrink: 0">
+            <button
+              type="button"
+              @click="moveExerciseUp(i)"
+              :disabled="i === 0"
+              :aria-label="`Move exercise ${i + 1} up`"
+              style="background: oklch(14% 0.008 45); border: 1px solid oklch(22% 0.008 45); border-radius: 6px; color: #c4b5fd; cursor: pointer; font-size: 13px; font-weight: 700; width: 34px; height: 38px; display: inline-flex; align-items: center; justify-content: center"
+              :style="{ opacity: i === 0 ? 0.3 : 1, cursor: i === 0 ? 'default' : 'pointer' }"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              @click="moveExerciseDown(i)"
+              :disabled="i === exercises.length - 1"
+              :aria-label="`Move exercise ${i + 1} down`"
+              style="background: oklch(14% 0.008 45); border: 1px solid oklch(22% 0.008 45); border-radius: 6px; color: #c4b5fd; cursor: pointer; font-size: 13px; font-weight: 700; width: 34px; height: 38px; display: inline-flex; align-items: center; justify-content: center"
+              :style="{ opacity: i === exercises.length - 1 ? 0.3 : 1, cursor: i === exercises.length - 1 ? 'default' : 'pointer' }"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              @click="removeExercise(i)"
+              :aria-label="`Remove exercise ${i + 1}`"
+              style="background: transparent; border: none; color: #a3a3a3; cursor: pointer; font-size: 22px; width: 34px; height: 38px; display: flex; align-items: center; justify-content: center"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px">
@@ -643,13 +689,13 @@
           <Transition name="confirm" mode="out-in">
             <div v-if="confirmDeleteDayId === savedDay.id" key="confirm" style="display: flex; align-items: center">
               <span style="font-size: 12px; color: #a3a3a3; margin-right: 10px">Remove?</span>
-              <button @click="deleteDay(savedDay.id)" style="padding: 6px 14px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 38px; margin-right: 8px">Yes</button>
-              <button @click="confirmDeleteDayId = null" style="padding: 6px 12px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 38px">No</button>
+              <button @click="deleteDay(savedDay.id)" style="padding: 8px 16px; background: #7f3535; border: 1px solid #f87171; border-radius: 20px; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px">Yes</button>
+              <button @click="confirmDeleteDayId = null" style="padding: 8px 14px; background: transparent; border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #a3a3a3; font-size: 11px; cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">No</button>
             </div>
             <div v-else key="actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end">
-              <button @click="openLogModal(savedDay)" style="padding: 6px 14px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; min-height: 38px; display: inline-flex; align-items: center">Log</button>
-              <button @click="editDay(savedDay)" style="padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Edit</button>
-              <button @click="confirmDeleteDayId = savedDay.id" style="padding: 6px 12px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 38px; display: inline-flex; align-items: center">Delete</button>
+              <button @click="openLogModal(savedDay)" style="padding: 8px 16px; background: #166534; border: 1px solid #22c55e; border-radius: 20px; color: #ffffff; cursor: pointer; font-size: 11px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">Log</button>
+              <button @click="editDay(savedDay)" style="padding: 8px 14px; background: oklch(14% 0.008 45); border: 1px solid oklch(24% 0.008 45); border-radius: 20px; color: #c4b5fd; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">Edit</button>
+              <button @click="confirmDeleteDayId = savedDay.id" style="padding: 8px 14px; background: transparent; border: 1px solid #7f353555; border-radius: 20px; color: #fca5a5; cursor: pointer; font-size: 11px; font-weight: 500; min-height: 44px; display: inline-flex; align-items: center; justify-content: center">Delete</button>
             </div>
           </Transition>
         </div>
@@ -1037,6 +1083,22 @@ function removeProgramExercise(programId, dayName, idx) {
   }
 }
 
+function moveProgramExerciseUp(programId, dayName, idx) {
+  const draft = getOrInitDraft(programId, dayName)
+  if (idx <= 0 || !draft.exercises[idx]) return
+  const temp = draft.exercises[idx]
+  draft.exercises[idx] = draft.exercises[idx - 1]
+  draft.exercises[idx - 1] = temp
+}
+
+function moveProgramExerciseDown(programId, dayName, idx) {
+  const draft = getOrInitDraft(programId, dayName)
+  if (idx >= draft.exercises.length - 1 || !draft.exercises[idx]) return
+  const temp = draft.exercises[idx]
+  draft.exercises[idx] = draft.exercises[idx + 1]
+  draft.exercises[idx + 1] = temp
+}
+
 const savingProgramDay = ref(null)
 
 async function saveProgramDayHandler(programId, dayName) {
@@ -1089,6 +1151,20 @@ function removeExercise(i) {
   } else {
     exercises.value.splice(i, 1)
   }
+}
+
+function moveExerciseUp(i) {
+  if (i <= 0) return
+  const temp = exercises.value[i]
+  exercises.value[i] = exercises.value[i - 1]
+  exercises.value[i - 1] = temp
+}
+
+function moveExerciseDown(i) {
+  if (i >= exercises.value.length - 1) return
+  const temp = exercises.value[i]
+  exercises.value[i] = exercises.value[i + 1]
+  exercises.value[i + 1] = temp
 }
 
 function resetDayBuilder() {
@@ -1288,23 +1364,18 @@ a:hover {
 }
 
 .rename-slide-enter-active {
-  transition:
-    opacity 200ms ease-out,
-    max-height 200ms cubic-bezier(0.25, 1, 0.5, 1);
-  overflow: hidden;
-  max-height: 800px;
+  transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .rename-slide-leave-active {
-  transition:
-    opacity 140ms ease-in,
-    max-height 140ms ease-in;
-  overflow: hidden;
-  max-height: 800px;
+  transition: opacity 120ms ease-in, transform 120ms ease-in;
 }
-.rename-slide-enter-from,
+.rename-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 .rename-slide-leave-to {
   opacity: 0;
-  max-height: 0;
+  transform: translateY(-4px);
 }
 
 .modal-enter-active {
