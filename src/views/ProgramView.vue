@@ -141,71 +141,68 @@
             </span>
           </button>
 
-          <!-- Day Content -->
-          <Transition name="accordion">
-            <div v-if="isDayExpanded(i)" class="day-content">
-              <div v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length" class="table-container">
-                <table class="exercise-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="th-exercise">Exercise</th>
-                      <th scope="col" class="th-sets">Sets</th>
-                      <th scope="col" class="th-reps">Reps</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(ex, j) in activeCustomSchedule[dayName.toLowerCase()].exercises"
-                      :key="j"
-                      class="exercise-row"
-                    >
-                      <td class="td-exercise">
-                        <a
-                          :href="yt(ex.name)"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="exercise-link"
-                          style="color: #c4b5fd; border-bottom-color: #a78bfa77"
-                        >
-                          <span class="exercise-name">{{ ex.name }}</span>
-                          <span class="demo-icon" aria-hidden="true">↗</span>
-                        </a>
-                      </td>
-                      <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
-                      <td class="td-reps">{{ ex.reps || '—' }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <!-- Day Action Bar (Log Custom Workout CTA) -->
-                <div class="day-action-bar">
-                  <button
-                    class="btn-log-action"
-                    :class="{
-                      isLogged: loggedDay === i,
-                      isQueued: queuedDay === i,
-                    }"
-                    :disabled="loggingDay === i"
-                    @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName.toLowerCase()].title, exercises: activeCustomSchedule[dayName.toLowerCase()].exercises }, true)"
+          <!-- Day Content (no Transition — avoids opacity:0 blocking on initial render) -->
+          <div v-if="isDayExpanded(i)" class="day-content">
+            <div v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length" class="table-container">
+              <table class="exercise-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-exercise">Exercise</th>
+                    <th scope="col" class="th-sets">Sets</th>
+                    <th scope="col" class="th-reps">Reps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(ex, j) in activeCustomSchedule[dayName.toLowerCase()].exercises"
+                    :key="j"
+                    class="exercise-row"
                   >
-                    <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
-                    <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
-                    <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
-                    <span v-else class="btn-text">Log workout</span>
-                  </button>
+                    <td class="td-exercise">
+                      <a
+                        :href="yt(ex.name)"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="exercise-link"
+                        style="color: #c4b5fd; border-bottom-color: #a78bfa77"
+                      >
+                        <span class="exercise-name">{{ ex.name }}</span>
+                        <span class="demo-icon" aria-hidden="true">↗</span>
+                      </a>
+                    </td>
+                    <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
+                    <td class="td-reps">{{ ex.reps || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
 
-                  <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
-                    View history →
-                  </RouterLink>
-                </div>
-              </div>
-
-              <!-- Rest Day Message -->
-              <div v-else style="padding: 20px 0; text-align: center; color: #737373; font-style: italic; font-size: 0.875rem">
-                Rest & recovery day — no exercises scheduled.
+              <!-- Log Workout CTA -->
+              <div class="day-action-bar">
+                <button
+                  class="btn-log-action"
+                  :class="{
+                    isLogged: loggedDay === i,
+                    isQueued: queuedDay === i,
+                  }"
+                  :disabled="loggingDay === i"
+                  @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName.toLowerCase()].title, exercises: activeCustomSchedule[dayName.toLowerCase()].exercises }, true)"
+                >
+                  <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
+                  <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
+                  <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
+                  <span v-else class="btn-text">Log workout</span>
+                </button>
+                <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
+                  View history →
+                </RouterLink>
               </div>
             </div>
-          </Transition>
+
+            <!-- Rest Day -->
+            <div v-else style="padding: 20px 0; text-align: center; color: #737373; font-style: italic; font-size: 0.875rem">
+              Rest &amp; recovery day — no exercises scheduled.
+            </div>
+          </div>
         </article>
       </div>
     </div>
