@@ -381,13 +381,24 @@
 
               <!-- Edit Mode: Inline Form -->
               <div v-else style="padding: 14px; background: oklch(12% 0.01 45); border: 1px solid oklch(22% 0.008 45); border-radius: 10px; margin-top: 6px">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 14px">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 12px">
                   <div>
                     <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #34d399; font-weight: 700; margin-bottom: 4px">Cardio (min)</label>
                     <input v-model.number="nutritionInputs.cardio" type="number" min="0" max="999" placeholder="30" class="history-input" />
                   </div>
                   <div>
-                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #facc15; font-weight: 700; margin-bottom: 4px">Calories (kcal)</label>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px">
+                      <label style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #facc15; font-weight: 700">Calories (kcal)</label>
+                      <button
+                        v-if="calculatedCaloriesFromMacros != null && nutritionInputs.calories !== calculatedCaloriesFromMacros"
+                        type="button"
+                        @click="applyCalculatedCalories"
+                        style="background: transparent; border: none; padding: 0; color: #facc15; font-size: 10px; font-weight: 600; cursor: pointer; text-decoration: underline"
+                        title="Calculate from Protein (4 kcal/g) + Carbs (4 kcal/g) + Fat (9 kcal/g)"
+                      >
+                        Auto: {{ calculatedCaloriesFromMacros }}
+                      </button>
+                    </div>
                     <input v-model.number="nutritionInputs.calories" type="number" min="0" max="15000" placeholder="2400" class="history-input" />
                   </div>
                   <div>
@@ -402,6 +413,12 @@
                     <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #f472b6; font-weight: 700; margin-bottom: 4px">Fat (g)</label>
                     <input v-model.number="nutritionInputs.fat" type="number" min="0" max="999" placeholder="65" class="history-input" />
                   </div>
+                </div>
+
+                <!-- Macro calculation breakdown indicator -->
+                <div v-if="calculatedCaloriesFromMacros != null" style="font-size: 11px; color: #a3a3a3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 6px">
+                  <span>Macro formula: ({{ nutritionInputs.protein || 0 }}g × 4) + ({{ nutritionInputs.carbs || 0 }}g × 4) + ({{ nutritionInputs.fat || 0 }}g × 9)</span>
+                  <strong style="color: #facc15; font-variant-numeric: tabular-nums">= {{ calculatedCaloriesFromMacros }} kcal</strong>
                 </div>
 
                 <div v-if="nutritionError" style="font-size: 11px; color: #f87171; margin-bottom: 10px">
@@ -577,6 +594,34 @@ const nutritionInputs = ref({
 })
 const savingNutrition = ref(false)
 const nutritionError = ref(null)
+
+const calculatedCaloriesFromMacros = computed(() => {
+  const p = Number(nutritionInputs.value.protein) || 0
+  const c = Number(nutritionInputs.value.carbs) || 0
+  const f = Number(nutritionInputs.value.fat) || 0
+  if (p === 0 && c === 0 && f === 0) return null
+  return (p * 4) + (c * 4) + (f * 9)
+})
+
+function applyCalculatedCalories() {
+  if (calculatedCaloriesFromMacros.value != null) {
+    nutritionInputs.value.calories = calculatedCaloriesFromMacros.value
+  }
+}
+
+watch(
+  () => [nutritionInputs.value.protein, nutritionInputs.value.carbs, nutritionInputs.value.fat],
+  ([newP, newC, newF], [oldP, oldC, oldF]) => {
+    if (editingNutritionId.value) {
+      const prevCalc = ((Number(oldP) || 0) * 4) + ((Number(oldC) || 0) * 4) + ((Number(oldF) || 0) * 9)
+      const newCalc = ((Number(newP) || 0) * 4) + ((Number(newC) || 0) * 4) + ((Number(newF) || 0) * 9)
+      // Auto-populate calories if it's empty or currently matching previous calculated value
+      if (newCalc > 0 && (!nutritionInputs.value.calories || nutritionInputs.value.calories === prevCalc)) {
+        nutritionInputs.value.calories = newCalc
+      }
+    }
+  }
+)
 
 function startEditNutrition(session) {
   editingNutritionId.value = session.id
