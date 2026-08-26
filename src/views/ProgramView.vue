@@ -4,7 +4,7 @@
     <div class="program-header-inner">
       <h1 class="program-title">{{ activeProgramTitle }}</h1>
       <p class="program-subtitle">
-        {{ hasActiveCustomProgram ? 'Active Custom Schedule · 7 Days' : 'Home & Gym Tracks · 5 days/week · 20–30 min' }}
+        {{ hasActiveCustomProgram ? activeCustomSubtitle : 'Home & Gym Tracks · 5 days/week · 20–30 min' }}
       </p>
       <div class="program-badges">
         <span v-if="hasActiveCustomProgram" class="badge highlight" style="background: #a78bfa22; color: #c4b5fd; border-color: #a78bfa">⚡ Active Custom Plan</span>
@@ -93,9 +93,8 @@
     <div v-else-if="hasActiveCustomProgram" class="phase-container">
       <div class="phase-info-bar">
         <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
-        <span class="phase-subtitle-text">Your activated custom schedule (7 Days)</span>
+        <span class="phase-subtitle-text">7-Day Split · Tap any day to expand or collapse</span>
       </div>
-
 
       <div class="days-list">
         <article
@@ -630,9 +629,49 @@ const isLoadingProgram = computed(() => {
 
 const activeProgramTitle = computed(() => {
   if (!hasActiveCustomProgram.value) return 'Build From Zero'
-  const firstWithTitle = Object.values(activeCustomSchedule.value).find((d) => d.programTitle || d.title)
-  if (firstWithTitle?.programTitle) return firstWithTitle.programTitle
-  return firstWithTitle?.title ? `Custom: ${firstWithTitle.title}` : 'My Active Custom Program'
+
+  // 1. Saved active program name in localStorage
+  const uid = authStore.user?.id
+  const savedName = uid ? localStorage.getItem(`active-program-name-${uid}`) : null
+  const fallbackName = localStorage.getItem('active-program-name-last')
+  if (savedName) return savedName
+  if (fallbackName) return fallbackName
+
+  // 2. Lookup program name by saved active program ID
+  const activeProgId = uid ? localStorage.getItem(`active-program-id-${uid}`) : null
+  if (activeProgId && customProgramsData.value?.length) {
+    const matched = customProgramsData.value.find((p) => p.id === activeProgId)
+    if (matched?.name) return matched.name
+  }
+
+  // 3. Check if any day item has an attached programTitle
+  const withProgTitle = Object.values(activeCustomSchedule.value).find((d) => d.programTitle)
+  if (withProgTitle?.programTitle) return withProgTitle.programTitle
+
+  // 4. Default to first custom program name in list if available
+  if (customProgramsData.value?.length && customProgramsData.value[0]?.name) {
+    return customProgramsData.value[0].name
+  }
+
+  // 5. Fallback to today's workout title
+  const todayKey = today.toLowerCase()
+  const todayItem = activeCustomSchedule.value[todayKey]
+  if (todayItem?.title) {
+    return `${today}: ${todayItem.title}`
+  }
+
+  return 'My Custom Program'
+})
+
+const activeCustomSubtitle = computed(() => {
+  if (!hasActiveCustomProgram.value) return ''
+  const todayKey = today.toLowerCase()
+  const todayItem = activeCustomSchedule.value[todayKey]
+  if (todayItem) {
+    const workoutName = todayItem.title || `${todayItem.exercises?.length || 0} exercises`
+    return `Today (${today}): ${workoutName} · 7-Day Plan`
+  }
+  return `Today (${today}): Rest & Recovery · 7-Day Plan`
 })
 
 const exportProgramData = computed(() => {

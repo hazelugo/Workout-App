@@ -890,7 +890,11 @@ async function handleActivateProgram(program) {
       const k = auth.user?.id ? `active-custom-days-v1-${auth.user.id}` : 'active-custom-days-v1-anon'
       localStorage.setItem(k, JSON.stringify(rows))
       localStorage.setItem('active-custom-days-v1-last', JSON.stringify(rows))
-      if (auth.user?.id) localStorage.setItem(`active-program-id-${auth.user.id}`, program.id)
+      if (auth.user?.id) {
+        localStorage.setItem(`active-program-id-${auth.user.id}`, program.id)
+        localStorage.setItem(`active-program-name-${auth.user.id}`, program.name)
+      }
+      localStorage.setItem('active-program-name-last', program.name)
     } catch (e) {}
 
     showToast(`"${program.name}" is now active in your program!`)
