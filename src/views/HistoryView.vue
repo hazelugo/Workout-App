@@ -471,7 +471,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useWorkoutHistoryQuery } from '@/queries/history'
 import { PHASES, formatSessionDate, formatSessionTime } from '@/lib/workout'
 import { supabase } from '@/lib/supabase'
