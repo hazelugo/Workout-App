@@ -27,7 +27,7 @@
 
   <!-- ── Phase Tabs Navigation (Tablist) ───────────────────────── -->
   <nav
-    v-if="!showOnboarding && !hasActiveCustomProgram"
+    v-if="!hasActiveCustomProgram"
     class="phase-tabs-wrapper"
     role="tablist"
     aria-label="Workout program phases"
@@ -53,45 +53,10 @@
     </div>
   </nav>
 
-  <!-- ── Onboarding State ──────────────────────────────────────── -->
-  <section
-    v-if="showOnboarding"
-    class="onboarding-section"
-    aria-label="Welcome and program setup"
-  >
-    <div class="onboarding-card">
-      <div class="onboarding-icon" aria-hidden="true">🏋️</div>
-      <h2 class="onboarding-title">
-        Welcome{{ authStore.profile?.display_name ? ', ' + authStore.profile.display_name.split(' ')[0] : '' }}
-      </h2>
-      <p class="onboarding-desc">
-        You don't have a program yet. Start with our recommended 8-week plan or build your own custom routine.
-      </p>
-
-      <button
-        class="btn-adopt-primary"
-        :disabled="adopting"
-        @click="handleAdoptProgram"
-      >
-        <span class="adopt-badge">Recommended</span>
-        <span class="adopt-title">Build From Zero — 8 Week Program</span>
-        <span class="adopt-meta">Home &amp; Gym Tracks · 5 days/week · 20–30 min</span>
-      </button>
-
-      <button
-        class="btn-adopt-secondary"
-        :disabled="adopting"
-        @click="handleBuildOwn"
-      >
-        Build my own program
-      </button>
-    </div>
-  </section>
-
   <!-- ── First-Run Tip Banner ──────────────────────────────────── -->
   <Transition name="reveal">
     <aside
-      v-if="!firstRunSeen && !showOnboarding"
+      v-if="!firstRunSeen"
       class="first-run-banner"
       aria-label="Getting started tip"
     >
@@ -112,10 +77,7 @@
   </Transition>
 
   <!-- ── Main Phase & Workout Content ──────────────────────────── -->
-  <main
-    v-if="!showOnboarding"
-    class="program-main"
-  >
+  <main class="program-main">
     <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
     <div v-if="hasActiveCustomProgram" class="phase-container">
       <div class="phase-info-bar">
@@ -556,25 +518,7 @@ const showExportModal = ref(false)
 
 const { data: customDaysData } = useCustomDaysQuery()
 
-const showOnboarding = computed(() =>
-  !hasActiveCustomProgram.value &&
-  authStore.isAuthenticated &&
-  authStore.profile !== null &&
-  authStore.profile.program_adopted === false,
-)
 
-const adopting = ref(false)
-
-async function handleAdoptProgram() {
-  adopting.value = true
-  await authStore.adoptProgram()
-  adopting.value = false
-}
-
-async function handleBuildOwn() {
-  await authStore.adoptProgram()
-  router.push('/custom')
-}
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today)
