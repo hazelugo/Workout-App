@@ -135,7 +135,12 @@
           style="--phase-color: #a78bfa"
         >
           <!-- Day Accordion Header Button -->
-          <button class="day-header-btn" @click="toggleDay(i)">
+          <button
+            class="day-header-btn"
+            :aria-expanded="isDayExpanded(i)"
+            :aria-label="`${dayName}: ${activeCustomSchedule[dayName.toLowerCase()]?.title || 'Rest Day'} — ${isDayExpanded(i) ? 'collapse' : 'expand'}`"
+            @click="toggleDay(i)"
+          >
             <div class="day-header-left">
               <span class="day-name">{{ dayName }}</span>
               <span
@@ -162,7 +167,7 @@
                 >Today</span
               >
             </div>
-            <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
+            <span class="accordion-icon" aria-hidden="true">
               {{ isDayExpanded(i) ? '−' : '+' }}
             </span>
           </button>
@@ -282,8 +287,8 @@
             <!-- Day Accordion Header Button -->
             <button
               class="day-header-btn"
-              :aria-expanded="isDesktop ? undefined : isDayExpanded(i)"
-              :aria-label="`${d.day}: ${d.label}${!isDesktop ? ` — ${isDayExpanded(i) ? 'collapse' : 'expand'}` : ''}`"
+              :aria-expanded="isDayExpanded(i)"
+              :aria-label="`${d.day}: ${d.label} — ${isDayExpanded(i) ? 'collapse' : 'expand'}`"
               @click="toggleDay(i)"
             >
               <div class="day-header-left">
@@ -292,7 +297,7 @@
                 <span v-if="!d.gym" class="home-only-badge">Home only</span>
                 <span v-if="d.day === today" class="today-badge">Today</span>
               </div>
-              <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
+              <span class="accordion-icon" aria-hidden="true">
                 {{ isDayExpanded(i) ? '−' : '+' }}
               </span>
             </button>
@@ -396,19 +401,8 @@
       </div>
     </Transition>
 
-    <!-- ── Reference: Substitutions & Keys ─────────────────────── -->
-    <section class="reference-section" aria-label="Gym substitutions and training tips">
-      <div class="reference-card">
-        <h2 class="reference-heading">Gym Substitutions</h2>
-        <div class="subs-list">
-          <div v-for="(sub, i) in subs" :key="i" class="sub-item">
-            <span class="sub-from">{{ sub[0] }}</span>
-            <span class="sub-arrow" aria-hidden="true">→</span>
-            <span class="sub-to">{{ sub[1] }}</span>
-          </div>
-        </div>
-      </div>
-
+    <!-- ── Reference: Keys to Success ───────────────────────────── -->
+    <section class="reference-section" aria-label="Training tips">
       <div class="reference-card">
         <h2 class="reference-heading">Keys to Success</h2>
         <div class="tips-grid">
@@ -712,7 +706,7 @@ import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/hist
 import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
 import { useCustomProgramsQuery } from '@/queries/programs'
 import { logCustomDay } from '@/queries/customLog'
-import { program, tips, subs, WEEKDAYS } from '@/data/program'
+import { program, tips, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 
 const authStore = useAuthStore()
@@ -720,7 +714,7 @@ const connectivity = useConnectivityStore()
 const _router = useRouter()
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-const _todayIndex = WEEKDAYS.indexOf(today)
+const todayIndex = WEEKDAYS.indexOf(today) >= 0 ? WEEKDAYS.indexOf(today) : 0
 
 const activePhase = ref(0)
 const track = ref({})
@@ -730,12 +724,6 @@ const firstRunSeen = ref(localStorage.getItem(_onboardKey) === '1')
 function dismissFirstRun() {
   firstRunSeen.value = true
   localStorage.setItem(_onboardKey, '1')
-}
-
-const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 375)
-const isDesktop = computed(() => windowWidth.value >= 900)
-function onResize() {
-  windowWidth.value = window.innerWidth
 }
 
 const userId = computed(() => authStore.user?.id)
@@ -946,11 +934,11 @@ const exportProgramData = computed(() => {
 
 const phase = computed(() => program.phases[activePhase.value])
 
-// Reactive object tracking day expansion state (0 to 6 all true by default)
-const expandedDaysMap = ref({ 0: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true })
+// Reactive object tracking day expansion state (only current day expanded by default)
+const expandedDaysMap = ref({ [todayIndex]: true })
 
 function isDayExpanded(i) {
-  return isDesktop.value || !!expandedDaysMap.value[i]
+  return !!expandedDaysMap.value[i]
 }
 
 function selectPhase(i) {
@@ -1252,7 +1240,6 @@ function handleVisibilityChange() {
 }
 
 onMounted(() => {
-  window.addEventListener('resize', onResize, { passive: true })
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleVisibilityChange)
   const saved = localStorage.getItem(_weekKey.value)
@@ -1263,7 +1250,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', onResize)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('focus', handleVisibilityChange)
   clearInterval(_timerInterval)
@@ -2059,37 +2045,6 @@ onUnmounted(() => {
   color: #d4d4d4;
   text-transform: uppercase;
   margin: 0 0 16px;
-}
-
-.subs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sub-item {
-  display: flex;
-  align-items: center;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.sub-from {
-  color: #d4d4d4;
-  font-weight: 500;
-}
-
-.sub-arrow {
-  color: #737373;
-  margin: 0 10px;
-}
-
-.sub-to {
-  color: #a3a3a3;
 }
 
 .tips-grid {
