@@ -516,62 +516,39 @@
                     </div>
                   </div>
                   <div class="input-wrapper weight-input-wrapper">
-                    <input
-                      v-model.number="s.weightLbs"
-                      type="number"
-                      inputmode="decimal"
-                      min="0"
-                      step="2.5"
-                      :placeholder="
-                        lastLoggedWeightMap[group.exerciseName] != null
-                          ? `${lastLoggedWeightMap[group.exerciseName]} lbs`
-                          : 'lbs'
-                      "
-                      class="modal-input"
-                      :aria-label="`${group.exerciseName} set ${s.setNumber} weight in lbs`"
-                    />
+                    <div class="stepper-input-container">
+                      <button
+                        type="button"
+                        class="stepper-btn-mini stepper-btn-weight"
+                        @click="adjustWeight(s, -5, group.exerciseName)"
+                        :aria-label="`Decrease weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
+                      >
+                        −5
+                      </button>
+                      <input
+                        v-model.number="s.weightLbs"
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        step="2.5"
+                        :placeholder="
+                          lastLoggedWeightMap[group.exerciseName] != null
+                            ? `${lastLoggedWeightMap[group.exerciseName]} lbs`
+                            : 'lbs'
+                        "
+                        class="modal-input"
+                        :aria-label="`${group.exerciseName} set ${s.setNumber} weight in lbs`"
+                      />
+                      <button
+                        type="button"
+                        class="stepper-btn-mini stepper-btn-weight"
+                        @click="adjustWeight(s, 5, group.exerciseName)"
+                        :aria-label="`Increase weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
+                      >
+                        +5
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                <!-- Weight Adjustment Stepper Row -->
-                <div
-                  class="weight-stepper-bar"
-                  role="group"
-                  :aria-label="`Quick weight adjustments for ${group.exerciseName} set ${s.setNumber}`"
-                >
-                  <span class="stepper-label">Weight:</span>
-                  <button
-                    type="button"
-                    class="weight-stepper-btn"
-                    @click="adjustWeight(s, -5, group.exerciseName)"
-                    :aria-label="`Decrease weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
-                  >
-                    -5
-                  </button>
-                  <button
-                    type="button"
-                    class="weight-stepper-btn"
-                    @click="adjustWeight(s, -1, group.exerciseName)"
-                    :aria-label="`Decrease weight by 1 lb for ${group.exerciseName} set ${s.setNumber}`"
-                  >
-                    -1
-                  </button>
-                  <button
-                    type="button"
-                    class="weight-stepper-btn"
-                    @click="adjustWeight(s, 1, group.exerciseName)"
-                    :aria-label="`Increase weight by 1 lb for ${group.exerciseName} set ${s.setNumber}`"
-                  >
-                    +1
-                  </button>
-                  <button
-                    type="button"
-                    class="weight-stepper-btn"
-                    @click="adjustWeight(s, 5, group.exerciseName)"
-                    :aria-label="`Increase weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
-                  >
-                    +5
-                  </button>
                 </div>
               </div>
             </div>
@@ -2291,14 +2268,14 @@ onUnmounted(() => {
 }
 
 .stepper-btn-mini {
-  min-width: 44px;
+  min-width: 36px;
   min-height: 44px;
-  padding: 0;
+  padding: 0 4px;
   background: oklch(14% 0.008 45);
   border: 1px solid oklch(22% 0.008 45);
   border-radius: 6px;
   color: #d4d4d4;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 1;
   display: flex;
@@ -2307,6 +2284,11 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
   transition: all 120ms ease-out;
+}
+
+.stepper-btn-mini.stepper-btn-weight {
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .stepper-btn-mini:hover {
@@ -2322,7 +2304,7 @@ onUnmounted(() => {
 .modal-input {
   width: 100%;
   min-height: 46px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   background: oklch(8% 0.012 45);
   border: 1px solid oklch(22% 0.008 45);
   border-radius: 8px;
@@ -2353,60 +2335,6 @@ onUnmounted(() => {
 
 .modal-input::placeholder {
   color: #737373;
-}
-
-.weight-stepper-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed oklch(15% 0.008 45);
-  flex-wrap: wrap;
-}
-
-.stepper-label {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.6875rem;
-  color: #888888;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-right: 4px;
-}
-
-.weight-stepper-btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 10px;
-  background: oklch(13% 0.008 45);
-  border: 1px solid oklch(22% 0.008 45);
-  border-radius: 6px;
-  color: #e5e5e5;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 120ms ease-out;
-}
-
-.weight-stepper-btn:hover {
-  background: oklch(18% 0.008 45);
-  border-color: #4ade8077;
-  color: #4ade80;
-}
-
-.weight-stepper-btn:active {
-  transform: scale(0.96);
 }
 
 .modal-helper-text {
