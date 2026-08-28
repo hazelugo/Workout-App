@@ -90,20 +90,95 @@
       </div>
     </Transition>
 
-    <!-- Program cards loading / empty state -->
+    <!-- Program cards loading state -->
     <div v-if="programsLoading" class="programs-loading-state">
       Loading programs…
     </div>
 
-    <div v-else-if="programs.length === 0 && !creatingProgram" class="empty-state-card">
-      <div class="empty-state-title">No custom programs yet</div>
-      <div class="empty-state-desc">
-        Create a program to save a full 7-day training schedule as a reusable template.
-      </div>
-    </div>
-
     <!-- Programs list -->
     <div v-else class="programs-list">
+      <!-- 1. Default Built-in Program Card: Build From Zero -->
+      <article
+        class="program-card"
+        :class="{ 'is-active': isBuiltInActive }"
+      >
+        <div class="program-card-header" :class="{ 'is-active': isBuiltInActive }">
+          <div class="program-header-info">
+            <div class="program-name-group">
+              <span class="program-title-text">Build From Zero</span>
+              <span v-if="isBuiltInActive" class="badge-active">Active</span>
+              <span class="badge-days-count" style="background: oklch(14% 0.008 45); color: #a3a3a3">
+                Default Program · 8 Weeks
+              </span>
+            </div>
+          </div>
+
+          <div class="program-actions-group">
+            <RouterLink
+              to="/program"
+              class="btn-primary-action btn-edit-days"
+              style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center"
+            >
+              View Program
+            </RouterLink>
+
+            <button
+              v-if="isBuiltInActive"
+              type="button"
+              class="btn-primary-action btn-active-plan"
+              disabled
+              aria-label="Build From Zero is currently active"
+            >
+              <span aria-hidden="true">✓</span> Active Plan
+            </button>
+            <button
+              v-else
+              type="button"
+              class="btn-primary-action btn-activate-plan"
+              :disabled="activatingBuiltIn"
+              @click="handleActivateBuiltIn"
+            >
+              {{ activatingBuiltIn ? 'Activating…' : 'Activate Plan' }}
+            </button>
+
+            <!-- Overflow menu for built-in program -->
+            <div class="overflow-container">
+              <button
+                type="button"
+                class="btn-overflow-trigger"
+                :aria-expanded="openMenuProgramId === 'builtin'"
+                aria-label="More options for Build From Zero"
+                aria-haspopup="true"
+                @click.stop="toggleOverflowMenu('builtin')"
+              >
+                <span aria-hidden="true" class="overflow-dots">⋮</span>
+              </button>
+
+              <Transition name="dropdown-pop">
+                <div
+                  v-if="openMenuProgramId === 'builtin'"
+                  class="overflow-dropdown-menu"
+                  role="menu"
+                  aria-label="Options for Build From Zero"
+                  @click.stop
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    class="overflow-menu-item"
+                    @click="openExportProgram(builtInProgram); closeOverflowMenu()"
+                  >
+                    <span class="menu-item-icon" aria-hidden="true">↗</span>
+                    <span>Export Program</span>
+                  </button>
+                </div>
+              </Transition>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 2. User's Custom Programs -->
       <article
         v-for="program in programs"
         :key="program.id"
@@ -225,18 +300,6 @@
                     >
                       <span class="menu-item-icon" aria-hidden="true">↗</span>
                       <span>Export Program</span>
-                    </button>
-
-                    <button
-                      v-if="isProgramActive(program)"
-                      type="button"
-                      role="menuitem"
-                      class="overflow-menu-item"
-                      :disabled="resettingToBuiltIn"
-                      @click="handleResetToBuiltIn(); closeOverflowMenu()"
-                    >
-                      <span class="menu-item-icon" aria-hidden="true">↩</span>
-                      <span>{{ resettingToBuiltIn ? 'Resetting…' : 'Switch to Built-in Plan' }}</span>
                     </button>
 
                     <div class="overflow-menu-divider" role="separator" />
@@ -806,6 +869,7 @@ import { invalidateProfile } from '@/queries/profile'
 import { logCustomDay } from '@/queries/customLog'
 import { invalidateWorkoutHistory } from '@/queries/history'
 import { parseSetCount } from '@/lib/workout'
+import { program as builtInProgram } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 
 const auth = useAuthStore()
@@ -913,33 +977,34 @@ async function saveNewProgram() {
 }
 
 // ── Active Program Tracking ──────────────────────────────────
-const activeProgramId = ref(null)
+const activeProgramId = ref('builtin')
 
 function syncActiveProgramId() {
   const uid = auth.user?.id
-  const savedId = (uid ? localStorage.getItem(`active-program-id-${uid}`) : null) || localStorage.getItem('active-program-id-last')
-  activeProgramId.value = savedId
+  const savedId =
+    (uid ? localStorage.getItem(`active-program-id-${uid}`) : null) ||
+    localStorage.getItem('active-program-id-last')
+  activeProgramId.value = savedId && savedId !== 'builtin' ? savedId : 'builtin'
 }
 
 syncActiveProgramId()
 onMounted(syncActiveProgramId)
 watch(() => auth.user?.id, syncActiveProgramId)
 
+const isBuiltInActive = computed(() => {
+  return !activeProgramId.value || activeProgramId.value === 'builtin'
+})
+
 function isProgramActive(program) {
-  if (!program) return false
-  if (activeProgramId.value && program.id === activeProgramId.value) return true
-  const uid = auth.user?.id
-  const savedName = (uid ? localStorage.getItem(`active-program-name-${uid}`) : null) || localStorage.getItem('active-program-name-last')
-  if (savedName && program.name === savedName) return true
-  if (programs.value?.length === 1 && auth.profile?.program_adopted) return true
-  return false
+  if (!program || isBuiltInActive.value) return false
+  return activeProgramId.value === program.id
 }
 
-// ── Reset to Built-in Program ────────────────────────────────
-const resettingToBuiltIn = ref(false)
+// ── Activate Built-in Program (Build From Zero) ─────────────
+const activatingBuiltIn = ref(false)
 
-async function handleResetToBuiltIn() {
-  resettingToBuiltIn.value = true
+async function handleActivateBuiltIn() {
+  activatingBuiltIn.value = true
   try {
     const uid = auth.user?.id
     if (uid) {
@@ -948,15 +1013,15 @@ async function handleResetToBuiltIn() {
       // 2. Update profile program_adopted
       await supabase.from('profiles').update({ program_adopted: false }).eq('id', uid)
       // 3. Clear localStorage user keys
-      localStorage.removeItem(`active-program-id-${uid}`)
-      localStorage.removeItem(`active-program-name-${uid}`)
       localStorage.removeItem(`active-custom-days-v1-${uid}`)
+      localStorage.setItem(`active-program-id-${uid}`, 'builtin')
+      localStorage.setItem(`active-program-name-${uid}`, 'Build From Zero')
     }
-    localStorage.removeItem('active-program-id-last')
-    localStorage.removeItem('active-program-name-last')
     localStorage.removeItem('active-custom-days-v1-last')
+    localStorage.setItem('active-program-id-last', 'builtin')
+    localStorage.setItem('active-program-name-last', 'Build From Zero')
 
-    activeProgramId.value = null
+    activeProgramId.value = 'builtin'
     if (auth.profile) {
       auth.profile.program_adopted = false
     }
@@ -964,14 +1029,15 @@ async function handleResetToBuiltIn() {
     await Promise.all([
       invalidateCustomDays(queryClient),
       invalidateCustomPrograms(queryClient),
-      invalidateProfile(queryClient, uid),
+      uid ? invalidateProfile(queryClient, uid) : Promise.resolve(),
     ])
 
-    showToast('Reset to built-in "Build From Zero" track!')
-  } catch {
-    showToast('Failed to reset program. Please try again.')
+    showToast('Activated "Build From Zero" program!')
+  } catch (err) {
+    console.error('Failed to activate built-in program:', err)
+    showToast('Failed to switch to Build From Zero. Please try again.')
   } finally {
-    resettingToBuiltIn.value = false
+    activatingBuiltIn.value = false
   }
 }
 
@@ -1005,14 +1071,14 @@ async function confirmProgramRename(programId) {
 async function handleDeleteProgram(programId) {
   await deleteProgram(programId)
   if (activeProgramId.value === programId) {
-    activeProgramId.value = null
+    activeProgramId.value = 'builtin'
     const uid = auth.user?.id
     if (uid) {
-      localStorage.removeItem(`active-program-id-${uid}`)
-      localStorage.removeItem(`active-program-name-${uid}`)
+      localStorage.setItem(`active-program-id-${uid}`, 'builtin')
+      localStorage.setItem(`active-program-name-${uid}`, 'Build From Zero')
     }
-    localStorage.removeItem('active-program-id-last')
-    localStorage.removeItem('active-program-name-last')
+    localStorage.setItem('active-program-id-last', 'builtin')
+    localStorage.setItem('active-program-name-last', 'Build From Zero')
   }
   await invalidateCustomPrograms(queryClient)
   closeOverflowMenu()
@@ -1031,16 +1097,21 @@ async function handleActivateProgram(program) {
   }
   activatingProgramId.value = program.id
   try {
-    await activateProgram(auth.user.id, daysList)
-    await invalidateCustomDays(queryClient)
-    await auth.adoptProgram()
+    if (auth.user?.id) {
+      await activateProgram(auth.user.id, daysList)
+      await auth.adoptProgram()
+    }
     activeProgramId.value = program.id
 
     // Build cache rows — ensure exercises is always a plain array
     const rows = daysList.map((d) => {
       let exList = d.exercises
       if (typeof exList === 'string') {
-        try { exList = JSON.parse(exList) } catch { exList = [] }
+        try {
+          exList = JSON.parse(exList)
+        } catch {
+          exList = []
+        }
       }
       if (!Array.isArray(exList)) exList = []
       return {
@@ -1054,17 +1125,27 @@ async function handleActivateProgram(program) {
 
     // Save to instant local cache so ProgramView renders synchronously without delay
     try {
-      const k = auth.user?.id ? `active-custom-days-v1-${auth.user.id}` : 'active-custom-days-v1-anon'
+      const uid = auth.user?.id
+      const k = uid ? `active-custom-days-v1-${uid}` : 'active-custom-days-v1-anon'
       localStorage.setItem(k, JSON.stringify(rows))
       localStorage.setItem('active-custom-days-v1-last', JSON.stringify(rows))
-      if (auth.user?.id) {
-        localStorage.setItem(`active-program-id-${auth.user.id}`, program.id)
-        localStorage.setItem(`active-program-name-${auth.user.id}`, program.name)
+      if (uid) {
+        localStorage.setItem(`active-program-id-${uid}`, program.id)
+        localStorage.setItem(`active-program-name-${uid}`, program.name)
       }
+      localStorage.setItem('active-program-id-last', program.id)
       localStorage.setItem('active-program-name-last', program.name)
     } catch {}
 
+    await Promise.all([
+      invalidateCustomDays(queryClient),
+      invalidateCustomPrograms(queryClient),
+    ])
+
     showToast(`"${program.name}" is now active in your program!`)
+  } catch (err) {
+    console.error('Failed to activate custom program:', err)
+    showToast('Failed to activate program. Please try again.')
   } finally {
     activatingProgramId.value = null
   }

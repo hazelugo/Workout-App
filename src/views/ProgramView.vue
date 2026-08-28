@@ -16,15 +16,6 @@
         >
         <span v-else class="badge">Home Track</span>
         <span v-if="!hasActiveCustomProgram" class="badge">Gym Track</span>
-        <button
-          v-if="hasActiveCustomProgram"
-          type="button"
-          class="badge highlight return-builtin-btn"
-          @click="switchToBuiltIn"
-          aria-label="Switch back to built-in Build From Zero program"
-        >
-          <span class="return-icon" aria-hidden="true">↩</span> Return to Build From Zero
-        </button>
         <span class="badge highlight">Tap exercise for demo</span>
         <button
           class="badge highlight export-badge-btn"
@@ -113,14 +104,6 @@
           <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
           <span class="phase-subtitle-text">7-Day Split · Tap any day to expand or collapse</span>
         </div>
-        <button
-          type="button"
-          class="btn-return-built-in"
-          @click="switchToBuiltIn"
-          aria-label="Switch back to built-in Build From Zero program"
-        >
-          <span aria-hidden="true">↩</span> Build From Zero Track
-        </button>
       </div>
 
       <div class="days-list">
@@ -680,7 +663,7 @@ import { buildSetLogs, parseSetCount, parseRepsProgrammed } from '@/lib/workout'
 import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
 import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/history'
-import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
+import { useCustomDaysQuery } from '@/queries/customDays'
 import { useCustomProgramsQuery } from '@/queries/programs'
 import { logCustomDay } from '@/queries/customLog'
 import { program, tips, WEEKDAYS } from '@/data/program'
@@ -787,18 +770,19 @@ const activeCustomSchedule = computed(() => {
     activeProgId &&
     activeProgId !== 'builtin'
   ) {
-    const matchedProg =
-      customProgramsData.value.find((p) => p.id === activeProgId) || customProgramsData.value[0]
-    const progDays = matchedProg.custom_program_days ?? []
-    for (const item of progDays) {
-      if (!item.day_name) continue
-      const key = item.day_name.trim().toLowerCase()
-      const exList = getCustomExercises(item)
-      if (exList.length && !map[key]) {
-        map[key] = {
-          ...item,
-          programTitle: matchedProg.name,
-          exercises: exList,
+    const matchedProg = customProgramsData.value.find((p) => p.id === activeProgId)
+    if (matchedProg) {
+      const progDays = matchedProg.custom_program_days ?? []
+      for (const item of progDays) {
+        if (!item.day_name) continue
+        const key = item.day_name.trim().toLowerCase()
+        const exList = getCustomExercises(item)
+        if (exList.length && !map[key]) {
+          map[key] = {
+            ...item,
+            programTitle: matchedProg.name,
+            exercises: exList,
+          }
         }
       }
     }
@@ -810,38 +794,6 @@ const activeCustomSchedule = computed(() => {
 const hasActiveCustomProgram = computed(() => {
   return Object.keys(activeCustomSchedule.value).length > 0
 })
-
-async function switchToBuiltIn() {
-  const uid = authStore.user?.id
-  if (uid) {
-    try {
-      await supabase.from('custom_days').delete().eq('user_id', uid)
-    } catch (e) {
-      console.error('Failed to clear custom days in db:', e)
-    }
-  }
-  try {
-    const userKeys = uid
-      ? [`active-custom-days-v1-${uid}`, `active-program-id-${uid}`, `active-program-name-${uid}`]
-      : []
-    const generalKeys = [
-      'active-custom-days-v1-anon',
-      'active-custom-days-v1-last',
-      'active-program-id-last',
-      'active-program-name-last',
-    ]
-    ;[...userKeys, ...generalKeys].forEach((k) => localStorage.removeItem(k))
-    if (uid) {
-      localStorage.setItem(`active-program-id-${uid}`, 'builtin')
-    }
-    localStorage.setItem('active-program-id-last', 'builtin')
-  } catch {}
-
-  cachedDays.value = []
-  if (uid) {
-    await invalidateCustomDays(queryClient)
-  }
-}
 
 // True while we're still waiting for auth OR for program data to load
 // — prevents flashing the wrong mode during the auth restore window
@@ -1309,28 +1261,6 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.return-builtin-btn {
-  cursor: pointer;
-  background: #a78bfa22;
-  color: #c4b5fd;
-  border-color: #a78bfa;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  transition: all 150ms ease-out;
-}
-
-.return-builtin-btn:hover {
-  background: #a78bfa33;
-  color: #ffffff;
-  border-color: #c4b5fd;
-}
-
-.return-icon {
-  font-size: 0.875rem;
-}
 
 .edit-studio-badge {
   color: #c4b5fd;
@@ -1596,31 +1526,6 @@ onUnmounted(() => {
   gap: 10px;
 }
 
-.btn-return-built-in {
-  min-height: 44px;
-  padding: 8px 14px;
-  background: oklch(12% 0.008 45);
-  border: 1px solid #a78bfa77;
-  border-radius: 6px;
-  color: #c4b5fd;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 150ms ease-out;
-}
-
-.btn-return-built-in:hover {
-  background: #a78bfa22;
-  border-color: #a78bfa;
-  color: #ffffff;
-}
 
 .phase-dot {
   width: 8px;
