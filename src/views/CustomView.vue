@@ -47,32 +47,6 @@
 
   <!-- ═══════════════════════ TAB 1: MY PROGRAMS ═══════════════════════ -->
   <section v-if="activeTab === 'programs'" class="program-section" aria-label="Saved Program Templates">
-    <!-- Active Program Status Banner with Reset to Built-in Program -->
-    <div
-      v-if="hasActiveProgram"
-      class="active-program-banner"
-      role="region"
-      aria-label="Active Program Status"
-    >
-      <div class="active-banner-content">
-        <span class="active-indicator-dot" aria-hidden="true">●</span>
-        <div class="active-banner-text">
-          <span class="active-banner-label">Currently Active Program</span>
-          <strong class="active-banner-title">{{ activeProgramName }}</strong>
-        </div>
-      </div>
-      <button
-        type="button"
-        class="btn-reset-builtin"
-        :disabled="resettingToBuiltIn"
-        aria-label="Reset active custom program to default Build From Zero track"
-        @click="handleResetToBuiltIn"
-      >
-        <span v-if="resettingToBuiltIn">Resetting…</span>
-        <span v-else>Reset to Built-in Program</span>
-      </button>
-    </div>
-
     <!-- Section Header & + New Program CTA -->
     <div class="section-header">
       <div class="section-title">Saved Program Templates</div>
@@ -251,6 +225,18 @@
                     >
                       <span class="menu-item-icon" aria-hidden="true">↗</span>
                       <span>Export Program</span>
+                    </button>
+
+                    <button
+                      v-if="isProgramActive(program)"
+                      type="button"
+                      role="menuitem"
+                      class="overflow-menu-item"
+                      :disabled="resettingToBuiltIn"
+                      @click="handleResetToBuiltIn(); closeOverflowMenu()"
+                    >
+                      <span class="menu-item-icon" aria-hidden="true">↩</span>
+                      <span>{{ resettingToBuiltIn ? 'Resetting…' : 'Switch to Built-in Plan' }}</span>
                     </button>
 
                     <div class="overflow-menu-divider" role="separator" />
@@ -949,30 +935,6 @@ function isProgramActive(program) {
   return false
 }
 
-const hasActiveProgram = computed(() => {
-  if (activeProgramId.value) return true
-  if (programs.value.some((p) => isProgramActive(p))) return true
-  const uid = auth.user?.id
-  const savedName = (uid ? localStorage.getItem(`active-program-name-${uid}`) : null) || localStorage.getItem('active-program-name-last')
-  if (savedName) return true
-  if (savedWorkouts.value.length > 0 && auth.profile?.program_adopted) return true
-  return false
-})
-
-const activeProgramName = computed(() => {
-  if (activeProgramId.value) {
-    const matched = programs.value.find((p) => p.id === activeProgramId.value)
-    if (matched?.name) return matched.name
-  }
-  const uid = auth.user?.id
-  const savedName = (uid ? localStorage.getItem(`active-program-name-${uid}`) : null) || localStorage.getItem('active-program-name-last')
-  if (savedName) return savedName
-  const activeProg = programs.value.find((p) => isProgramActive(p))
-  if (activeProg?.name) return activeProg.name
-  if (programs.value.length === 1 && auth.profile?.program_adopted) return programs.value[0].name
-  return 'Custom Program'
-})
-
 // ── Reset to Built-in Program ────────────────────────────────
 const resettingToBuiltIn = ref(false)
 
@@ -1524,83 +1486,6 @@ async function confirmLog() {
   color: #a3a3a3;
   text-transform: uppercase;
   font-weight: 600;
-}
-
-/* ── Active Program Status Banner & Reset Action ──────────────── */
-.active-program-banner {
-  background: oklch(11% 0.015 145);
-  border: 1px solid #22c55e55;
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.08);
-}
-
-.active-banner-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.active-indicator-dot {
-  color: #22c55e;
-  font-size: 1.125rem;
-  animation: pulse-dot 2s infinite ease-in-out;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.15); }
-}
-
-.active-banner-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.active-banner-label {
-  font-size: 0.625rem;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #4ade80;
-  font-weight: 700;
-}
-
-.active-banner-title {
-  font-size: 0.9375rem;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.btn-reset-builtin {
-  padding: 8px 16px;
-  min-height: 44px;
-  background: oklch(13% 0.008 45);
-  border: 1px solid oklch(26% 0.008 45);
-  border-radius: 9999px;
-  color: #e5e5e5;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 160ms ease-out;
-  white-space: nowrap;
-}
-
-.btn-reset-builtin:hover {
-  background: oklch(16% 0.008 45);
-  border-color: #a78bfa66;
-  color: #ffffff;
 }
 
 /* ── New Program Form ────────────────────────────────────────── */
