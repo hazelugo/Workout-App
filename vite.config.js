@@ -3,7 +3,19 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import { VitePWA } from 'vite-plugin-pwa'
+let VitePWA = () => ({
+  name: 'virtual-pwa-fallback',
+  resolveId(id) {
+    if (id === 'virtual:pwa-register') return '\0virtual:pwa-register'
+  },
+  load(id) {
+    if (id === '\0virtual:pwa-register') return 'export function registerSW() { return () => {} }'
+  }
+})
+try {
+  const mod = await import('vite-plugin-pwa')
+  if (mod?.VitePWA) VitePWA = mod.VitePWA
+} catch {}
 
 // https://vite.dev/config/
 export default defineConfig({

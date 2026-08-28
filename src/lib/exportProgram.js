@@ -184,7 +184,7 @@ export function exportProgramToPdf(program, options = {}) {
 
   const { phaseIndex = null, track = 'all' } = options
 
-  let contentHtml = ''
+  let contentHtml
 
   if (isBuiltIn) {
     const phasesToExport = phaseIndex !== null && program.phases[phaseIndex]

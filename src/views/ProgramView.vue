@@ -4,12 +4,27 @@
     <div class="program-header-inner">
       <h1 class="program-title">{{ activeProgramTitle }}</h1>
       <p class="program-subtitle">
-        {{ hasActiveCustomProgram ? activeCustomSubtitle : 'Home & Gym Tracks · 5 days/week · 20–30 min' }}
+        {{
+          hasActiveCustomProgram
+            ? activeCustomSubtitle
+            : 'Home & Gym Tracks · 5 days/week · 20–30 min'
+        }}
       </p>
       <div class="program-badges">
-        <span v-if="hasActiveCustomProgram" class="badge highlight" style="background: #a78bfa22; color: #c4b5fd; border-color: #a78bfa">Active Custom Plan</span>
+        <span v-if="hasActiveCustomProgram" class="badge highlight active-custom-badge"
+          >Active Custom Plan</span
+        >
         <span v-else class="badge">Home Track</span>
         <span v-if="!hasActiveCustomProgram" class="badge">Gym Track</span>
+        <button
+          v-if="hasActiveCustomProgram"
+          type="button"
+          class="badge highlight return-builtin-btn"
+          @click="switchToBuiltIn"
+          aria-label="Switch back to built-in Build From Zero program"
+        >
+          <span class="return-icon" aria-hidden="true">↩</span> Return to Build From Zero
+        </button>
         <span class="badge highlight">Tap exercise for demo</span>
         <button
           class="badge highlight export-badge-btn"
@@ -18,7 +33,7 @@
         >
           Export Plan
         </button>
-        <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge" style="color: #c4b5fd; text-decoration: none; border-color: #a78bfa66">
+        <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge edit-studio-badge">
           Edit in Studio →
         </RouterLink>
       </div>
@@ -55,21 +70,14 @@
 
   <!-- ── First-Run Tip Banner ──────────────────────────────────── -->
   <Transition name="reveal">
-    <aside
-      v-if="!firstRunSeen"
-      class="first-run-banner"
-      aria-label="Getting started tip"
-    >
+    <aside v-if="!firstRunSeen" class="first-run-banner" aria-label="Getting started tip">
       <div class="first-run-content">
         <span class="first-run-text">
           <strong class="first-run-highlight">Start at Week 1.</strong>
-          Open any day to see your programmed exercises. Tap any exercise name to watch a video demonstration.
+          Open any day to see your programmed exercises. Tap any exercise name to watch a video
+          demonstration.
         </span>
-        <button
-          class="first-run-dismiss"
-          aria-label="Dismiss tip"
-          @click="dismissFirstRun"
-        >
+        <button class="first-run-dismiss" aria-label="Dismiss tip" @click="dismissFirstRun">
           <span aria-hidden="true">×</span>
         </button>
       </div>
@@ -83,7 +91,16 @@
       <div v-for="n in 7" :key="n" class="day-card" style="margin-bottom: 8px; opacity: 0.5">
         <div class="day-header-btn" style="pointer-events: none">
           <div class="day-header-left">
-            <span class="day-name" style="background: oklch(20% 0.008 45); color: transparent; border-radius: 4px; min-width: 80px">Loading</span>
+            <span
+              class="day-name"
+              style="
+                background: oklch(20% 0.008 45);
+                color: transparent;
+                border-radius: 4px;
+                min-width: 80px;
+              "
+              >Loading</span
+            >
           </div>
         </div>
       </div>
@@ -91,9 +108,19 @@
 
     <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
     <div v-else-if="hasActiveCustomProgram" class="phase-container">
-      <div class="phase-info-bar">
-        <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
-        <span class="phase-subtitle-text">7-Day Split · Tap any day to expand or collapse</span>
+      <div class="phase-info-bar custom-phase-info-bar">
+        <div class="phase-info-bar-left">
+          <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
+          <span class="phase-subtitle-text">7-Day Split · Tap any day to expand or collapse</span>
+        </div>
+        <button
+          type="button"
+          class="btn-return-built-in"
+          @click="switchToBuiltIn"
+          aria-label="Switch back to built-in Build From Zero program"
+        >
+          <span aria-hidden="true">↩</span> Build From Zero Track
+        </button>
       </div>
 
       <div class="days-list">
@@ -108,19 +135,32 @@
           style="--phase-color: #a78bfa"
         >
           <!-- Day Accordion Header Button -->
-          <button
-            class="day-header-btn"
-            @click="toggleDay(i)"
-          >
+          <button class="day-header-btn" @click="toggleDay(i)">
             <div class="day-header-left">
               <span class="day-name">{{ dayName }}</span>
-              <span v-if="activeCustomSchedule[dayName.toLowerCase()]" class="day-label-pill" style="background: #a78bfa22; color: #c4b5fd">
-                {{ activeCustomSchedule[dayName.toLowerCase()].title || `${activeCustomSchedule[dayName.toLowerCase()].exercises?.length ?? 0} exercises` }}
+              <span
+                v-if="activeCustomSchedule[dayName.toLowerCase()]"
+                class="day-label-pill"
+                style="background: #a78bfa22; color: #c4b5fd"
+              >
+                {{
+                  activeCustomSchedule[dayName.toLowerCase()].title ||
+                  `${activeCustomSchedule[dayName.toLowerCase()].exercises?.length ?? 0} exercises`
+                }}
               </span>
-              <span v-else class="day-label-pill" style="background: oklch(14% 0.008 45); color: #737373">
+              <span
+                v-else
+                class="day-label-pill"
+                style="background: oklch(14% 0.008 45); color: #737373"
+              >
                 Rest Day
               </span>
-              <span v-if="dayName === today" class="today-badge" style="background: #a78bfa; color: #000">Today</span>
+              <span
+                v-if="dayName === today"
+                class="today-badge"
+                style="background: #a78bfa; color: #000"
+                >Today</span
+              >
             </div>
             <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
               {{ isDayExpanded(i) ? '−' : '+' }}
@@ -129,7 +169,10 @@
 
           <!-- Day Content (no Transition — avoids opacity:0 blocking on initial render) -->
           <div v-if="isDayExpanded(i)" class="day-content">
-            <div v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length" class="table-container">
+            <div
+              v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length"
+              class="table-container"
+            >
               <table class="exercise-table">
                 <thead>
                   <tr>
@@ -151,6 +194,7 @@
                         rel="noopener noreferrer"
                         class="exercise-link"
                         style="color: #c4b5fd; border-bottom-color: #a78bfa77"
+                        :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
                       >
                         <span class="exercise-name">{{ ex.name }}</span>
                         <span class="demo-icon" aria-hidden="true">↗</span>
@@ -171,7 +215,17 @@
                     isQueued: queuedDay === i,
                   }"
                   :disabled="loggingDay === i"
-                  @click="openLogModal(i, { day: dayName, title: activeCustomSchedule[dayName.toLowerCase()].title, exercises: activeCustomSchedule[dayName.toLowerCase()].exercises }, true)"
+                  @click="
+                    openLogModal(
+                      i,
+                      {
+                        day: dayName,
+                        title: activeCustomSchedule[dayName.toLowerCase()].title,
+                        exercises: activeCustomSchedule[dayName.toLowerCase()].exercises,
+                      },
+                      true,
+                    )
+                  "
                 >
                   <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
                   <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
@@ -185,7 +239,16 @@
             </div>
 
             <!-- Rest Day -->
-            <div v-else style="padding: 20px 0; text-align: center; color: #737373; font-style: italic; font-size: 0.875rem">
+            <div
+              v-else
+              style="
+                padding: 20px 0;
+                text-align: center;
+                color: #737373;
+                font-style: italic;
+                font-size: 0.875rem;
+              "
+            >
               Rest &amp; recovery day — no exercises scheduled.
             </div>
           </div>
@@ -198,11 +261,7 @@
       <div :key="activePhase" class="phase-container">
         <!-- Phase Subtitle Info -->
         <div class="phase-info-bar">
-          <span
-            class="phase-dot"
-            :style="{ background: phase.color }"
-            aria-hidden="true"
-          />
+          <span class="phase-dot" :style="{ background: phase.color }" aria-hidden="true" />
           <span class="phase-subtitle-text">{{ phase.subtitle }}</span>
         </div>
 
@@ -233,11 +292,7 @@
                 <span v-if="!d.gym" class="home-only-badge">Home only</span>
                 <span v-if="d.day === today" class="today-badge">Today</span>
               </div>
-              <span
-                v-if="!isDesktop"
-                class="accordion-icon"
-                aria-hidden="true"
-              >
+              <span v-if="!isDesktop" class="accordion-icon" aria-hidden="true">
                 {{ isDayExpanded(i) ? '−' : '+' }}
               </span>
             </button>
@@ -265,10 +320,7 @@
 
             <!-- Exercise List / Table -->
             <Transition name="accordion">
-              <div
-                v-if="isDayExpanded(i)"
-                class="day-content"
-              >
+              <div v-if="isDayExpanded(i)" class="day-content">
                 <div class="table-container">
                   <table class="exercise-table">
                     <thead>
@@ -279,11 +331,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr
-                        v-for="(ex, j) in getExercises(i, d)"
-                        :key="j"
-                        class="exercise-row"
-                      >
+                      <tr v-for="(ex, j) in getExercises(i, d)" :key="j" class="exercise-row">
                         <td class="td-exercise">
                           <a
                             v-if="ex.link"
@@ -291,7 +339,7 @@
                             target="_blank"
                             rel="noopener noreferrer"
                             class="exercise-link"
-                            :aria-label="`Watch demonstration for ${ex.name}`"
+                            :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
                           >
                             <span class="exercise-name">{{ ex.name }}</span>
                             <span class="demo-icon" aria-hidden="true">↗</span>
@@ -329,26 +377,15 @@
                     <span v-else class="btn-text">Log workout</span>
                   </button>
 
-                  <RouterLink
-                    v-if="loggedDay === i"
-                    to="/history"
-                    class="view-history-link"
-                  >
+                  <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
                     View history →
                   </RouterLink>
 
-                  <div
-                    v-if="queuedDay === i && !connectivity.isOnline"
-                    class="offline-notice"
-                  >
+                  <div v-if="queuedDay === i && !connectivity.isOnline" class="offline-notice">
                     Saved offline — will sync automatically when reconnected
                   </div>
 
-                  <div
-                    v-if="logError === i"
-                    class="log-error-msg"
-                    role="alert"
-                  >
+                  <div v-if="logError === i" class="log-error-msg" role="alert">
                     {{ logErrorMsg }}
                   </div>
                 </div>
@@ -381,7 +418,19 @@
             class="tip-card"
             :style="{ '--phase-color': phase.color }"
           >
-            <span class="tip-tag" style="font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--phase-color, #a78bfa); margin-bottom: 4px; display: block">{{ t.tag }}</span>
+            <span
+              class="tip-tag"
+              style="
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 1.5px;
+                text-transform: uppercase;
+                color: var(--phase-color, #a78bfa);
+                margin-bottom: 4px;
+                display: block;
+              "
+              >{{ t.tag }}</span
+            >
             <p class="tip-text">{{ t.text }}</p>
           </div>
         </div>
@@ -406,14 +455,11 @@
             <div class="modal-header-titles">
               <span class="modal-eyebrow">Log workout session</span>
               <h2 id="modal-title" class="modal-title">
-                {{ pendingLogDay?.day.day }} · {{ pendingLogDay?.day.label }}
+                {{ pendingLogDay?.day.day }} ·
+                {{ pendingLogDay?.day.label || pendingLogDay?.day.title }}
               </h2>
             </div>
-            <button
-              class="modal-close-btn"
-              aria-label="Close modal"
-              @click="closeLogModal"
-            >
+            <button class="modal-close-btn" aria-label="Close modal" @click="closeLogModal">
               <span aria-hidden="true">×</span>
             </button>
           </div>
@@ -425,8 +471,16 @@
               :key="group.exerciseName"
               class="modal-exercise-group"
             >
-              <h3 class="group-exercise-title">{{ group.exerciseName }}</h3>
-              
+              <div class="group-exercise-header">
+                <h3 class="group-exercise-title">{{ group.exerciseName }}</h3>
+                <span
+                  v-if="lastLoggedWeightMap[group.exerciseName] != null"
+                  class="last-weight-badge"
+                >
+                  Last: {{ lastLoggedWeightMap[group.exerciseName] }} lbs
+                </span>
+              </div>
+
               <!-- Column Header Labels -->
               <div class="set-grid-header">
                 <span class="col-label col-set">Set</span>
@@ -434,59 +488,130 @@
                 <span class="col-label col-weight">Weight (lbs)</span>
               </div>
 
-              <!-- Set Input Rows -->
-              <div
-                v-for="s in group.sets"
-                :key="s.setNumber"
-                class="set-input-row"
-              >
-                <span class="set-number-label">{{ s.setNumber }}</span>
-                <div class="input-wrapper">
-                  <input
-                    v-model.number="s.repsDone"
-                    type="number"
-                    inputmode="numeric"
-                    min="0"
-                    :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
-                    class="modal-input"
-                    :aria-label="`${group.exerciseName} set ${s.setNumber} reps`"
-                  />
+              <!-- Set Input Rows with Steppers -->
+              <div v-for="s in group.sets" :key="s.setNumber" class="set-card-row">
+                <div class="set-input-row">
+                  <span class="set-number-label">{{ s.setNumber }}</span>
+                  <div class="input-wrapper reps-input-wrapper">
+                    <div class="stepper-input-container">
+                      <button
+                        type="button"
+                        class="stepper-btn-mini"
+                        @click="adjustReps(s, -1)"
+                        :aria-label="`Decrease reps by 1 for ${group.exerciseName} set ${s.setNumber}`"
+                      >
+                        −
+                      </button>
+                      <input
+                        v-model.number="s.repsDone"
+                        type="number"
+                        inputmode="numeric"
+                        min="0"
+                        :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
+                        class="modal-input"
+                        :aria-label="`${group.exerciseName} set ${s.setNumber} reps`"
+                      />
+                      <button
+                        type="button"
+                        class="stepper-btn-mini"
+                        @click="adjustReps(s, 1)"
+                        :aria-label="`Increase reps by 1 for ${group.exerciseName} set ${s.setNumber}`"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  <div class="input-wrapper weight-input-wrapper">
+                    <input
+                      v-model.number="s.weightLbs"
+                      type="number"
+                      inputmode="decimal"
+                      min="0"
+                      step="2.5"
+                      :placeholder="
+                        lastLoggedWeightMap[group.exerciseName] != null
+                          ? `${lastLoggedWeightMap[group.exerciseName]} lbs`
+                          : 'lbs'
+                      "
+                      class="modal-input"
+                      :aria-label="`${group.exerciseName} set ${s.setNumber} weight in lbs`"
+                    />
+                  </div>
                 </div>
-                <div class="input-wrapper">
-                  <input
-                    v-model.number="s.weightLbs"
-                    type="number"
-                    inputmode="decimal"
-                    min="0"
-                    step="2.5"
-                    placeholder="lbs"
-                    class="modal-input"
-                    :aria-label="`${group.exerciseName} set ${s.setNumber} weight in lbs`"
-                  />
+
+                <!-- Weight Adjustment Stepper Row -->
+                <div
+                  class="weight-stepper-bar"
+                  role="group"
+                  :aria-label="`Quick weight adjustments for ${group.exerciseName} set ${s.setNumber}`"
+                >
+                  <span class="stepper-label">Weight:</span>
+                  <button
+                    type="button"
+                    class="weight-stepper-btn"
+                    @click="adjustWeight(s, -5, group.exerciseName)"
+                    :aria-label="`Decrease weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
+                  >
+                    -5
+                  </button>
+                  <button
+                    type="button"
+                    class="weight-stepper-btn"
+                    @click="adjustWeight(s, -1, group.exerciseName)"
+                    :aria-label="`Decrease weight by 1 lb for ${group.exerciseName} set ${s.setNumber}`"
+                  >
+                    -1
+                  </button>
+                  <button
+                    type="button"
+                    class="weight-stepper-btn"
+                    @click="adjustWeight(s, 1, group.exerciseName)"
+                    :aria-label="`Increase weight by 1 lb for ${group.exerciseName} set ${s.setNumber}`"
+                  >
+                    +1
+                  </button>
+                  <button
+                    type="button"
+                    class="weight-stepper-btn"
+                    @click="adjustWeight(s, 5, group.exerciseName)"
+                    :aria-label="`Increase weight by 5 lbs for ${group.exerciseName} set ${s.setNumber}`"
+                  >
+                    +5
+                  </button>
                 </div>
               </div>
             </div>
 
             <p class="modal-helper-text">
-              All set inputs are optional. Leave fields empty to record default programmed reps without weight.
+              All set inputs are optional. Leave fields empty to record default programmed reps
+              without weight.
             </p>
           </div>
 
-          <!-- Modal Footer CTA -->
+          <!-- Modal Footer CTA: Fast-path 1-tap + Standard Actions -->
           <div class="modal-footer">
             <button
-              class="modal-btn-primary"
+              type="button"
+              class="modal-btn-fast-log"
               :disabled="loggingDay === pendingLogDay?.dayIndex"
-              @click="confirmLog"
+              @click="logAllAsProgrammed"
             >
-              {{ loggingDay === pendingLogDay?.dayIndex ? 'Saving workout…' : 'Save workout' }}
+              <span class="fast-log-icon" aria-hidden="true">⚡</span>
+              <span class="fast-log-text">Log All as Programmed</span>
             </button>
-            <button
-              class="modal-btn-secondary"
-              @click="closeLogModal"
-            >
-              Cancel
-            </button>
+            <div class="modal-footer-secondary-row">
+              <button
+                type="button"
+                class="modal-btn-primary"
+                :disabled="loggingDay === pendingLogDay?.dayIndex"
+                @click="confirmLog"
+              >
+                {{ loggingDay === pendingLogDay?.dayIndex ? 'Saving workout…' : 'Save workout' }}
+              </button>
+              <button type="button" class="modal-btn-secondary" @click="closeLogModal">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -525,6 +650,7 @@
           type="button"
           class="timer-preset-btn"
           @click="startRestTimer(60)"
+          aria-label="Start 60 second rest timer"
         >
           60s
         </button>
@@ -532,6 +658,7 @@
           type="button"
           class="timer-preset-btn"
           @click="startRestTimer(90)"
+          aria-label="Start 90 second rest timer"
         >
           90s
         </button>
@@ -539,6 +666,7 @@
           type="button"
           class="timer-preset-btn"
           @click="startRestTimer(120)"
+          aria-label="Start 2 minute rest timer"
         >
           2m
         </button>
@@ -546,7 +674,7 @@
           type="button"
           class="timer-preset-btn"
           @click="addRestTime(30)"
-          aria-label="Add 30 seconds"
+          aria-label="Add 30 seconds to rest timer"
         >
           +30s
         </button>
@@ -554,7 +682,7 @@
           type="button"
           class="timer-reset-btn"
           @click="resetRestTimer(90)"
-          aria-label="Reset rest timer"
+          aria-label="Reset rest timer to 90 seconds"
         >
           Reset
         </button>
@@ -580,7 +708,7 @@ import { supabase } from '@/lib/supabase'
 import { buildSetLogs, parseSetCount, parseRepsProgrammed } from '@/lib/workout'
 import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
-import { invalidateWorkoutHistory } from '@/queries/history'
+import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
 import { useCustomProgramsQuery } from '@/queries/programs'
 import { logCustomDay } from '@/queries/customLog'
@@ -589,10 +717,10 @@ import ExportModal from '@/components/ExportModal.vue'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
-const router = useRouter()
+const _router = useRouter()
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-const todayIndex = WEEKDAYS.indexOf(today)
+const _todayIndex = WEEKDAYS.indexOf(today)
 
 const activePhase = ref(0)
 const track = ref({})
@@ -614,22 +742,41 @@ const userId = computed(() => authStore.user?.id)
 const authIsReady = computed(() => authStore.isReady)
 const { data: customDaysData } = useCustomDaysQuery(userId)
 const { data: customProgramsData, isLoading: programsLoading } = useCustomProgramsQuery(userId)
+const { data: workoutHistory } = useWorkoutHistoryQuery()
+
+const lastLoggedWeightMap = computed(() => {
+  const map = {}
+  if (!workoutHistory.value) return map
+  for (const session of workoutHistory.value) {
+    if (!session.set_logs) continue
+    for (const log of session.set_logs) {
+      if (log.exercise_name && log.weight_kg != null && map[log.exercise_name] === undefined) {
+        map[log.exercise_name] = log.weight_kg
+      }
+    }
+  }
+  return map
+})
 
 // Synchronous local cache backup to prevent split-second layout flashes on refresh
 const cachedDays = ref([])
 try {
-  const localKey = authStore.user?.id ? `active-custom-days-v1-${authStore.user.id}` : 'active-custom-days-v1-anon'
+  const localKey = authStore.user?.id
+    ? `active-custom-days-v1-${authStore.user.id}`
+    : 'active-custom-days-v1-anon'
   const raw = localStorage.getItem(localKey) || localStorage.getItem('active-custom-days-v1-last')
   if (raw) cachedDays.value = JSON.parse(raw)
-} catch (e) {}
+} catch {}
 
 const activeCustomDaysList = computed(() => {
   if (customDaysData.value && customDaysData.value.length > 0) {
     try {
-      const k = authStore.user?.id ? `active-custom-days-v1-${authStore.user.id}` : 'active-custom-days-v1-anon'
+      const k = authStore.user?.id
+        ? `active-custom-days-v1-${authStore.user.id}`
+        : 'active-custom-days-v1-anon'
       localStorage.setItem(k, JSON.stringify(customDaysData.value))
       localStorage.setItem('active-custom-days-v1-last', JSON.stringify(customDaysData.value))
-    } catch (e) {}
+    } catch {}
     return customDaysData.value
   }
   return cachedDays.value
@@ -640,7 +787,7 @@ function getCustomExercises(dayItem) {
   if (typeof dayItem.exercises === 'string') {
     try {
       return JSON.parse(dayItem.exercises)
-    } catch (e) {
+    } catch {
       return []
     }
   }
@@ -649,7 +796,14 @@ function getCustomExercises(dayItem) {
 
 const activeCustomSchedule = computed(() => {
   const map = {}
-  
+  const uid = authStore.user?.id
+  const activeProgId =
+    (uid ? localStorage.getItem(`active-program-id-${uid}`) : null) ||
+    localStorage.getItem('active-program-id-last')
+  if (activeProgId === 'builtin') {
+    return map
+  }
+
   // 1. Primary: custom_days
   const daysList = activeCustomDaysList.value ?? []
   for (const item of daysList) {
@@ -661,10 +815,16 @@ const activeCustomSchedule = computed(() => {
     }
   }
 
-  // 2. Secondary: if custom_days is empty, use the user's latest custom program
-  if (Object.keys(map).length === 0 && customProgramsData.value?.length > 0) {
-    const latestProgram = customProgramsData.value[0]
-    const progDays = latestProgram.custom_program_days ?? []
+  // 2. Secondary: if custom_days is empty, use the user's latest custom program only if actively set
+  if (
+    Object.keys(map).length === 0 &&
+    customProgramsData.value?.length > 0 &&
+    activeProgId &&
+    activeProgId !== 'builtin'
+  ) {
+    const matchedProg =
+      customProgramsData.value.find((p) => p.id === activeProgId) || customProgramsData.value[0]
+    const progDays = matchedProg.custom_program_days ?? []
     for (const item of progDays) {
       if (!item.day_name) continue
       const key = item.day_name.trim().toLowerCase()
@@ -672,7 +832,7 @@ const activeCustomSchedule = computed(() => {
       if (exList.length && !map[key]) {
         map[key] = {
           ...item,
-          programTitle: latestProgram.name,
+          programTitle: matchedProg.name,
           exercises: exList,
         }
       }
@@ -685,6 +845,38 @@ const activeCustomSchedule = computed(() => {
 const hasActiveCustomProgram = computed(() => {
   return Object.keys(activeCustomSchedule.value).length > 0
 })
+
+async function switchToBuiltIn() {
+  const uid = authStore.user?.id
+  if (uid) {
+    try {
+      await supabase.from('custom_days').delete().eq('user_id', uid)
+    } catch (e) {
+      console.error('Failed to clear custom days in db:', e)
+    }
+  }
+  try {
+    const userKeys = uid
+      ? [`active-custom-days-v1-${uid}`, `active-program-id-${uid}`, `active-program-name-${uid}`]
+      : []
+    const generalKeys = [
+      'active-custom-days-v1-anon',
+      'active-custom-days-v1-last',
+      'active-program-id-last',
+      'active-program-name-last',
+    ]
+    ;[...userKeys, ...generalKeys].forEach((k) => localStorage.removeItem(k))
+    if (uid) {
+      localStorage.setItem(`active-program-id-${uid}`, 'builtin')
+    }
+    localStorage.setItem('active-program-id-last', 'builtin')
+  } catch {}
+
+  cachedDays.value = []
+  if (uid) {
+    await invalidateCustomDays(queryClient)
+  }
+}
 
 // True while we're still waiting for auth OR for program data to load
 // — prevents flashing the wrong mode during the auth restore window
@@ -794,7 +986,7 @@ const logErrorMsg = ref('')
 let _loggedTimer = null
 let _queuedTimer = null
 
-async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides) {
+async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, _setOverrides) {
   await enqueueWorkout(authStore.user.id, sessionPayload, exercises)
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
@@ -902,6 +1094,40 @@ function closeLogModal() {
   logModalInputs.value = []
 }
 
+function adjustWeight(s, delta, exerciseName) {
+  let base = s.weightLbs
+  if (base == null || isNaN(base) || base === '') {
+    base = lastLoggedWeightMap.value[exerciseName] ?? 0
+  }
+  const next = Math.max(0, Math.round((Number(base) + delta) * 10) / 10)
+  s.weightLbs = next === 0 && delta < 0 ? null : next
+}
+
+function adjustReps(s, delta) {
+  let base = s.repsDone
+  if (base == null || isNaN(base) || base === '') {
+    base = s.repsProgrammed > 0 ? s.repsProgrammed : 0
+  }
+  const next = Math.max(0, Number(base) + delta)
+  s.repsDone = next
+}
+
+function logAllAsProgrammed() {
+  if (!pendingLogDay.value) return
+  for (const group of logModalInputs.value) {
+    const fallbackWeight = lastLoggedWeightMap.value[group.exerciseName] ?? null
+    for (const s of group.sets) {
+      if (s.repsDone == null || s.repsDone === '') {
+        s.repsDone = s.repsProgrammed > 0 ? s.repsProgrammed : null
+      }
+      if (s.weightLbs == null || s.weightLbs === '') {
+        s.weightLbs = fallbackWeight
+      }
+    }
+  }
+  confirmLog()
+}
+
 async function confirmLog() {
   if (!pendingLogDay.value) return
 
@@ -951,9 +1177,11 @@ async function confirmLog() {
 
 const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
 const currentWeek = ref(1)
-// ── Rest Timer Interval Widget ──────────────────────────────
+
+// ── Rest Timer Widget with Clock Accuracy & Background Sync ───────
 const restTimerSeconds = ref(90)
 const restTimerRunning = ref(false)
+let restTimerTargetEnd = null
 let _timerInterval = null
 
 const restTimerFormatted = computed(() => {
@@ -962,29 +1190,54 @@ const restTimerFormatted = computed(() => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
+function updateRestTimerFromClock() {
+  if (!restTimerRunning.value || !restTimerTargetEnd) return
+  const now = Date.now()
+  const remainingMs = restTimerTargetEnd - now
+  if (remainingMs <= 0) {
+    restTimerSeconds.value = 0
+    pauseRestTimer()
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate([200, 100, 200])
+      } catch {}
+    }
+  } else {
+    restTimerSeconds.value = Math.ceil(remainingMs / 1000)
+  }
+}
+
 function startRestTimer(seconds) {
-  if (seconds != null) restTimerSeconds.value = seconds
+  if (seconds != null) {
+    restTimerSeconds.value = seconds
+  } else if (restTimerSeconds.value <= 0) {
+    restTimerSeconds.value = 90
+  }
+  restTimerTargetEnd = Date.now() + restTimerSeconds.value * 1000
   restTimerRunning.value = true
   clearInterval(_timerInterval)
   _timerInterval = setInterval(() => {
-    if (restTimerSeconds.value > 0) {
-      restTimerSeconds.value--
-    } else {
-      pauseRestTimer()
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([200, 100, 200])
-      }
-    }
-  }, 1000)
+    updateRestTimerFromClock()
+  }, 250)
 }
 
 function pauseRestTimer() {
+  if (restTimerRunning.value && restTimerTargetEnd) {
+    const remainingMs = restTimerTargetEnd - Date.now()
+    restTimerSeconds.value = Math.max(0, Math.ceil(remainingMs / 1000))
+  }
   restTimerRunning.value = false
+  restTimerTargetEnd = null
   clearInterval(_timerInterval)
 }
 
 function addRestTime(secs = 30) {
-  restTimerSeconds.value += secs
+  if (restTimerRunning.value && restTimerTargetEnd) {
+    restTimerTargetEnd += secs * 1000
+    updateRestTimerFromClock()
+  } else {
+    restTimerSeconds.value += secs
+  }
 }
 
 function resetRestTimer(secs = 90) {
@@ -992,16 +1245,27 @@ function resetRestTimer(secs = 90) {
   restTimerSeconds.value = secs
 }
 
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible' && restTimerRunning.value) {
+    updateRestTimerFromClock()
+  }
+}
+
 onMounted(() => {
   window.addEventListener('resize', onResize, { passive: true })
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleVisibilityChange)
   const saved = localStorage.getItem(_weekKey.value)
   if (saved) {
     const n = parseInt(saved, 10)
     if (n >= 1 && n <= 8) currentWeek.value = n
   }
 })
+
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('focus', handleVisibilityChange)
   clearInterval(_timerInterval)
   clearTimeout(_loggedTimer)
   clearTimeout(_queuedTimer)
@@ -1033,7 +1297,10 @@ onUnmounted(() => {
 }
 
 .program-subtitle {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.9375rem;
   color: #a3a3a3;
   margin: 8px 0 0;
@@ -1043,24 +1310,76 @@ onUnmounted(() => {
 .program-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: 8px 12px;
   justify-content: center;
+  align-items: center;
   margin-top: 14px;
 }
 
 .badge {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.75rem;
   color: #a3a3a3;
-  padding: 4px 10px;
+  padding: 8px 14px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: oklch(12% 0.008 45);
   border: 1px solid oklch(18% 0.008 45);
   border-radius: 9999px;
+  box-sizing: border-box;
 }
 
 .badge.highlight {
   color: #e5e5e5;
   border-color: oklch(24% 0.008 45);
+}
+
+.active-custom-badge {
+  background: #a78bfa22;
+  color: #c4b5fd;
+  border-color: #a78bfa;
+  font-weight: 600;
+}
+
+.return-builtin-btn {
+  cursor: pointer;
+  background: #a78bfa22;
+  color: #c4b5fd;
+  border-color: #a78bfa;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 150ms ease-out;
+}
+
+.return-builtin-btn:hover {
+  background: #a78bfa33;
+  color: #ffffff;
+  border-color: #c4b5fd;
+}
+
+.return-icon {
+  font-size: 0.875rem;
+}
+
+.edit-studio-badge {
+  color: #c4b5fd;
+  text-decoration: none;
+  border-color: #a78bfa66;
+  transition: all 150ms;
+}
+
+.edit-studio-badge:hover {
+  background: oklch(14% 0.008 45);
+  border-color: #a78bfa;
+  color: #ffffff;
 }
 
 /* ── Phase Tabs Navigation ───────────────────────────────── */
@@ -1093,7 +1412,10 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   transition: all 180ms ease-out;
 }
 
@@ -1151,7 +1473,10 @@ onUnmounted(() => {
 }
 
 .onboarding-desc {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: #a3a3a3;
   font-size: 0.9375rem;
   line-height: 1.5;
@@ -1180,7 +1505,10 @@ onUnmounted(() => {
 .adopt-badge {
   display: block;
   color: #4ade80;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -1213,7 +1541,10 @@ onUnmounted(() => {
   cursor: pointer;
   color: #a3a3a3;
   font-size: 0.875rem;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   transition: all 150ms;
 }
 
@@ -1238,7 +1569,10 @@ onUnmounted(() => {
   background: oklch(11% 0.01 45);
   border: 1px solid #4ade8055;
   border-radius: 8px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.875rem;
   line-height: 1.5;
   color: #d4d4d4;
@@ -1285,6 +1619,46 @@ onUnmounted(() => {
   padding: 8px 4px 16px;
 }
 
+.custom-phase-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.phase-info-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-return-built-in {
+  min-height: 44px;
+  padding: 8px 14px;
+  background: oklch(12% 0.008 45);
+  border: 1px solid #a78bfa77;
+  border-radius: 6px;
+  color: #c4b5fd;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms ease-out;
+}
+
+.btn-return-built-in:hover {
+  background: #a78bfa22;
+  border-color: #a78bfa;
+  color: #ffffff;
+}
+
 .phase-dot {
   width: 8px;
   height: 8px;
@@ -1293,7 +1667,10 @@ onUnmounted(() => {
 }
 
 .phase-subtitle-text {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.875rem;
   color: #a3a3a3;
   font-style: italic;
@@ -1311,7 +1688,9 @@ onUnmounted(() => {
   border: 1px solid oklch(18% 0.008 45);
   border-radius: 10px;
   overflow: hidden;
-  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
+  transition:
+    border-color 200ms ease-out,
+    box-shadow 200ms ease-out;
 }
 
 .day-card.expanded {
@@ -1334,7 +1713,10 @@ onUnmounted(() => {
   align-items: center;
   cursor: pointer;
   color: #f5f5f5;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   text-align: left;
   transition: background 160ms ease-out;
 }
@@ -1355,7 +1737,10 @@ onUnmounted(() => {
 }
 
 .day-name {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.875rem;
   font-weight: 700;
   color: #f5f5f5;
@@ -1418,7 +1803,10 @@ onUnmounted(() => {
   border-radius: 6px;
   color: #a3a3a3;
   cursor: pointer;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -1438,7 +1826,7 @@ onUnmounted(() => {
 .track-btn.active {
   background: oklch(16% 0.008 45);
   color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Exercise Table Layout ───────────────────────────────── */
@@ -1454,7 +1842,10 @@ onUnmounted(() => {
 .exercise-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .th-exercise,
@@ -1499,7 +1890,8 @@ onUnmounted(() => {
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.4;
-  padding: 4px 0;
+  padding: 8px 0;
+  min-height: 44px;
   border-bottom: 1px dashed var(--phase-color, #4ade80);
   transition: opacity 150ms;
 }
@@ -1517,6 +1909,9 @@ onUnmounted(() => {
   color: #f5f5f5;
   font-size: 0.9375rem;
   font-weight: 500;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .exercise-note {
@@ -1565,7 +1960,10 @@ onUnmounted(() => {
   border-radius: 8px;
   color: #ffffff;
   cursor: pointer;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -1599,7 +1997,10 @@ onUnmounted(() => {
 }
 
 .view-history-link {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   color: #a3a3a3;
   text-decoration: none;
@@ -1615,13 +2016,19 @@ onUnmounted(() => {
 }
 
 .offline-notice {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   color: #facc15;
 }
 
 .log-error-msg {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   color: #f87171;
 }
@@ -1642,7 +2049,10 @@ onUnmounted(() => {
 }
 
 .reference-heading {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 2px;
@@ -1660,7 +2070,10 @@ onUnmounted(() => {
 .sub-item {
   display: flex;
   align-items: center;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.875rem;
   line-height: 1.5;
 }
@@ -1710,7 +2123,10 @@ onUnmounted(() => {
 }
 
 .tip-text {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.875rem;
   line-height: 1.5;
   color: #a3a3a3;
@@ -1739,7 +2155,7 @@ onUnmounted(() => {
 
 .modal-sheet {
   width: 100%;
-  max-width: 540px;
+  max-width: 560px;
   background: oklch(11% 0.01 45);
   border: 1px solid oklch(20% 0.008 45);
   border-radius: 16px 16px 0 0;
@@ -1747,7 +2163,7 @@ onUnmounted(() => {
   max-height: 88dvh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.6);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
 }
 
 @media (min-width: 600px) {
@@ -1755,7 +2171,7 @@ onUnmounted(() => {
     border-radius: 14px;
     padding: 28px 24px;
     max-height: 82dvh;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -1770,7 +2186,10 @@ onUnmounted(() => {
 
 .modal-eyebrow {
   display: block;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.6875rem;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -1824,24 +2243,51 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 
+.group-exercise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .group-exercise-title {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.9375rem;
   color: #f5f5f5;
-  margin: 0 0 12px;
+  margin: 0;
   font-weight: 600;
+}
+
+.last-weight-badge {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.6875rem;
+  color: #4ade80;
+  background: oklch(14% 0.008 45);
+  border: 1px solid #4ade8044;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 
 .set-grid-header {
   display: grid;
-  grid-template-columns: 48px 1fr 1fr;
+  grid-template-columns: 36px 1fr 1fr;
   gap: 10px;
   margin-bottom: 8px;
   padding: 0 4px;
 }
 
 .col-label {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.6875rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -1853,24 +2299,69 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.set-input-row {
-  display: grid;
-  grid-template-columns: 48px 1fr 1fr;
-  gap: 10px;
-  align-items: center;
+.set-card-row {
+  background: oklch(9% 0.012 45);
+  border: 1px solid oklch(16% 0.008 45);
+  border-radius: 8px;
+  padding: 10px;
   margin-bottom: 10px;
 }
 
+.set-input-row {
+  display: grid;
+  grid-template-columns: 36px 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
 .set-number-label {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   color: #a3a3a3;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .input-wrapper {
   position: relative;
+}
+
+.stepper-input-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper-btn-mini {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: oklch(14% 0.008 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 6px;
+  color: #d4d4d4;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 120ms ease-out;
+}
+
+.stepper-btn-mini:hover {
+  background: oklch(18% 0.008 45);
+  border-color: oklch(30% 0.008 45);
+  color: #ffffff;
+}
+
+.stepper-btn-mini:active {
+  transform: scale(0.96);
 }
 
 .modal-input {
@@ -1881,11 +2372,15 @@ onUnmounted(() => {
   border: 1px solid oklch(22% 0.008 45);
   border-radius: 8px;
   color: #ffffff;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 16px; /* Essential: prevents iOS viewport zoom on focus */
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
   box-sizing: border-box;
+  text-align: center;
   transition: border-color 150ms;
 }
 
@@ -1905,8 +2400,65 @@ onUnmounted(() => {
   color: #737373;
 }
 
+.weight-stepper-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed oklch(15% 0.008 45);
+  flex-wrap: wrap;
+}
+
+.stepper-label {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.6875rem;
+  color: #888888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+.weight-stepper-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  background: oklch(13% 0.008 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 6px;
+  color: #e5e5e5;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 120ms ease-out;
+}
+
+.weight-stepper-btn:hover {
+  background: oklch(18% 0.008 45);
+  border-color: #4ade8077;
+  color: #4ade80;
+}
+
+.weight-stepper-btn:active {
+  transform: scale(0.96);
+}
+
 .modal-helper-text {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.75rem;
   color: #a3a3a3;
   margin-top: 8px;
@@ -1915,10 +2467,56 @@ onUnmounted(() => {
 
 .modal-footer {
   display: flex;
-  gap: 12px;
-  margin-top: 20px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid oklch(16% 0.008 45);
+}
+
+.modal-btn-fast-log {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 18px;
+  background: #22c55e;
+  border: 1px solid #4ade80;
+  border-radius: 8px;
+  color: #000000;
+  cursor: pointer;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 12px rgba(34, 197, 94, 0.35);
+  transition: all 150ms ease-out;
+}
+
+.modal-btn-fast-log:hover:not(:disabled) {
+  background: #16a34a;
+  box-shadow: 0 4px 18px rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+}
+
+.modal-btn-fast-log:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.fast-log-icon {
+  font-size: 1rem;
+}
+
+.modal-footer-secondary-row {
+  display: flex;
+  gap: 10px;
 }
 
 .modal-btn-primary {
@@ -1930,7 +2528,10 @@ onUnmounted(() => {
   border-radius: 8px;
   color: #000000;
   cursor: pointer;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 1.5px;
@@ -1956,7 +2557,10 @@ onUnmounted(() => {
   border-radius: 8px;
   color: #a3a3a3;
   cursor: pointer;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -1971,7 +2575,9 @@ onUnmounted(() => {
 
 /* ── Transitions ─────────────────────────────────────────── */
 .phase-switch-enter-active {
-  transition: opacity 180ms ease-out, transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition:
+    opacity 180ms ease-out,
+    transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .phase-switch-leave-active {
   transition: opacity 100ms ease-in;
@@ -1985,7 +2591,9 @@ onUnmounted(() => {
 }
 
 .accordion-enter-active {
-  transition: opacity 200ms ease-out, transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .accordion-leave-active {
   transition: opacity 120ms ease-in;
@@ -2030,6 +2638,8 @@ onUnmounted(() => {
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 600;
+  min-height: 44px;
+  padding: 8px 14px;
   transition: all 150ms ease-out;
 }
 .export-badge-btn:hover {
@@ -2089,6 +2699,7 @@ onUnmounted(() => {
 }
 .timer-ctrl-btn {
   min-height: 44px;
+  min-width: 60px;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 11px;
@@ -2113,6 +2724,7 @@ onUnmounted(() => {
 }
 .timer-preset-btn {
   min-height: 44px;
+  min-width: 44px;
   padding: 8px 12px;
   background: oklch(14% 0.008 45);
   border: 1px solid oklch(24% 0.008 45);
@@ -2121,6 +2733,9 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .timer-preset-btn:hover {
   background: oklch(18% 0.008 45);
@@ -2128,6 +2743,7 @@ onUnmounted(() => {
 }
 .timer-reset-btn {
   min-height: 44px;
+  min-width: 50px;
   padding: 8px 12px;
   background: transparent;
   border: 1px solid oklch(20% 0.008 45);
@@ -2136,5 +2752,8 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

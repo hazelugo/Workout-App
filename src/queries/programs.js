@@ -1,5 +1,5 @@
 import { unref, computed } from 'vue'
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys } from './keys'
 

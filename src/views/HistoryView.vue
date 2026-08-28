@@ -10,7 +10,8 @@
       style="
         font-size: 11px;
         letter-spacing: 4px;
-        color: #888;
+        color: #a3a3a3;
+        font-weight: 600;
         text-transform: uppercase;
         margin-bottom: 8px;
       "
@@ -28,13 +29,13 @@
     >
       Workout History
     </h1>
-    <p style="font-size: 0.875rem; color: #888; margin-top: 8px; font-style: italic">
+    <p style="font-size: 0.875rem; color: #a3a3a3; margin-top: 8px; font-style: italic">
       Completed sessions · tap to expand
     </p>
   </div>
 
   <div style="max-width: 640px; margin: 24px auto 0; padding: 0 16px">
-    <div v-if="loading" style="padding: 48px 0; text-align: center; color: #666; font-size: 0.875rem">
+    <div v-if="loading" style="padding: 48px 0; text-align: center; color: #a3a3a3; font-size: 0.875rem">
       Loading history…
     </div>
 
@@ -105,7 +106,8 @@
               font-size: 10px;
               letter-spacing: 2px;
               text-transform: uppercase;
-              color: #666;
+              color: #a3a3a3;
+              font-weight: 600;
               margin-top: 2px;
             "
           >
@@ -122,7 +124,8 @@
               font-size: 10px;
               letter-spacing: 2px;
               text-transform: uppercase;
-              color: #666;
+              color: #a3a3a3;
+              font-weight: 600;
               margin-top: 2px;
             "
           >
@@ -299,10 +302,10 @@
                 v-if="isEditing(session.id, name)"
                 style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px"
               >
-                <span style="font-size: 10px; color: #555"></span>
-                <span style="font-size: 10px; color: #555; text-align: center">Target</span>
-                <span style="font-size: 10px; color: #555; text-align: center">Done</span>
-                <span style="font-size: 10px; color: #555; text-align: center">Weight (lbs)</span>
+                <span style="font-size: 10px; color: #a3a3a3"></span>
+                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Target</span>
+                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Done</span>
+                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Weight (lbs)</span>
               </div>
 
               <div
@@ -311,17 +314,17 @@
                 style="margin-bottom: 4px"
               >
                 <!-- View mode -->
-                <div v-if="!isEditing(session.id, name)" style="font-size: 12px; color: #777; line-height: 1.8">
-                  <span style="color: #555">Set {{ set.set_number }}:</span>
-                  <span style="margin-left: 6px">
+                <div v-if="!isEditing(session.id, name)" style="font-size: 12px; color: #a3a3a3; line-height: 1.8">
+                  <span style="color: #a3a3a3; font-weight: 600">Set {{ set.set_number }}:</span>
+                  <span style="margin-left: 6px; color: #d4d4d4">
                     {{ set.reps_programmed }} reps
                     <template v-if="set.reps_done != null">
-                      <span style="color: #444"> → </span>
-                      <span style="color: #aaa">{{ set.reps_done }} done</span>
+                      <span style="color: #737373"> → </span>
+                      <span style="color: #d4d4d4">{{ set.reps_done }} done</span>
                     </template>
                     <template v-if="set.weight_kg != null">
-                      <span style="color: #444"> · </span>
-                      <span style="color: #aaa">{{ set.weight_kg }} lbs</span>
+                      <span style="color: #737373"> · </span>
+                      <span style="color: #d4d4d4">{{ set.weight_kg }} lbs</span>
                     </template>
                   </span>
                 </div>
@@ -331,8 +334,8 @@
                   v-else
                   style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; align-items: center"
                 >
-                  <span style="font-size: 11px; color: #666">Set {{ set.set_number }}</span>
-                  <span style="font-size: 12px; color: #555; text-align: center; font-variant-numeric: tabular-nums">
+                  <span style="font-size: 11px; color: #a3a3a3; font-weight: 600">Set {{ set.set_number }}</span>
+                  <span style="font-size: 12px; color: #d4d4d4; text-align: center; font-variant-numeric: tabular-nums">
                     {{ set.reps_programmed }}
                   </span>
                   <input
@@ -559,7 +562,7 @@
                 </div>
 
                 <!-- Macro calculation breakdown indicator -->
-                <div v-if="calculatedCaloriesFromMacros != null" style="font-size: 11px; color: #a3a3a3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 6px">
+                <div v-if="calculatedCaloriesFromMacros != null" style="font-size: 11px; color: #a3a3a3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 6px;">
                   <span>Macro formula: ({{ nutritionInputs.protein || 0 }}g × 4) + ({{ nutritionInputs.carbs || 0 }}g × 4) + ({{ nutritionInputs.fat || 0 }}g × 9)</span>
                   <strong style="color: #facc15; font-variant-numeric: tabular-nums">= {{ calculatedCaloriesFromMacros }} kcal</strong>
                 </div>
@@ -590,7 +593,7 @@
                 </button>
               </div>
               <div v-else style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
-                <span style="font-size: 12px; color: #777">Remove this session permanently?</span>
+                <span style="font-size: 12px; color: #a3a3a3">Remove this session permanently?</span>
                 <div style="display: flex; gap: 8px; flex-shrink: 0">
                   <button
                     @click="deleteSession(session.id)"
@@ -636,7 +639,7 @@ const totalSets = computed(() =>
 )
 
 function phaseMeta(phase) {
-  return PHASES[phase] ?? { name: `Phase ${phase}`, color: '#888' }
+  return PHASES[phase] ?? { name: `Phase ${phase}`, color: '#a3a3a3' }
 }
 
 function sessionAccentColor(session) {
@@ -716,17 +719,20 @@ async function saveEdit(sessionId, exerciseName, group) {
   saveError.value = null
 
   try {
-    for (const set of group) {
+    const updatePromises = group.map((set) => {
       const { repsDone, weightLbs } = editInputs.value[set.id] ?? {}
-      const { error } = await supabase
+      return supabase
         .from('set_logs')
         .update({
           reps_done: repsDone ?? null,
           weight_kg: weightLbs ?? null,
         })
         .eq('id', set.id)
+    })
 
-      if (error) throw error
+    const results = await Promise.all(updatePromises)
+    for (const res of results) {
+      if (res?.error) throw res.error
     }
 
     // Optimistically patch local cache so the view updates without a full refetch
@@ -807,7 +813,9 @@ async function saveNutrition(sessionId) {
   // Cache locally first for instant persistence and fallback
   try {
     localStorage.setItem(`session-nutrition-v1-${sessionId}`, JSON.stringify(payload))
-  } catch (e) {}
+  } catch {
+    // Ignore storage quota or disabled localStorage errors
+  }
 
   try {
     const { error } = await supabase
@@ -825,7 +833,7 @@ async function saveNutrition(sessionId) {
 
     await refetch()
     editingNutritionId.value = null
-  } catch (err) {
+  } catch {
     // Still refetch to reflect locally cached values
     await refetch()
     editingNutritionId.value = null

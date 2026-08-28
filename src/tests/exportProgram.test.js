@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { formatProgramAsText, copyTextToClipboard, downloadTextFile } from '@/lib/exportProgram'
+import { describe, it, expect } from 'vitest'
+import { formatProgramAsText } from '@/lib/exportProgram'
 
 describe('formatProgramAsText', () => {
   it('formats built-in program with all phases and tracks', () => {

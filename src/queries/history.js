@@ -79,7 +79,7 @@ export async function fetchWorkoutHistory() {
           cardio_minutes: session.cardio_minutes ?? parsed.cardio_minutes ?? null,
         }
       }
-    } catch (e) {}
+    } catch {}
     return session
   })
 }

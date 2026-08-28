@@ -1,13 +1,14 @@
 <template>
-  <div :style="{ maxWidth: '400px', margin: '60px auto', padding: '0 20px' }">
+  <div style="max-width: 400px; margin: 60px auto; padding: 0 20px">
     <div style="text-align: center; margin-bottom: 32px">
       <div
         style="
           font-size: 12px;
           letter-spacing: 4px;
-          color: #e8440a;
+          color: var(--color-primary, #a78bfa);
           text-transform: uppercase;
           margin-bottom: 8px;
+          font-weight: 700;
         "
       >
         Workout App
@@ -27,15 +28,19 @@
 
     <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 16px">
       <div v-if="isSignUp" style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
-          >Name</label
+        <label
+          for="auth-display-name"
+          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
         >
+          Name
+        </label>
         <input
+          id="auth-display-name"
           v-model="displayName"
           type="text"
           placeholder="Your name"
           required
-          :style="inputStyle"
+          class="auth-input"
         />
         <span v-if="errors.displayName" style="font-size: 11px; color: #f87171">{{
           errors.displayName
@@ -43,29 +48,37 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
-          >Email</label
+        <label
+          for="auth-email"
+          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
         >
+          Email
+        </label>
         <input
+          id="auth-email"
           v-model="email"
           type="email"
           placeholder="you@example.com"
           required
-          :style="inputStyle"
+          class="auth-input"
         />
         <span v-if="errors.email" style="font-size: 11px; color: #f87171">{{ errors.email }}</span>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #888"
-          >Password</label
+        <label
+          for="auth-password"
+          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
         >
+          Password
+        </label>
         <input
+          id="auth-password"
           v-model="password"
           type="password"
           placeholder="••••••••"
           required
-          :style="inputStyle"
+          class="auth-input"
         />
         <span v-if="errors.password" style="font-size: 11px; color: #f87171">{{
           errors.password
@@ -74,14 +87,15 @@
           v-if="!isSignUp"
           type="button"
           @click="handleForgotPassword"
+          class="auth-link-btn"
           style="
             background: none;
             border: none;
-            color: #888;
+            color: #a3a3a3;
             font-size: 11px;
             cursor: pointer;
             text-align: left;
-            padding: 0;
+            padding: 4px 0;
             font-family: Georgia, serif;
             text-decoration: underline;
           "
@@ -101,19 +115,7 @@
       <button
         type="submit"
         :disabled="loading"
-        :style="{
-          padding: '12px',
-          background: loading ? 'oklch(20% 0.008 45)' : '#E8440A',
-          border: 'none',
-          color: loading ? '#666' : '#fff',
-          fontSize: '11px',
-          letterSpacing: '2px',
-          textTransform: 'uppercase',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          borderRadius: '4px',
-          transition: 'background 0.15s',
-          fontFamily: 'Georgia, serif',
-        }"
+        class="auth-submit-btn"
       >
         {{ loading ? '...' : isSignUp ? 'Create Account' : 'Sign In' }}
       </button>
@@ -121,7 +123,7 @@
       <!-- Divider -->
       <div style="display: flex; align-items: center; gap: 12px">
         <div style="flex: 1; height: 1px; background: oklch(18% 0.008 45)"></div>
-        <span style="font-size: 11px; color: #555">or</span>
+        <span style="font-size: 11px; color: #a3a3a3">or</span>
         <div style="flex: 1; height: 1px; background: oklch(18% 0.008 45)"></div>
       </div>
 
@@ -129,37 +131,27 @@
         type="button"
         @click="handleGoogle"
         :disabled="loading"
-        :style="{
-          padding: '12px',
-          background: 'transparent',
-          border: '1px solid oklch(22% 0.008 45)',
-          color: '#e8e8e8',
-          fontSize: '11px',
-          letterSpacing: '2px',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          borderRadius: '4px',
-          fontFamily: 'Georgia, serif',
-          transition: 'border-color 0.15s',
-        }"
+        class="auth-google-btn"
       >
         Continue with Google
       </button>
     </form>
 
-    <p style="text-align: center; margin-top: 24px; font-size: 12px; color: #888">
+    <p style="text-align: center; margin-top: 24px; font-size: 12px; color: #a3a3a3">
       {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
       <button
         @click="toggleMode"
+        class="auth-link-btn"
         style="
           background: none;
           border: none;
-          color: #e8440a;
+          color: #a78bfa;
           cursor: pointer;
           font-size: 12px;
+          font-weight: 600;
           font-family: Georgia, serif;
           text-decoration: underline;
-          padding: 0;
+          padding: 2px 4px;
         "
       >
         {{ isSignUp ? 'Sign in' : 'Sign up' }}
@@ -184,17 +176,6 @@ const displayName = ref('')
 const loading = ref(false)
 const errors = reactive({ email: '', password: '', displayName: '', general: '' })
 const successMsg = ref('')
-
-const inputStyle = {
-  padding: '10px 12px',
-  background: 'oklch(11.5% 0.008 45)',
-  border: '1px solid oklch(20% 0.008 45)',
-  borderRadius: '4px',
-  color: '#e8e8e8',
-  fontSize: '14px',
-  fontFamily: 'Georgia, serif',
-  outline: 'none',
-}
 
 function clearErrors() {
   errors.email = ''
@@ -259,3 +240,91 @@ async function handleForgotPassword() {
   }
 }
 </script>
+
+<style scoped>
+.auth-input {
+  padding: 10px 12px;
+  min-height: 44px;
+  background: oklch(11.5% 0.008 45);
+  border: 1px solid oklch(20% 0.008 45);
+  border-radius: 4px;
+  color: #f5f5f5;
+  font-size: 14px;
+  font-family: Georgia, serif;
+  outline: none;
+  transition: border-color 0.15s, outline 0.15s;
+}
+
+.auth-input:focus-visible {
+  border-color: #a78bfa;
+  outline: 2px solid #a78bfa;
+}
+
+.auth-submit-btn {
+  padding: 12px;
+  min-height: 44px;
+  background: #a78bfa;
+  border: none;
+  color: #121118;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s, opacity 0.15s;
+  font-family: Georgia, serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background: #c4b5fd;
+}
+
+.auth-submit-btn:disabled {
+  background: oklch(20% 0.008 45);
+  color: #737373;
+  cursor: not-allowed;
+}
+
+.auth-submit-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.auth-google-btn {
+  padding: 12px;
+  min-height: 44px;
+  background: transparent;
+  border: 1px solid oklch(22% 0.008 45);
+  color: #f5f5f5;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Georgia, serif;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-google-btn:hover:not(:disabled) {
+  border-color: #a78bfa;
+  background: #a78bfa11;
+}
+
+.auth-google-btn:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.auth-link-btn:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+</style>

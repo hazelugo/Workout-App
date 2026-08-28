@@ -51,7 +51,7 @@
           margin-left: auto;
           display: flex;
           align-items: center;
-          padding-right: 12px;
+          padding-right: 8px;
           position: relative;
         "
       >
@@ -59,24 +59,11 @@
           @click="dropdownOpen = !dropdownOpen"
           :aria-expanded="dropdownOpen"
           aria-label="User menu"
-          :style="{
-            width: '30px',
-            height: '30px',
-            borderRadius: '50%',
-            background: '#a78bfa22',
-            border: '1px solid #a78bfa66',
-            color: '#a78bfa',
-            fontSize: '11px',
-            fontWeight: 700,
-            letterSpacing: '0.5px',
-            cursor: 'pointer',
-            fontFamily: 'Georgia, serif',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }"
+          class="profile-avatar-btn"
         >
-          {{ auth.userInitials }}
+          <span class="profile-avatar-inner">
+            {{ auth.userInitials }}
+          </span>
         </button>
 
         <Transition name="reveal">
@@ -98,7 +85,7 @@
               style="
                 padding: 10px 14px;
                 font-size: 12px;
-                color: #888;
+                color: var(--color-text-secondary, #a3a3a3);
                 border-bottom: 1px solid oklch(18% 0.008 45);
               "
             >
@@ -106,19 +93,7 @@
             </div>
             <button
               @click="handleSignOut"
-              style="
-                width: 100%;
-                padding: 10px 14px;
-                background: transparent;
-                border: none;
-                color: #e8440a;
-                font-size: 11px;
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                text-align: left;
-                cursor: pointer;
-                font-family: Georgia, serif;
-              "
+              class="sign-out-btn"
             >
               Sign Out
             </button>
@@ -171,10 +146,21 @@ async function handleSignOut() {
 </script>
 
 <style>
-/* Modern, accessible, high-legibility typography stack */
+/* Modern, accessible, high-legibility typography & design token system */
 :root {
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
+
+  /* Standard semantic design tokens */
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a3a3a3;
+  --color-text-muted: #737373;
+  --color-primary: #a78bfa;
+  --color-accent: #22c55e;
+  --color-bg: oklch(8% 0.012 45);
+  --color-surface: oklch(10% 0.01 45);
+  --color-surface-elevated: oklch(13% 0.008 45);
+  --color-border: oklch(18% 0.008 45);
 }
 
 *, *::before, *::after {
@@ -184,7 +170,7 @@ async function handleSignOut() {
 body {
   margin: 0;
   background: oklch(8% 0.012 45);
-  color: #e8e8e8;
+  color: var(--color-text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -245,7 +231,7 @@ input[type="number"] {
   min-height: 48px;
   background: transparent;
   border-bottom: 2px solid transparent;
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 1.5px;
@@ -262,16 +248,87 @@ input[type="number"] {
     border-color 0.15s;
 }
 .nav-link:hover {
-  color: #f5f5f5;
+  color: var(--color-text-primary);
 }
 .nav-link:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: -2px;
 }
 .nav-link.router-link-exact-active {
   background: oklch(11.5% 0.008 45);
-  border-bottom-color: #a78bfa;
-  color: #f5f5f5;
+  border-bottom-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+/* Profile Avatar Button with >=44x44px touch area & focus-visible ring */
+.profile-avatar-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.profile-avatar-inner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #a78bfa22;
+  border: 1px solid #a78bfa66;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-family: var(--font-serif);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.profile-avatar-btn:hover .profile-avatar-inner {
+  background: #a78bfa33;
+  border-color: var(--color-primary);
+}
+.profile-avatar-btn:focus-visible {
+  outline: none;
+}
+.profile-avatar-btn:focus-visible .profile-avatar-inner {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Sign-out button */
+.sign-out-btn {
+  width: 100%;
+  padding: 12px 14px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+.sign-out-btn:hover {
+  background: oklch(18% 0.008 45);
+  color: #c4b5fd;
+}
+.sign-out-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 .page-enter-active {
   transition: opacity 120ms ease-out;

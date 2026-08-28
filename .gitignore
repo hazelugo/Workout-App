@@ -43,3 +43,4 @@ docs/
 
 .vercel
 .env*.local
+AUDIT_TRACKER.md
