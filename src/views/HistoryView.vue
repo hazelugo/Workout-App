@@ -221,14 +221,40 @@
           >
             <div
               style="
-                font-size: 10px;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                color: #a3a3a3;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex-wrap: wrap;
                 padding: 12px 0 8px;
               "
             >
-              {{ formatSessionTime(session.completed_at) }}
+              <span
+                style="
+                  font-size: 10px;
+                  letter-spacing: 2px;
+                  text-transform: uppercase;
+                  color: #a3a3a3;
+                "
+              >
+                {{ formatSessionTime(session.completed_at) }}
+              </span>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button
+                  type="button"
+                  class="calendar-btn"
+                  @click="exportToGoogleCalendar(session)"
+                >
+                  Google Calendar
+                </button>
+                <button
+                  type="button"
+                  class="calendar-btn calendar-btn-secondary"
+                  @click="downloadCalendarFile(session)"
+                >
+                  Download .ics
+                </button>
+              </div>
             </div>
 
             <!-- Exercise groups -->
@@ -326,6 +352,123 @@
                     class="history-input"
                     aria-label="Weight in lbs"
                   />
+                </div>
+              </div>
+            </div>
+
+            <!-- Add exercise to session -->
+            <div style="padding: 14px 0 4px; border-top: 1px solid oklch(15% 0.008 45)">
+              <div
+                v-if="addingExerciseSessionId !== session.id"
+                style="display: flex; justify-content: flex-end"
+              >
+                <button
+                  type="button"
+                  class="edit-btn"
+                  @click="startAddExercise(session.id)"
+                >
+                  + Add Exercise
+                </button>
+              </div>
+
+              <div
+                v-else
+                style="padding: 14px; background: oklch(12% 0.01 45); border: 1px solid oklch(22% 0.008 45); border-radius: 10px"
+              >
+                <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 700; margin-bottom: 12px">
+                  Add exercise to this session
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 72px 72px; gap: 8px; margin-bottom: 12px">
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Name</label>
+                    <input
+                      v-model="newExerciseForm.name"
+                      type="text"
+                      placeholder="e.g. Cable Fly"
+                      class="history-input"
+                      style="text-align: left"
+                    />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Sets</label>
+                    <input
+                      v-model="newExerciseForm.sets"
+                      type="number"
+                      min="1"
+                      max="20"
+                      placeholder="3"
+                      class="history-input"
+                    />
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Reps</label>
+                    <input
+                      v-model="newExerciseForm.reps"
+                      type="text"
+                      placeholder="10"
+                      class="history-input"
+                    />
+                  </div>
+                </div>
+
+                <div v-if="newExerciseSetInputs.length" style="margin-bottom: 12px">
+                  <div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 8px">
+                    Log sets (optional)
+                  </div>
+                  <div
+                    style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px"
+                  >
+                    <span></span>
+                    <span style="font-size: 10px; color: #555; text-align: center">Target</span>
+                    <span style="font-size: 10px; color: #555; text-align: center">Done</span>
+                    <span style="font-size: 10px; color: #555; text-align: center">Weight (lbs)</span>
+                  </div>
+                  <div
+                    v-for="set in newExerciseSetInputs"
+                    :key="set.setNumber"
+                    style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; align-items: center; margin-bottom: 4px"
+                  >
+                    <span style="font-size: 11px; color: #666">Set {{ set.setNumber }}</span>
+                    <span style="font-size: 12px; color: #555; text-align: center; font-variant-numeric: tabular-nums">
+                      {{ set.repsProgrammed }}
+                    </span>
+                    <input
+                      v-model.number="set.repsDone"
+                      type="number"
+                      min="0"
+                      :placeholder="String(set.repsProgrammed)"
+                      class="history-input"
+                      aria-label="Reps done"
+                    />
+                    <input
+                      v-model.number="set.weightLbs"
+                      type="number"
+                      min="0"
+                      step="2.5"
+                      placeholder="lbs"
+                      class="history-input"
+                      aria-label="Weight in lbs"
+                    />
+                  </div>
+                </div>
+
+                <div v-if="addExerciseError" style="font-size: 11px; color: #f87171; margin-bottom: 10px">
+                  {{ addExerciseError }}
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap">
+                  <button
+                    type="button"
+                    @click="saveNewExercise(session.id)"
+                    :disabled="savingNewExercise || !canSaveNewExercise"
+                    class="save-btn"
+                  >
+                    {{ savingNewExercise ? 'Saving…' : 'Add to session' }}
+                  </button>
+                  <button type="button" @click="cancelAddExercise" class="cancel-btn">
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>
@@ -472,8 +615,13 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useWorkoutHistoryQuery } from '@/queries/history'
+import { useWorkoutHistoryQuery, addExerciseToSession } from '@/queries/history'
 import { PHASES, formatSessionDate, formatSessionTime } from '@/lib/workout'
+import {
+  buildNewExerciseSetInputs,
+  downloadSessionIcs,
+  openSessionInGoogleCalendar,
+} from '@/lib/exportSession'
 import { supabase } from '@/lib/supabase'
 
 const { data, isPending, isError, error: queryError, refetch } = useWorkoutHistoryQuery()
@@ -503,7 +651,16 @@ function toggleSession(id) {
     editingGroup.value = null
     editInputs.value = {}
     saveError.value = null
+    cancelAddExercise()
   }
+}
+
+function exportToGoogleCalendar(session) {
+  openSessionInGoogleCalendar(session)
+}
+
+function downloadCalendarFile(session) {
+  downloadSessionIcs(session)
 }
 
 function groupSets(setLogs) {
@@ -674,6 +831,68 @@ async function saveNutrition(sessionId) {
     editingNutritionId.value = null
   } finally {
     savingNutrition.value = false
+  }
+}
+
+// ── Add exercise to historic session ─────────────────────────
+const addingExerciseSessionId = ref(null)
+const newExerciseForm = ref({ name: '', sets: '3', reps: '10' })
+const newExerciseSetInputs = ref([])
+const savingNewExercise = ref(false)
+const addExerciseError = ref(null)
+
+const canSaveNewExercise = computed(() => Boolean(newExerciseForm.value.name?.trim()))
+
+watch(
+  () => [newExerciseForm.value.sets, newExerciseForm.value.reps, newExerciseForm.value.name],
+  () => {
+    if (addingExerciseSessionId.value == null) return
+    const name = newExerciseForm.value.name?.trim()
+    if (!name) {
+      newExerciseSetInputs.value = []
+      return
+    }
+    newExerciseSetInputs.value = buildNewExerciseSetInputs(newExerciseForm.value)
+  },
+)
+
+function startAddExercise(sessionId) {
+  addingExerciseSessionId.value = sessionId
+  newExerciseForm.value = { name: '', sets: '3', reps: '10' }
+  newExerciseSetInputs.value = []
+  addExerciseError.value = null
+  editingGroup.value = null
+  editInputs.value = {}
+}
+
+function cancelAddExercise() {
+  addingExerciseSessionId.value = null
+  newExerciseForm.value = { name: '', sets: '3', reps: '10' }
+  newExerciseSetInputs.value = []
+  addExerciseError.value = null
+}
+
+async function saveNewExercise(sessionId) {
+  if (!canSaveNewExercise.value) return
+
+  savingNewExercise.value = true
+  addExerciseError.value = null
+
+  const setOverrides = newExerciseSetInputs.value.map((set) => ({
+    exerciseName: newExerciseForm.value.name.trim(),
+    setNumber: set.setNumber,
+    repsDone: set.repsDone ?? null,
+    weightLbs: set.weightLbs ?? null,
+  }))
+
+  try {
+    await addExerciseToSession(sessionId, newExerciseForm.value, setOverrides)
+    await refetch()
+    cancelAddExercise()
+  } catch (err) {
+    addExerciseError.value = err?.message ?? 'Failed to add exercise. Please try again.'
+  } finally {
+    savingNewExercise.value = false
   }
 }
 
@@ -868,5 +1087,31 @@ a:hover {
 .delete-confirm-btn:disabled {
   opacity: 0.5;
   cursor: wait;
+}
+
+.calendar-btn {
+  background: oklch(14% 0.008 45);
+  border: 1px solid oklch(24% 0.008 45);
+  color: #d4d4d4;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 8px 12px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+.calendar-btn:hover {
+  color: #ffffff;
+  border-color: #4285f4;
+  background: #4285f418;
+}
+.calendar-btn-secondary:hover {
+  border-color: #a78bfa;
+  background: #a78bfa18;
 }
 </style>

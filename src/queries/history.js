@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
+import { buildSetLogs } from '@/lib/workout'
 import { queryKeys } from './keys'
 
 export async function fetchWorkoutHistory() {
@@ -93,4 +94,23 @@ export function useWorkoutHistoryQuery() {
 /** Call after logging a workout or when offline queue sync completes. */
 export function invalidateWorkoutHistory(queryClient) {
   return queryClient.invalidateQueries({ queryKey: queryKeys.history.all })
+}
+
+/**
+ * Append a new exercise (and its sets) to an existing logged session.
+ * Does not modify program templates — only inserts set_logs rows.
+ *
+ * @param {string} sessionId
+ * @param {{ name: string, sets: string|number, reps: string|number }} exercise
+ * @param {Array<{ exerciseName: string, setNumber: number, repsDone?: number|null, weightLbs?: number|null }>} [setOverrides]
+ */
+export async function addExerciseToSession(sessionId, exercise, setOverrides = []) {
+  const name = exercise?.name?.trim()
+  if (!name) throw new Error('Exercise name is required')
+
+  const logs = buildSetLogs(sessionId, [{ name, sets: exercise.sets, reps: exercise.reps }], setOverrides)
+  const { data, error } = await supabase.from('set_logs').insert(logs).select()
+
+  if (error) throw error
+  return data
 }
