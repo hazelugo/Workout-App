@@ -23,8 +23,8 @@ export default defineConfig({
     vue(),
     vueJsx(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
         name: 'Workout App',
         short_name: 'Workout',
@@ -36,20 +36,31 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
-            src: 'icon.svg',
-            sizes: '192x192',
-            type: 'image/svg+xml',
+            src: 'pwa-64x64.png',
+            sizes: '64x64',
+            type: 'image/png',
           },
           {
-            src: 'icon.svg',
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'maskable-icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
       },
     }),

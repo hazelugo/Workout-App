@@ -854,6 +854,7 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useConnectivityStore } from '@/stores/connectivity'
 import { useCustomDaysQuery, invalidateCustomDays } from '@/queries/customDays'
 import {
   useCustomProgramsQuery,
@@ -867,12 +868,14 @@ import {
 } from '@/queries/programs'
 import { invalidateProfile } from '@/queries/profile'
 import { logCustomDay } from '@/queries/customLog'
+import { enqueueCustomWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { invalidateWorkoutHistory } from '@/queries/history'
 import { parseSetCount } from '@/lib/workout'
 import { program as builtInProgram } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 
 const auth = useAuthStore()
+const connectivity = useConnectivityStore()
 const queryClient = useQueryClient()
 
 const activeTab = ref('programs')
@@ -1415,18 +1418,41 @@ async function confirmLog() {
     const dayData = savedWorkouts.value.find((sd) => sd.day_name === logModal.value.dayName)
     const exList = dayData?.exercises ?? []
 
-    await logCustomDay(
-      auth.user.id,
-      logModal.value.dayName,
-      logModal.value.title,
-      exList,
-      setOverrides,
-    )
-    await invalidateWorkoutHistory(queryClient)
-    closeLogModal()
-    showToast(`Logged ${logModal.value.dayName} workout to History!`)
-  } catch (err) {
-    logModal.value.error = err?.message ?? 'Failed to log workout. Please try again.'
+    const queueOffline = async () => {
+      await enqueueCustomWorkout(auth.user.id, {
+        dayName: logModal.value.dayName,
+        title: logModal.value.title,
+        exercises: exList,
+        setOverrides,
+      })
+      await connectivity.onWorkoutQueued()
+      closeLogModal()
+      showToast(`Queued ${logModal.value.dayName} workout — will sync when online`)
+    }
+
+    if (!connectivity.isOnline) {
+      await queueOffline()
+      return
+    }
+
+    try {
+      await logCustomDay(
+        auth.user.id,
+        logModal.value.dayName,
+        logModal.value.title,
+        exList,
+        setOverrides,
+      )
+      await invalidateWorkoutHistory(queryClient)
+      closeLogModal()
+      showToast(`Logged ${logModal.value.dayName} workout to History!`)
+    } catch (err) {
+      if (isNetworkError(err)) {
+        await queueOffline()
+        return
+      }
+      logModal.value.error = err?.message ?? 'Failed to log workout. Please try again.'
+    }
   } finally {
     logModal.value.saving = false
   }

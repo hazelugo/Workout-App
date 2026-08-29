@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { buildSetLogs } from '@/lib/workout'
+import {
+  cacheWorkoutHistory,
+  fetchWithCache,
+  getCachedWorkoutHistory,
+} from '@/lib/offlineCache'
 import { queryKeys } from './keys'
 
-export async function fetchWorkoutHistory() {
+async function loadWorkoutHistoryFromServer() {
   let { data, error } = await supabase
     .from('workout_sessions')
     .select(
@@ -65,7 +70,11 @@ export async function fetchWorkoutHistory() {
     data = fallback.data
   }
 
-  return (data ?? []).map((session) => {
+  return data ?? []
+}
+
+function hydrateNutrition(sessions) {
+  return sessions.map((session) => {
     try {
       const cached = localStorage.getItem(`session-nutrition-v1-${session.id}`)
       if (cached) {
@@ -81,6 +90,19 @@ export async function fetchWorkoutHistory() {
       }
     } catch {}
     return session
+  })
+}
+
+export async function fetchWorkoutHistory() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  return fetchWithCache({
+    userId: user?.id,
+    fetcher: async () => hydrateNutrition(await loadWorkoutHistoryFromServer()),
+    readCache: getCachedWorkoutHistory,
+    writeCache: cacheWorkoutHistory,
   })
 }
 

@@ -105,6 +105,8 @@
     <Transition name="page" mode="out-in">
       <RouterView />
     </Transition>
+
+    <PwaBanners />
   </div>
 </template>
 
@@ -113,6 +115,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useConnectivityStore } from './stores/connectivity'
+import PwaBanners from './components/PwaBanners.vue'
 
 const auth = useAuthStore()
 const connectivity = useConnectivityStore()

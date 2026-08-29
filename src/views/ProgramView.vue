@@ -660,7 +660,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useConnectivityStore } from '@/stores/connectivity'
 import { supabase } from '@/lib/supabase'
 import { buildSetLogs, parseSetCount, parseRepsProgrammed } from '@/lib/workout'
-import { enqueueWorkout, isNetworkError } from '@/lib/offlineQueue'
+import { enqueueWorkout, enqueueCustomWorkout, isNetworkError } from '@/lib/offlineQueue'
 import { queryClient } from '@/lib/queryClient'
 import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery } from '@/queries/customDays'
@@ -903,8 +903,24 @@ const logErrorMsg = ref('')
 let _loggedTimer = null
 let _queuedTimer = null
 
-async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, _setOverrides) {
-  await enqueueWorkout(authStore.user.id, sessionPayload, exercises)
+async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides = []) {
+  await enqueueWorkout(authStore.user.id, sessionPayload, exercises, setOverrides)
+  await connectivity.onWorkoutQueued()
+  loggingDay.value = null
+  queuedDay.value = dayIndex
+  clearTimeout(_queuedTimer)
+  _queuedTimer = setTimeout(() => {
+    if (queuedDay.value === dayIndex) queuedDay.value = null
+  }, 4000)
+}
+
+async function queueCustomWorkoutOffline(dayIndex, day, setOverrides = []) {
+  await enqueueCustomWorkout(authStore.user.id, {
+    dayName: day.day,
+    title: day.title ?? '',
+    exercises: day.exercises ?? [],
+    setOverrides,
+  })
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
   queuedDay.value = dayIndex
@@ -1068,6 +1084,11 @@ async function confirmLog() {
   if (isCustom) {
     loggingDay.value = dayIndex
     try {
+      if (!connectivity.isOnline) {
+        await queueCustomWorkoutOffline(dayIndex, day, setOverrides)
+        return
+      }
+
       await logCustomDay(
         authStore.user.id,
         day.day,
@@ -1082,6 +1103,10 @@ async function confirmLog() {
         if (loggedDay.value === dayIndex) loggedDay.value = null
       }, 4000)
     } catch (err) {
+      if (isNetworkError(err)) {
+        await queueCustomWorkoutOffline(dayIndex, day, setOverrides)
+        return
+      }
       logError.value = dayIndex
       logErrorMsg.value = err?.message ?? 'Failed to log workout.'
     } finally {
