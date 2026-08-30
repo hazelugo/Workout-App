@@ -119,11 +119,10 @@ export function invalidateWorkoutHistory(queryClient) {
   return queryClient.invalidateQueries({ queryKey: queryKeys.history.all })
 }
 
-function applyDateToTimestamp(isoTimestamp, dateStr) {
-  const old = isoTimestamp ? new Date(isoTimestamp) : new Date()
+function applyDateToTimestamp(_isoTimestamp, dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number)
-  const updated = new Date(y, m - 1, d, old.getHours(), old.getMinutes(), old.getSeconds(), 0)
-  return updated.toISOString()
+  // Noon local keeps the saved calendar day stable across US timezones.
+  return new Date(y, m - 1, d, 12, 0, 0, 0).toISOString()
 }
 
 /**

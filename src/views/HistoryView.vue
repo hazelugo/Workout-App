@@ -643,7 +643,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useWorkoutHistoryQuery, addExerciseToSession, updateSessionDate } from '@/queries/history'
-import { PHASES, formatSessionDate, formatSessionTime } from '@/lib/workout'
+import { PHASES, formatSessionDate, formatSessionTime, toDateInputValue } from '@/lib/workout'
 import {
   buildNewExerciseSetInputs,
   downloadSessionIcs,
@@ -691,9 +691,7 @@ const savingDate = ref(false)
 const dateError = ref(null)
 
 function sessionDateValue(session) {
-  if (session.date) return String(session.date).slice(0, 10)
-  if (session.completed_at) return session.completed_at.slice(0, 10)
-  return ''
+  return toDateInputValue(session.date || session.completed_at)
 }
 
 function startEditDate(session) {

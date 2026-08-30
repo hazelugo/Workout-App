@@ -50,8 +50,34 @@ export function buildSetLogs(sessionId, exercises, setOverrides = []) {
   return logs
 }
 
+const DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/** Parse YYYY-MM-DD as a local calendar date (avoids UTC day-shift). */
+export function parseCalendarDate(value) {
+  if (!value) return null
+  const raw = String(value).trim()
+  const match = raw.match(DATE_ONLY_RE)
+  if (match) {
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  }
+  const parsed = new Date(raw)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+/** Format a value for `<input type="date">` in the user's local timezone. */
+export function toDateInputValue(value) {
+  const date = parseCalendarDate(value)
+  if (!date) return ''
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export function formatSessionDate(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
+  const date = parseCalendarDate(iso)
+  if (!date) return ''
+  return date.toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
