@@ -129,48 +129,26 @@
         </div>
       </div>
 
-      <nav class="day-carousel-nav" role="navigation" aria-label="Week day navigation">
-        <button
-          type="button"
-          class="day-nav-btn"
-          :disabled="activeDayIndex === 0"
-          aria-label="Previous day"
-          @click="prevDay"
-        >
-          ‹
-        </button>
-        <div class="day-pills" role="tablist" aria-label="Select day">
-          <button
-            v-for="(pill, i) in dayPillItems"
-            :key="pill.key"
-            type="button"
-            role="tab"
-            class="day-pill"
-            :class="{ active: activeDayIndex === i, isToday: pill.isToday }"
-            :aria-selected="activeDayIndex === i"
-            :title="pill.title"
-            @click="goToDay(i)"
-          >
-            {{ pill.short }}
-          </button>
-        </div>
-        <button
-          type="button"
-          class="day-nav-btn"
-          :disabled="activeDayIndex >= dayCount - 1"
-          aria-label="Next day"
-          @click="nextDay"
-        >
-          ›
-        </button>
-      </nav>
+      <ProgramDayNav
+        :items="dayPillItems"
+        :active-index="activeDayIndex"
+        :total="dayCount"
+        :title="carouselDayTitle"
+        :subtitle="carouselDaySubtitle"
+        :show-jump-today="activeDayIndex !== todayDayIndex"
+        aria-label="Select workout day"
+        @prev="prevDay"
+        @next="nextDay"
+        @select="goToDay"
+        @jump-today="goToToday"
+        @swipe-start="onDaySwipeStart"
+        @swipe-end="onDaySwipeEnd"
+      />
 
       <div
         class="day-carousel-panel"
         tabindex="0"
-        aria-label="Workout day details. Swipe left or right to change days."
-        @touchstart.passive="onDaySwipeStart"
-        @touchend.passive="onDaySwipeEnd"
+        aria-label="Workout day details"
         @keydown="onDayCarouselKeydown"
       >
         <Transition name="day-slide" mode="out-in">
@@ -300,48 +278,26 @@
         </div>
 
         <!-- Day Carousel -->
-        <nav class="day-carousel-nav" role="navigation" aria-label="Week day navigation">
-          <button
-            type="button"
-            class="day-nav-btn"
-            :disabled="activeDayIndex === 0"
-            aria-label="Previous day"
-            @click="prevDay"
-          >
-            ‹
-          </button>
-          <div class="day-pills" role="tablist" aria-label="Select day">
-            <button
-              v-for="(pill, i) in dayPillItems"
-              :key="pill.key"
-              type="button"
-              role="tab"
-              class="day-pill"
-              :class="{ active: activeDayIndex === i, isToday: pill.isToday }"
-              :aria-selected="activeDayIndex === i"
-              :title="pill.title"
-              @click="goToDay(i)"
-            >
-              {{ pill.short }}
-            </button>
-          </div>
-          <button
-            type="button"
-            class="day-nav-btn"
-            :disabled="activeDayIndex >= dayCount - 1"
-            aria-label="Next day"
-            @click="nextDay"
-          >
-            ›
-          </button>
-        </nav>
+        <ProgramDayNav
+          :items="dayPillItems"
+          :active-index="activeDayIndex"
+          :total="dayCount"
+          :title="carouselDayTitle"
+          :subtitle="carouselDaySubtitle"
+          :show-jump-today="activeDayIndex !== todayDayIndex"
+          aria-label="Select workout day"
+          @prev="prevDay"
+          @next="nextDay"
+          @select="goToDay"
+          @jump-today="goToToday"
+          @swipe-start="onDaySwipeStart"
+          @swipe-end="onDaySwipeEnd"
+        />
 
         <div
           class="day-carousel-panel"
           tabindex="0"
-          aria-label="Workout day details. Swipe left or right to change days."
-          @touchstart.passive="onDaySwipeStart"
-          @touchend.passive="onDaySwipeEnd"
+          aria-label="Workout day details"
           @keydown="onDayCarouselKeydown"
         >
           <Transition name="day-slide" mode="out-in">
@@ -758,6 +714,7 @@ import { invalidateProfile } from '@/queries/profile'
 import { logCustomDay } from '@/queries/customLog'
 import { program, tips, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
+import ProgramDayNav from '@/components/ProgramDayNav.vue'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
@@ -1057,6 +1014,30 @@ const dayPillItems = computed(() => {
 })
 
 const dayCount = computed(() => dayPillItems.value.length)
+
+const carouselDayTitle = computed(() => {
+  if (hasActiveCustomProgram.value) return WEEKDAYS[activeDayIndex.value] ?? ''
+  return phase.value.days[activeDayIndex.value]?.day ?? ''
+})
+
+const carouselDaySubtitle = computed(() => {
+  if (hasActiveCustomProgram.value) {
+    const key = WEEKDAYS[activeDayIndex.value]?.toLowerCase()
+    const entry = key ? activeCustomSchedule.value[key] : null
+    if (!entry) return 'Rest Day'
+    return entry.title || `${entry.exercises?.length ?? 0} exercises`
+  }
+  return phase.value.days[activeDayIndex.value]?.label ?? ''
+})
+
+const todayDayIndex = computed(() => {
+  const idx = dayPillItems.value.findIndex((p) => p.isToday)
+  return idx >= 0 ? idx : activeDayIndex.value
+})
+
+function goToToday() {
+  goToDay(todayDayIndex.value)
+}
 
 function initActiveDayIndex() {
   activeDayIndex.value = hasActiveCustomProgram.value

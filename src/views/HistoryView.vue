@@ -223,6 +223,70 @@
               </div>
             </div>
 
+            <!-- Reorder / change date -->
+            <div class="session-order-section">
+              <div class="session-order-header">
+                <span class="session-order-label">Session order &amp; date</span>
+                <button
+                  v-if="editingDateId !== session.id"
+                  type="button"
+                  class="edit-btn"
+                  @click="startEditDate(session)"
+                >
+                  Change date
+                </button>
+              </div>
+
+              <p class="session-order-hint">
+                Logged on the wrong day? Set the workout date or nudge it up/down the list.
+              </p>
+
+              <div v-if="editingDateId === session.id" class="session-date-form">
+                <label class="session-date-label" :for="`session-date-${session.id}`">Workout date</label>
+                <input
+                  :id="`session-date-${session.id}`"
+                  v-model="dateInput"
+                  type="date"
+                  class="history-input"
+                  style="text-align: left; margin-bottom: 10px"
+                />
+                <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap">
+                  <button
+                    type="button"
+                    class="save-btn"
+                    :disabled="savingDate"
+                    @click="saveSessionDate(session.id)"
+                  >
+                    {{ savingDate ? 'Saving…' : 'Save date' }}
+                  </button>
+                  <button type="button" class="cancel-btn" @click="editingDateId = null">Cancel</button>
+                </div>
+              </div>
+
+              <div v-else class="session-order-actions">
+                <button
+                  type="button"
+                  class="edit-btn"
+                  :disabled="reordering || !canMoveNewer(session)"
+                  @click="nudgeSession(session, 'newer')"
+                >
+                  ↑ Move up
+                </button>
+                <button
+                  type="button"
+                  class="edit-btn"
+                  :disabled="reordering || !canMoveOlder(session)"
+                  @click="nudgeSession(session, 'older')"
+                >
+                  ↓ Move down
+                </button>
+              </div>
+
+              <div v-if="dateError && (editingDateId === session.id || reorderingSessionId === session.id)" class="session-order-error">
+                {{ dateError }}
+              </div>
+            </div>
+
             <!-- Exercise groups -->
             <div
               v-for="(group, name) in groupSets(session.set_logs)"
@@ -599,7 +663,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useWorkoutHistoryQuery, addExerciseToSession } from '@/queries/history'
+import { useWorkoutHistoryQuery, addExerciseToSession, updateSessionDate, moveSessionOrder } from '@/queries/history'
 import { PHASES, formatSessionDate, formatSessionTime } from '@/lib/workout'
 import {
   buildNewExerciseSetInputs,
@@ -636,6 +700,69 @@ function toggleSession(id) {
     editInputs.value = {}
     saveError.value = null
     cancelAddExercise()
+    editingDateId.value = null
+    dateError.value = null
+  }
+}
+
+// ── Session date & reorder ───────────────────────────────────
+const editingDateId = ref(null)
+const dateInput = ref('')
+const savingDate = ref(false)
+const reordering = ref(false)
+const reorderingSessionId = ref(null)
+const dateError = ref(null)
+
+function sessionDateValue(session) {
+  if (session.date) return String(session.date).slice(0, 10)
+  if (session.completed_at) return session.completed_at.slice(0, 10)
+  return ''
+}
+
+function startEditDate(session) {
+  editingDateId.value = session.id
+  dateInput.value = sessionDateValue(session)
+  dateError.value = null
+}
+
+async function saveSessionDate(sessionId) {
+  if (!dateInput.value) return
+  savingDate.value = true
+  dateError.value = null
+  reorderingSessionId.value = sessionId
+  try {
+    await updateSessionDate(sessionId, dateInput.value)
+    await refetch()
+    editingDateId.value = null
+  } catch (err) {
+    dateError.value = err?.message ?? 'Failed to update date.'
+  } finally {
+    savingDate.value = false
+    reorderingSessionId.value = null
+  }
+}
+
+function canMoveNewer(session) {
+  return sessions.value.findIndex((s) => s.id === session.id) > 0
+}
+
+function canMoveOlder(session) {
+  const idx = sessions.value.findIndex((s) => s.id === session.id)
+  return idx >= 0 && idx < sessions.value.length - 1
+}
+
+async function nudgeSession(session, direction) {
+  reordering.value = true
+  reorderingSessionId.value = session.id
+  dateError.value = null
+  try {
+    await moveSessionOrder(sessions.value, session.id, direction)
+    await refetch()
+  } catch (err) {
+    dateError.value = err?.message ?? 'Cannot move further in the list.'
+  } finally {
+    reordering.value = false
+    reorderingSessionId.value = null
   }
 }
 
@@ -1214,5 +1341,55 @@ a:hover {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+.session-order-section {
+  padding: 12px 0 4px;
+  border-top: 1px solid oklch(15% 0.008 45);
+  margin-bottom: 4px;
+}
+
+.session-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.session-order-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #a3a3a3);
+  font-weight: 700;
+}
+
+.session-order-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted, #737373);
+}
+
+.session-date-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, #a3a3a3);
+  margin-bottom: 4px;
+}
+
+.session-order-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-order-error {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #f87171;
 }
 </style>

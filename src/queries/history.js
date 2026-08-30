@@ -37,6 +37,7 @@ async function loadWorkoutHistoryFromServer() {
     `,
     )
     .not('completed_at', 'is', null)
+    .order('date', { ascending: false })
     .order('completed_at', { ascending: false })
 
   if (error) {
@@ -116,6 +117,84 @@ export function useWorkoutHistoryQuery() {
 /** Call after logging a workout or when offline queue sync completes. */
 export function invalidateWorkoutHistory(queryClient) {
   return queryClient.invalidateQueries({ queryKey: queryKeys.history.all })
+}
+
+function applyDateToTimestamp(isoTimestamp, dateStr) {
+  const old = isoTimestamp ? new Date(isoTimestamp) : new Date()
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const updated = new Date(y, m - 1, d, old.getHours(), old.getMinutes(), old.getSeconds(), 0)
+  return updated.toISOString()
+}
+
+/**
+ * Move a session to a specific calendar date (fixes out-of-order logging).
+ * Updates both `date` and `completed_at` so list sort stays correct.
+ */
+export async function updateSessionDate(sessionId, dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    throw new Error('Invalid date')
+  }
+
+  const { data: session, error: fetchErr } = await supabase
+    .from('workout_sessions')
+    .select('completed_at, started_at')
+    .eq('id', sessionId)
+    .single()
+
+  if (fetchErr) throw fetchErr
+
+  const completedAt = applyDateToTimestamp(session.completed_at, dateStr)
+  const startedAt = session.started_at
+    ? applyDateToTimestamp(session.started_at, dateStr)
+    : completedAt
+
+  const { error } = await supabase
+    .from('workout_sessions')
+    .update({
+      date: dateStr,
+      completed_at: completedAt,
+      started_at: startedAt,
+    })
+    .eq('id', sessionId)
+
+  if (error) throw error
+}
+
+/**
+ * Nudge a session up or down in the history list (newer / older).
+ * @param {Array} sortedSessions - completed_at desc
+ * @param {'newer'|'older'} direction
+ */
+export async function moveSessionOrder(sortedSessions, sessionId, direction) {
+  const idx = sortedSessions.findIndex((s) => s.id === sessionId)
+  if (idx < 0) throw new Error('Session not found')
+
+  const current = sortedSessions[idx]
+  let targetMs
+
+  if (direction === 'newer') {
+    if (idx === 0) throw new Error('Already at the top')
+    const above = sortedSessions[idx - 1]
+    targetMs =
+      (new Date(above.completed_at).getTime() + new Date(current.completed_at).getTime()) / 2
+  } else {
+    if (idx >= sortedSessions.length - 1) throw new Error('Already at the bottom')
+    const below = sortedSessions[idx + 1]
+    const belowNext = sortedSessions[idx + 2]
+    targetMs = belowNext
+      ? (new Date(below.completed_at).getTime() + new Date(belowNext.completed_at).getTime()) / 2
+      : new Date(below.completed_at).getTime() - 60_000
+  }
+
+  const completedAt = new Date(targetMs).toISOString()
+  const dateStr = completedAt.slice(0, 10)
+
+  const { error } = await supabase
+    .from('workout_sessions')
+    .update({ completed_at: completedAt, date: dateStr })
+    .eq('id', sessionId)
+
+  if (error) throw error
 }
 
 /**
