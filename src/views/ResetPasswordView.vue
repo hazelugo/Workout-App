@@ -30,9 +30,9 @@
         <span v-if="error" style="font-size: 11px; color: #f87171">{{ error }}</span>
       </div>
 
-      <span v-if="success" style="font-size: 12px; color: #4ade80; text-align: center">
+      <div v-if="success" role="status" aria-live="polite" class="reset-success-banner">
         Password updated. <RouterLink to="/login" class="reset-link">Sign in</RouterLink>
-      </span>
+      </div>
 
       <button
         v-if="!success"
@@ -143,5 +143,16 @@ async function handleSubmit() {
   outline: 2px solid #a78bfa;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+.reset-success-banner {
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #4ade8066;
+  background: #4ade8018;
+  color: #4ade80;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
 }
 </style>

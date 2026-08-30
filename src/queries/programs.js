@@ -105,3 +105,17 @@ export async function activateProgram(userId, programDays) {
   const { error } = await supabase.from('custom_days').insert(rows)
   if (error) throw error
 }
+
+/** Switch active plan back to the built-in Build From Zero program. */
+export async function activateBuiltInProgram(userId) {
+  if (userId) {
+    await supabase.from('custom_days').delete().eq('user_id', userId)
+    await supabase.from('profiles').update({ program_adopted: false }).eq('id', userId)
+    localStorage.removeItem(`active-custom-days-v1-${userId}`)
+    localStorage.setItem(`active-program-id-${userId}`, 'builtin')
+    localStorage.setItem(`active-program-name-${userId}`, 'Build From Zero')
+  }
+  localStorage.removeItem('active-custom-days-v1-last')
+  localStorage.setItem('active-program-id-last', 'builtin')
+  localStorage.setItem('active-program-name-last', 'Build From Zero')
+}

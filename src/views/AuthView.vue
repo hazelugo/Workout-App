@@ -107,10 +107,14 @@
       <span v-if="errors.general" style="font-size: 12px; color: #f87171; text-align: center">{{
         errors.general
       }}</span>
-      <!-- Success message (e.g. reset email sent) -->
-      <span v-if="successMsg" style="font-size: 12px; color: #4ade80; text-align: center">{{
-        successMsg
-      }}</span>
+      <div
+        v-if="successMsg"
+        role="status"
+        aria-live="polite"
+        class="auth-success-banner"
+      >
+        {{ successMsg }}
+      </div>
 
       <button
         type="submit"
@@ -326,5 +330,16 @@ async function handleForgotPassword() {
   outline: 2px solid #a78bfa;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+.auth-success-banner {
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #4ade8066;
+  background: #4ade8018;
+  color: #4ade80;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
 }
 </style>

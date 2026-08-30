@@ -342,6 +342,7 @@
                     v-model.number="editInputs[set.id].repsDone"
                     type="number"
                     min="0"
+                    max="999"
                     :placeholder="String(set.reps_programmed)"
                     class="history-input"
                     aria-label="Reps done"
@@ -350,6 +351,7 @@
                     v-model.number="editInputs[set.id].weightLbs"
                     type="number"
                     min="0"
+                    max="2000"
                     step="2.5"
                     placeholder="lbs"
                     class="history-input"
@@ -423,23 +425,24 @@
                     style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px"
                   >
                     <span></span>
-                    <span style="font-size: 10px; color: #555; text-align: center">Target</span>
-                    <span style="font-size: 10px; color: #555; text-align: center">Done</span>
-                    <span style="font-size: 10px; color: #555; text-align: center">Weight (lbs)</span>
+                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Target</span>
+                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Done</span>
+                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Weight (lbs)</span>
                   </div>
                   <div
                     v-for="set in newExerciseSetInputs"
                     :key="set.setNumber"
                     style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; align-items: center; margin-bottom: 4px"
                   >
-                    <span style="font-size: 11px; color: #666">Set {{ set.setNumber }}</span>
-                    <span style="font-size: 12px; color: #555; text-align: center; font-variant-numeric: tabular-nums">
+                    <span style="font-size: 11px; color: #a3a3a3; font-weight: 600">Set {{ set.setNumber }}</span>
+                    <span style="font-size: 12px; color: #d4d4d4; text-align: center; font-variant-numeric: tabular-nums">
                       {{ set.repsProgrammed }}
                     </span>
                     <input
                       v-model.number="set.repsDone"
                       type="number"
                       min="0"
+                      max="999"
                       :placeholder="String(set.repsProgrammed)"
                       class="history-input"
                       aria-label="Reps done"
@@ -448,6 +451,7 @@
                       v-model.number="set.weightLbs"
                       type="number"
                       min="0"
+                      max="2000"
                       step="2.5"
                       placeholder="lbs"
                       class="history-input"
@@ -478,10 +482,23 @@
 
             <!-- Daily Cardio & Nutrition Section -->
             <div style="padding: 16px 0 12px; border-top: 1px solid oklch(15% 0.008 45)">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px">
+              <button
+                type="button"
+                class="nutrition-toggle-btn"
+                :aria-expanded="isNutritionExpanded(session.id)"
+                @click="toggleNutritionSection(session.id)"
+              >
                 <span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 700">
                   Daily Cardio & Nutrition
                 </span>
+                <span style="font-size: 12px; color: #a3a3a3; margin-left: auto; margin-right: 8px">
+                  {{ nutritionSummary(session) }}
+                </span>
+                <span aria-hidden="true" style="color: #a3a3a3">{{ isNutritionExpanded(session.id) ? '−' : '+' }}</span>
+              </button>
+
+              <div v-if="isNutritionExpanded(session.id)" style="margin-top: 12px">
+              <div style="display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px">
                 <button
                   v-if="editingNutritionId !== session.id"
                   @click="startEditNutrition(session)"
@@ -579,6 +596,7 @@
                     Cancel
                   </button>
                 </div>
+              </div>
               </div>
             </div>
 
@@ -748,6 +766,7 @@ async function saveEdit(sessionId, exerciseName, group) {
 
 // ── Daily Cardio & Nutrition Tracking ─────────────────────────
 const editingNutritionId = ref(null)
+const nutritionExpandedIds = ref(new Set())
 const nutritionInputs = ref({
   cardio: null,
   calories: null,
@@ -786,7 +805,30 @@ watch(
   }
 )
 
+function isNutritionExpanded(sessionId) {
+  return nutritionExpandedIds.value.has(sessionId)
+}
+
+function toggleNutritionSection(sessionId) {
+  const next = new Set(nutritionExpandedIds.value)
+  if (next.has(sessionId)) {
+    next.delete(sessionId)
+  } else {
+    next.add(sessionId)
+  }
+  nutritionExpandedIds.value = next
+}
+
+function nutritionSummary(session) {
+  const parts = []
+  if (session.cardio_minutes) parts.push(`${session.cardio_minutes}m cardio`)
+  if (session.calories) parts.push(`${Number(session.calories).toLocaleString()} kcal`)
+  if (session.protein_g) parts.push(`P${session.protein_g}g`)
+  return parts.length ? parts.join(' · ') : 'No metrics logged'
+}
+
 function startEditNutrition(session) {
+  nutritionExpandedIds.value = new Set([...nutritionExpandedIds.value, session.id])
   editingNutritionId.value = session.id
   nutritionInputs.value = {
     cardio: session.cardio_minutes ?? null,
@@ -1121,5 +1163,24 @@ a:hover {
 .calendar-btn-secondary:hover {
   border-color: #a78bfa;
   background: #a78bfa18;
+}
+
+.nutrition-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  min-height: 44px;
+}
+
+.nutrition-toggle-btn:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 </style>

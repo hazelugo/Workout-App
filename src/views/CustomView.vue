@@ -865,6 +865,7 @@ import {
   deleteProgramDay,
   deleteProgram,
   activateProgram,
+  activateBuiltInProgram,
 } from '@/queries/programs'
 import { invalidateProfile } from '@/queries/profile'
 import { logCustomDay } from '@/queries/customLog'
@@ -1010,20 +1011,7 @@ async function handleActivateBuiltIn() {
   activatingBuiltIn.value = true
   try {
     const uid = auth.user?.id
-    if (uid) {
-      // 1. Delete custom days for this user
-      await supabase.from('custom_days').delete().eq('user_id', uid)
-      // 2. Update profile program_adopted
-      await supabase.from('profiles').update({ program_adopted: false }).eq('id', uid)
-      // 3. Clear localStorage user keys
-      localStorage.removeItem(`active-custom-days-v1-${uid}`)
-      localStorage.setItem(`active-program-id-${uid}`, 'builtin')
-      localStorage.setItem(`active-program-name-${uid}`, 'Build From Zero')
-    }
-    localStorage.removeItem('active-custom-days-v1-last')
-    localStorage.setItem('active-program-id-last', 'builtin')
-    localStorage.setItem('active-program-name-last', 'Build From Zero')
-
+    await activateBuiltInProgram(uid)
     activeProgramId.value = 'builtin'
     if (auth.profile) {
       auth.profile.program_adopted = false

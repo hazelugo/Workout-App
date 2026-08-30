@@ -27,6 +27,15 @@
         <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge edit-studio-badge">
           Edit in Studio →
         </RouterLink>
+        <button
+          v-if="hasActiveCustomProgram"
+          type="button"
+          class="badge built-in-restore-badge"
+          :disabled="restoringBuiltIn"
+          @click="restoreBuiltInProgram"
+        >
+          {{ restoringBuiltIn ? 'Switching…' : 'Restore Build From Zero' }}
+        </button>
       </div>
     </div>
   </header>
@@ -484,6 +493,7 @@
                         type="number"
                         inputmode="numeric"
                         min="0"
+                        max="999"
                         :placeholder="s.repsProgrammed > 0 ? String(s.repsProgrammed) : 'Reps'"
                         class="modal-input"
                         :aria-label="`${group.exerciseName} set ${s.setNumber} reps`"
@@ -513,6 +523,7 @@
                         type="number"
                         inputmode="decimal"
                         min="0"
+                        max="2000"
                         step="2.5"
                         :placeholder="
                           lastLoggedWeightMap[group.exerciseName] != null
@@ -664,7 +675,9 @@ import { enqueueWorkout, enqueueCustomWorkout, isNetworkError } from '@/lib/offl
 import { queryClient } from '@/lib/queryClient'
 import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery } from '@/queries/customDays'
-import { useCustomProgramsQuery } from '@/queries/programs'
+import { useCustomProgramsQuery, activateBuiltInProgram, invalidateCustomPrograms } from '@/queries/programs'
+import { invalidateCustomDays } from '@/queries/customDays'
+import { invalidateProfile } from '@/queries/profile'
 import { logCustomDay } from '@/queries/customLog'
 import { program, tips, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
@@ -672,6 +685,28 @@ import ExportModal from '@/components/ExportModal.vue'
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const _router = useRouter()
+const restoringBuiltIn = ref(false)
+
+async function restoreBuiltInProgram() {
+  const uid = authStore.user?.id
+  if (!uid || restoringBuiltIn.value) return
+  restoringBuiltIn.value = true
+  try {
+    await activateBuiltInProgram(uid)
+    if (authStore.profile) {
+      authStore.profile.program_adopted = false
+    }
+    await Promise.all([
+      invalidateCustomDays(queryClient),
+      invalidateCustomPrograms(queryClient),
+      invalidateProfile(queryClient, uid),
+    ])
+  } catch (err) {
+    console.error('Failed to restore built-in program:', err)
+  } finally {
+    restoringBuiltIn.value = false
+  }
+}
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today) >= 0 ? WEEKDAYS.indexOf(today) : 0
@@ -1298,6 +1333,31 @@ onUnmounted(() => {
   background: oklch(14% 0.008 45);
   border-color: #a78bfa;
   color: #ffffff;
+}
+
+.built-in-restore-badge {
+  cursor: pointer;
+  color: #4ade80;
+  border-color: #4ade8066;
+  background: #4ade8011;
+  font-family: inherit;
+  transition: all 150ms;
+}
+
+.built-in-restore-badge:hover:not(:disabled) {
+  background: #4ade8022;
+  border-color: #4ade80;
+  color: #ffffff;
+}
+
+.built-in-restore-badge:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.built-in-restore-badge:focus-visible {
+  outline: 2px solid #4ade80;
+  outline-offset: 2px;
 }
 
 /* ── Phase Tabs Navigation ───────────────────────────────── */

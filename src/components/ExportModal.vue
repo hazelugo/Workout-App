@@ -361,6 +361,11 @@ function handlePdf() {
 .export-select:focus-visible {
   outline: 2px solid #a78bfa;
   outline-offset: 2px;
+}
+
+.export-select:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
   border-color: #a78bfa;
 }
 
