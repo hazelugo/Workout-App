@@ -161,43 +161,6 @@ export async function updateSessionDate(sessionId, dateStr) {
 }
 
 /**
- * Nudge a session up or down in the history list (newer / older).
- * @param {Array} sortedSessions - completed_at desc
- * @param {'newer'|'older'} direction
- */
-export async function moveSessionOrder(sortedSessions, sessionId, direction) {
-  const idx = sortedSessions.findIndex((s) => s.id === sessionId)
-  if (idx < 0) throw new Error('Session not found')
-
-  const current = sortedSessions[idx]
-  let targetMs
-
-  if (direction === 'newer') {
-    if (idx === 0) throw new Error('Already at the top')
-    const above = sortedSessions[idx - 1]
-    targetMs =
-      (new Date(above.completed_at).getTime() + new Date(current.completed_at).getTime()) / 2
-  } else {
-    if (idx >= sortedSessions.length - 1) throw new Error('Already at the bottom')
-    const below = sortedSessions[idx + 1]
-    const belowNext = sortedSessions[idx + 2]
-    targetMs = belowNext
-      ? (new Date(below.completed_at).getTime() + new Date(belowNext.completed_at).getTime()) / 2
-      : new Date(below.completed_at).getTime() - 60_000
-  }
-
-  const completedAt = new Date(targetMs).toISOString()
-  const dateStr = completedAt.slice(0, 10)
-
-  const { error } = await supabase
-    .from('workout_sessions')
-    .update({ completed_at: completedAt, date: dateStr })
-    .eq('id', sessionId)
-
-  if (error) throw error
-}
-
-/**
  * Append a new exercise (and its sets) to an existing logged session.
  * Does not modify program templates — only inserts set_logs rows.
  *

@@ -97,8 +97,9 @@
 
     <!-- Programs list -->
     <div v-else class="programs-list">
-      <!-- 1. Default Built-in Program Card: Build From Zero -->
+      <!-- 1. Default Built-in Program Card: Build From Zero (only before first custom program) -->
       <article
+        v-if="!programs.length"
         class="program-card"
         :class="{ 'is-active': isBuiltInActive }"
       >

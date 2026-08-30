@@ -140,11 +140,9 @@
             <div style="flex: 1">
               <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px">
                 <span style="font-size: 0.9375rem; font-weight: 500">{{ session.day_name }}</span>
-                <!-- Custom session badge -->
                 <span v-if="session.phase == null"
                   style="font-size: 10px; padding: 3px 10px; border-radius: 20px; background: #a78bfa22; color: #c4b5fd; letter-spacing: 1px; text-transform: uppercase; font-weight: 500"
                 >Custom</span>
-                <!-- Program session badge -->
                 <span v-else
                   :style="{
                     fontSize: '10px',
@@ -162,7 +160,7 @@
                 </span>
               </div>
               <div style="font-size: 12px; color: var(--color-text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
-                <span>{{ formatSessionDate(session.completed_at) }}</span>
+                <span>{{ formatSessionDate(session.date || session.completed_at) }}</span>
                 <template v-if="session.week"><span>· Week {{ session.week }}</span></template>
                 <span>· {{ session.set_logs?.length ?? 0 }} sets</span>
                 <span v-if="session.cardio_minutes" style="color: #34d399">· Cardio: {{ session.cardio_minutes }} min</span>
@@ -223,10 +221,10 @@
               </div>
             </div>
 
-            <!-- Reorder / change date -->
+            <!-- Workout date -->
             <div class="session-order-section">
               <div class="session-order-header">
-                <span class="session-order-label">Session order &amp; date</span>
+                <span class="session-order-label">Workout date</span>
                 <button
                   v-if="editingDateId !== session.id"
                   type="button"
@@ -238,7 +236,7 @@
               </div>
 
               <p class="session-order-hint">
-                Logged on the wrong day? Set the workout date or nudge it up/down the list.
+                Logged on the wrong day? Pick the correct date and it will move into chronological order automatically.
               </p>
 
               <div v-if="editingDateId === session.id" class="session-date-form">
@@ -263,26 +261,7 @@
                 </div>
               </div>
 
-              <div v-else class="session-order-actions">
-                <button
-                  type="button"
-                  class="edit-btn"
-                  :disabled="reordering || !canMoveNewer(session)"
-                  @click="nudgeSession(session, 'newer')"
-                >
-                  ↑ Move up
-                </button>
-                <button
-                  type="button"
-                  class="edit-btn"
-                  :disabled="reordering || !canMoveOlder(session)"
-                  @click="nudgeSession(session, 'older')"
-                >
-                  ↓ Move down
-                </button>
-              </div>
-
-              <div v-if="dateError && (editingDateId === session.id || reorderingSessionId === session.id)" class="session-order-error">
+              <div v-if="dateError && editingDateId === session.id" class="session-order-error">
                 {{ dateError }}
               </div>
             </div>
@@ -663,7 +642,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { useWorkoutHistoryQuery, addExerciseToSession, updateSessionDate, moveSessionOrder } from '@/queries/history'
+import { useWorkoutHistoryQuery, addExerciseToSession, updateSessionDate } from '@/queries/history'
 import { PHASES, formatSessionDate, formatSessionTime } from '@/lib/workout'
 import {
   buildNewExerciseSetInputs,
@@ -705,12 +684,10 @@ function toggleSession(id) {
   }
 }
 
-// ── Session date & reorder ───────────────────────────────────
+// ── Session date ─────────────────────────────────────────────
 const editingDateId = ref(null)
 const dateInput = ref('')
 const savingDate = ref(false)
-const reordering = ref(false)
-const reorderingSessionId = ref(null)
 const dateError = ref(null)
 
 function sessionDateValue(session) {
@@ -729,7 +706,6 @@ async function saveSessionDate(sessionId) {
   if (!dateInput.value) return
   savingDate.value = true
   dateError.value = null
-  reorderingSessionId.value = sessionId
   try {
     await updateSessionDate(sessionId, dateInput.value)
     await refetch()
@@ -738,31 +714,6 @@ async function saveSessionDate(sessionId) {
     dateError.value = err?.message ?? 'Failed to update date.'
   } finally {
     savingDate.value = false
-    reorderingSessionId.value = null
-  }
-}
-
-function canMoveNewer(session) {
-  return sessions.value.findIndex((s) => s.id === session.id) > 0
-}
-
-function canMoveOlder(session) {
-  const idx = sessions.value.findIndex((s) => s.id === session.id)
-  return idx >= 0 && idx < sessions.value.length - 1
-}
-
-async function nudgeSession(session, direction) {
-  reordering.value = true
-  reorderingSessionId.value = session.id
-  dateError.value = null
-  try {
-    await moveSessionOrder(sessions.value, session.id, direction)
-    await refetch()
-  } catch (err) {
-    dateError.value = err?.message ?? 'Cannot move further in the list.'
-  } finally {
-    reordering.value = false
-    reorderingSessionId.value = null
   }
 }
 
@@ -1379,12 +1330,6 @@ a:hover {
   text-transform: uppercase;
   color: var(--color-text-secondary, #a3a3a3);
   margin-bottom: 4px;
-}
-
-.session-order-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .session-order-error {

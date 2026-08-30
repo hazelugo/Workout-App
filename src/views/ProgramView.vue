@@ -11,12 +11,8 @@
         }}
       </p>
       <div class="program-badges">
-        <span v-if="hasActiveCustomProgram" class="badge highlight active-custom-badge"
-          >Active Custom Plan</span
-        >
-        <span v-else class="badge">Home Track</span>
+        <span v-if="!hasActiveCustomProgram" class="badge">Home Track</span>
         <span v-if="!hasActiveCustomProgram" class="badge">Gym Track</span>
-        <span class="badge highlight">Tap exercise for demo</span>
         <button
           class="badge highlight export-badge-btn"
           @click="showExportModal = true"
@@ -27,15 +23,6 @@
         <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge edit-studio-badge">
           Edit in Studio →
         </RouterLink>
-        <button
-          v-if="hasActiveCustomProgram"
-          type="button"
-          class="badge built-in-restore-badge"
-          :disabled="restoringBuiltIn"
-          @click="restoreBuiltInProgram"
-        >
-          {{ restoringBuiltIn ? 'Switching…' : 'Restore Build From Zero' }}
-        </button>
       </div>
     </div>
   </header>
@@ -94,11 +81,15 @@
 
   <!-- ── First-Run Tip Banner ──────────────────────────────────── -->
   <Transition name="reveal">
-    <aside v-if="!firstRunSeen" class="first-run-banner" aria-label="Getting started tip">
+    <aside
+      v-if="!hasActiveCustomProgram && !firstRunSeen"
+      class="first-run-banner"
+      aria-label="Getting started tip"
+    >
       <div class="first-run-content">
         <span class="first-run-text">
           <strong class="first-run-highlight">Start at Week 1.</strong>
-          Today’s workout is shown first — swipe or tap the day pills to move through the week. Tap any exercise for a video demo.
+          Today’s workout is shown first — swipe or tap the day pills to move through the week.
         </span>
         <button class="first-run-dismiss" aria-label="Dismiss tip" @click="dismissFirstRun">
           <span aria-hidden="true">×</span>
@@ -407,36 +398,6 @@
         </div>
       </div>
     </Transition>
-
-    <!-- ── Reference: Keys to Success ───────────────────────────── -->
-    <section class="reference-section" aria-label="Training tips">
-      <div class="reference-card">
-        <h2 class="reference-heading">Keys to Success</h2>
-        <div class="tips-grid">
-          <div
-            v-for="(t, i) in tips"
-            :key="i"
-            class="tip-card"
-            :style="{ '--phase-color': phase.color }"
-          >
-            <span
-              class="tip-tag"
-              style="
-                font-size: 10px;
-                font-weight: 700;
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                color: var(--phase-color, #a78bfa);
-                margin-bottom: 4px;
-                display: block;
-              "
-              >{{ t.tag }}</span
-            >
-            <p class="tip-text">{{ t.text }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- ── Pre-log Modal / Bottom Sheet ────────────────────────── -->
@@ -708,39 +669,15 @@ import { enqueueWorkout, enqueueCustomWorkout, isNetworkError } from '@/lib/offl
 import { queryClient } from '@/lib/queryClient'
 import { useWorkoutHistoryQuery, invalidateWorkoutHistory } from '@/queries/history'
 import { useCustomDaysQuery } from '@/queries/customDays'
-import { useCustomProgramsQuery, activateBuiltInProgram, invalidateCustomPrograms } from '@/queries/programs'
-import { invalidateCustomDays } from '@/queries/customDays'
-import { invalidateProfile } from '@/queries/profile'
+import { useCustomProgramsQuery } from '@/queries/programs'
 import { logCustomDay } from '@/queries/customLog'
-import { program, tips, WEEKDAYS } from '@/data/program'
+import { program, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 import ProgramDayNav from '@/components/ProgramDayNav.vue'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const _router = useRouter()
-const restoringBuiltIn = ref(false)
-
-async function restoreBuiltInProgram() {
-  const uid = authStore.user?.id
-  if (!uid || restoringBuiltIn.value) return
-  restoringBuiltIn.value = true
-  try {
-    await activateBuiltInProgram(uid)
-    if (authStore.profile) {
-      authStore.profile.program_adopted = false
-    }
-    await Promise.all([
-      invalidateCustomDays(queryClient),
-      invalidateCustomPrograms(queryClient),
-      invalidateProfile(queryClient, uid),
-    ])
-  } catch (err) {
-    console.error('Failed to restore built-in program:', err)
-  } finally {
-    restoringBuiltIn.value = false
-  }
-}
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today) >= 0 ? WEEKDAYS.indexOf(today) : 0
@@ -1531,14 +1468,6 @@ onUnmounted(() => {
   border-color: oklch(24% 0.008 45);
 }
 
-.active-custom-badge {
-  background: #a78bfa22;
-  color: #c4b5fd;
-  border-color: #a78bfa;
-  font-weight: 600;
-}
-
-
 .edit-studio-badge {
   color: #c4b5fd;
   text-decoration: none;
@@ -1550,31 +1479,6 @@ onUnmounted(() => {
   background: oklch(14% 0.008 45);
   border-color: #a78bfa;
   color: #ffffff;
-}
-
-.built-in-restore-badge {
-  cursor: pointer;
-  color: #4ade80;
-  border-color: #4ade8066;
-  background: #4ade8011;
-  font-family: inherit;
-  transition: all 150ms;
-}
-
-.built-in-restore-badge:hover:not(:disabled) {
-  background: #4ade8022;
-  border-color: #4ade80;
-  color: #ffffff;
-}
-
-.built-in-restore-badge:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.built-in-restore-badge:focus-visible {
-  outline: 2px solid #4ade80;
-  outline-offset: 2px;
 }
 
 /* ── Phase Tabs Navigation ───────────────────────────────── */
@@ -2382,75 +2286,6 @@ onUnmounted(() => {
     sans-serif;
   font-size: 0.8125rem;
   color: #f87171;
-}
-
-/* ── Reference Section (Substitutions & Tips) ────────────── */
-.reference-section {
-  margin-top: 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.reference-card {
-  background: oklch(10% 0.01 45);
-  border: 1px solid oklch(18% 0.008 45);
-  border-radius: 10px;
-  padding: 20px 22px;
-}
-
-.reference-heading {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #d4d4d4;
-  text-transform: uppercase;
-  margin: 0 0 16px;
-}
-
-.tips-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-@media (min-width: 768px) {
-  .tips-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-}
-
-.tip-card {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 14px 16px;
-  background: oklch(8% 0.012 45);
-  border-radius: 8px;
-  border: 1px solid oklch(18% 0.008 45);
-}
-
-.tip-icon {
-  font-size: 18px;
-  line-height: 1.2;
-  flex-shrink: 0;
-}
-
-.tip-text {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #a3a3a3;
-  margin: 0;
 }
 
 /* ── Pre-log Modal / Bottom Sheet ────────────────────────── */
