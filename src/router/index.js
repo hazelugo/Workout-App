@@ -6,6 +6,7 @@ const router = createRouter({
   routes: [
     { path: '/', component: () => import('../views/ProgramView.vue'), meta: { requiresAuth: true } },
     { path: '/custom', component: () => import('../views/CustomView.vue'), meta: { requiresAuth: true } },
+    { path: '/exercises', component: () => import('../views/ExercisesView.vue'), meta: { requiresAuth: true } },
     { path: '/login', component: () => import('../views/AuthView.vue') },
     { path: '/history', component: () => import('../views/HistoryView.vue'), meta: { requiresAuth: true } },
     { path: '/reset-password', component: () => import('../views/ResetPasswordView.vue') },

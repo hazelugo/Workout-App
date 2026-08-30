@@ -18,6 +18,7 @@
     >
       <RouterLink to="/" class="nav-link">Program</RouterLink>
       <RouterLink to="/custom" class="nav-link">Custom</RouterLink>
+      <RouterLink v-if="auth.isAuthenticated" to="/exercises" class="nav-link">Exercises</RouterLink>
       <RouterLink v-if="auth.isAuthenticated" to="/history" class="nav-link">History</RouterLink>
       <div
         v-if="connectivity.isOnline === false || connectivity.pendingCount > 0"

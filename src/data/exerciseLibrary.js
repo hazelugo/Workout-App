@@ -60,9 +60,31 @@ export const exerciseLibrary = {
 /** Flat sorted list of all library exercise names. */
 export const allExerciseNames = Object.values(exerciseLibrary).flat()
 
+/** Merge built-in and user-saved names (deduped, sorted). */
+export function mergeExerciseNames(savedNames = []) {
+  return [...new Set([...savedNames, ...allExerciseNames])].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' }),
+  )
+}
+
 /** Filter exercises by query (case-insensitive substring match). */
-export function filterExercises(query, limit = 12) {
+export function filterExercises(query, extraNames = [], limit = 12) {
   const q = query.trim().toLowerCase()
-  if (!q) return allExerciseNames.slice(0, limit)
-  return allExerciseNames.filter((name) => name.toLowerCase().includes(q)).slice(0, limit)
+  const pool = mergeExerciseNames(extraNames)
+  if (!q) return pool.slice(0, limit)
+  return pool.filter((name) => name.toLowerCase().includes(q)).slice(0, limit)
+}
+
+/** Group saved exercises by category for picker panels. */
+export function groupSavedExercises(savedExercises = []) {
+  const groups = {}
+  for (const ex of savedExercises) {
+    const category = ex.category || 'Other'
+    if (!groups[category]) groups[category] = []
+    groups[category].push(ex)
+  }
+  for (const list of Object.values(groups)) {
+    list.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+  }
+  return groups
 }

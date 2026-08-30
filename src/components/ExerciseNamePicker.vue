@@ -14,7 +14,7 @@
       @blur="onBlur"
     />
     <datalist :id="datalistId">
-      <option v-for="name in allExerciseNames" :key="name" :value="name" />
+      <option v-for="name in datalistNames" :key="name" :value="name" />
     </datalist>
 
     <Transition name="chips-fade">
@@ -45,6 +45,28 @@
           </div>
         </template>
         <template v-else>
+          <div v-if="hasSavedExercises" class="picker-section">
+            <div class="picker-section-label">My exercises</div>
+            <div
+              v-for="(items, group) in savedGroups"
+              :key="`saved-${group}`"
+              class="picker-subsection"
+            >
+              <div class="picker-subsection-label">{{ group }}</div>
+              <div class="picker-chips">
+                <button
+                  v-for="ex in items"
+                  :key="ex.id"
+                  type="button"
+                  class="picker-chip picker-chip-saved"
+                  role="option"
+                  @mousedown.prevent="selectSavedExercise(ex)"
+                >
+                  {{ ex.name }}
+                </button>
+              </div>
+            </div>
+          </div>
           <div
             v-for="(exercises, group) in exerciseLibrary"
             :key="group"
@@ -72,7 +94,9 @@
 
 <script setup>
 import { ref, computed, useId } from 'vue'
-import { exerciseLibrary, allExerciseNames, filterExercises } from '@/data/exerciseLibrary'
+import { exerciseLibrary, filterExercises, groupSavedExercises, mergeExerciseNames } from '@/data/exerciseLibrary'
+import { useSavedExercisesQuery } from '@/queries/savedExercises'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -81,7 +105,10 @@ const props = defineProps({
   inputId: { type: String, default: undefined },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'select-saved'])
+
+const auth = useAuthStore()
+const { data: savedExercises } = useSavedExercisesQuery(computed(() => auth.user?.id))
 
 const uid = useId()
 const datalistId = `exercise-datalist-${uid}`
@@ -89,9 +116,12 @@ const inputRef = ref(null)
 const focused = ref(false)
 let blurTimer = null
 
+const savedNames = computed(() => (savedExercises.value ?? []).map((ex) => ex.name))
+const savedGroups = computed(() => groupSavedExercises(savedExercises.value ?? []))
+const hasSavedExercises = computed(() => (savedExercises.value ?? []).length > 0)
+const datalistNames = computed(() => mergeExerciseNames(savedNames.value))
 const showPicker = computed(() => focused.value)
-
-const filteredMatches = computed(() => filterExercises(props.modelValue, 10))
+const filteredMatches = computed(() => filterExercises(props.modelValue, savedNames.value, 10))
 
 function onInput(e) {
   emit('update:modelValue', e.target.value)
@@ -110,6 +140,14 @@ function onBlur() {
 
 function selectExercise(name) {
   emit('update:modelValue', name)
+  clearTimeout(blurTimer)
+  focused.value = false
+  inputRef.value?.blur()
+}
+
+function selectSavedExercise(ex) {
+  emit('update:modelValue', ex.name)
+  emit('select-saved', ex)
   clearTimeout(blurTimer)
   focused.value = false
   inputRef.value?.blur()
@@ -144,13 +182,22 @@ function selectExercise(name) {
   border-top: 1px solid oklch(16% 0.008 45);
 }
 
-.picker-section-label {
+.picker-subsection + .picker-subsection {
+  margin-top: 8px;
+}
+
+.picker-section-label,
+.picker-subsection-label {
   font-size: 0.625rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--color-text-secondary, #a3a3a3);
   margin-bottom: 6px;
+}
+
+.picker-subsection-label {
+  color: #c4b5fd;
 }
 
 .picker-chips {
@@ -171,6 +218,10 @@ function selectExercise(name) {
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.picker-chip-saved {
+  border-color: #a78bfa44;
 }
 
 .picker-chip:hover,

@@ -82,12 +82,25 @@ create table public.custom_program_days (
   unique(program_id, day_name)
 );
 
+create table public.saved_exercises (
+  id            uuid default gen_random_uuid() primary key,
+  user_id       uuid references auth.users on delete cascade not null,
+  name          text not null,
+  category      text not null default 'Other',
+  default_sets  text,
+  default_reps  text,
+  notes         text,
+  created_at    timestamptz default now(),
+  unique(user_id, name)
+);
+
 alter table public.profiles enable row level security;
 alter table public.custom_days enable row level security;
 alter table public.workout_sessions enable row level security;
 alter table public.set_logs enable row level security;
 alter table public.custom_programs enable row level security;
 alter table public.custom_program_days enable row level security;
+alter table public.saved_exercises enable row level security;
 
 create policy "profiles: own row" on public.profiles
   for all using (auth.uid() = id);
@@ -118,6 +131,9 @@ create policy "custom_program_days: own via program" on public.custom_program_da
         and p.user_id = auth.uid()
     )
   );
+
+create policy "saved_exercises: own rows" on public.saved_exercises
+  for all using (auth.uid() = user_id);
 
 -- Server-side timestamp RPC (used by customLog.js for correct history date placement)
 create or replace function public.server_now()

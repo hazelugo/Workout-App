@@ -15,4 +15,8 @@ export const queryKeys = {
     all: ['profile'],
     detail: (userId) => [...queryKeys.profile.all, userId],
   },
+  savedExercises: {
+    all: ['savedExercises'],
+    list: (userId) => [...queryKeys.savedExercises.all, userId],
+  },
 }

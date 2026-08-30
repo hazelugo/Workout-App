@@ -420,6 +420,7 @@
                           v-model="ex.name"
                           :aria-label="`Exercise ${i + 1} name`"
                           :input-id="`pd-ex-${program.id}-${d}-${i}`"
+                          @select-saved="applySavedDefaults(ex, $event)"
                         />
                         <div class="stepper-actions-group">
                           <button
@@ -473,13 +474,22 @@
                     </div>
                   </TransitionGroup>
 
-                  <button
-                    type="button"
-                    class="btn-add-exercise"
-                    @click="addProgramExercise(program.id, d)"
-                  >
-                    + Add Exercise
-                  </button>
+                  <div class="exercise-add-actions">
+                    <button
+                      type="button"
+                      class="btn-add-exercise"
+                      @click="addProgramExercise(program.id, d)"
+                    >
+                      + Add Exercise
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-from-library"
+                      @click="openLibraryPicker({ programId: program.id, dayName: d })"
+                    >
+                      From my exercises
+                    </button>
+                  </div>
 
                   <div class="day-save-actions-row">
                     <button
@@ -569,6 +579,7 @@
             v-model="ex.name"
             :aria-label="`Exercise ${i + 1} name`"
             :input-id="`day-ex-${i}`"
+            @select-saved="applySavedDefaults(ex, $event)"
           />
           <div class="stepper-actions-group">
             <button
@@ -637,13 +648,22 @@
       </div>
     </TransitionGroup>
 
-    <button
-      type="button"
-      class="btn-add-exercise"
-      @click="addExercise"
-    >
-      + Add Exercise
-    </button>
+    <div class="exercise-add-actions">
+      <button
+        type="button"
+        class="btn-add-exercise"
+        @click="addExercise"
+      >
+        + Add Exercise
+      </button>
+      <button
+        type="button"
+        class="btn-from-library"
+        @click="openLibraryPicker('day')"
+      >
+        From my exercises
+      </button>
+    </div>
 
     <button
       type="button"
@@ -846,6 +866,14 @@
     :program="exportingProgram"
     @close="showExportModal = false"
   />
+
+  <SavedExercisePicker
+    :show="showLibraryPicker"
+    :exercises="savedExercises"
+    :loading="savedExercisesLoading"
+    @close="showLibraryPicker = false"
+    @select="onLibrarySelect"
+  />
 </template>
 
 <script setup>
@@ -874,6 +902,8 @@ import { parseSetCount } from '@/lib/workout'
 import { program as builtInProgram } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 import ExerciseNamePicker from '@/components/ExerciseNamePicker.vue'
+import SavedExercisePicker from '@/components/SavedExercisePicker.vue'
+import { useSavedExercisesQuery } from '@/queries/savedExercises'
 
 const auth = useAuthStore()
 const connectivity = useConnectivityStore()
@@ -902,6 +932,11 @@ function showToast(msg) {
 const userId = computed(() => auth.user?.id)
 const { data: customDaysData } = useCustomDaysQuery(userId)
 const { data: programsData, isPending: programsLoading } = useCustomProgramsQuery(userId)
+const { data: savedExercisesData, isPending: savedExercisesLoading } = useSavedExercisesQuery(userId)
+
+const savedExercises = computed(() => savedExercisesData.value ?? [])
+const showLibraryPicker = ref(false)
+const libraryTarget = ref(null)
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -1272,6 +1307,40 @@ const hasValidExercises = computed(() => exercises.value.some((e) => e.name.trim
 
 function addExercise() {
   exercises.value.push(newEx())
+}
+
+function applySavedDefaults(ex, saved) {
+  ex.name = saved.name
+  if (saved.default_sets) ex.sets = saved.default_sets
+  if (saved.default_reps) ex.reps = saved.default_reps
+}
+
+function exerciseFromSaved(saved, useDraftId = false) {
+  return {
+    _id: useDraftId ? _draftId++ : _exId++,
+    name: saved.name,
+    sets: saved.default_sets ?? '',
+    reps: saved.default_reps ?? '',
+  }
+}
+
+function openLibraryPicker(target) {
+  libraryTarget.value = target
+  showLibraryPicker.value = true
+}
+
+function onLibrarySelect(saved) {
+  if (libraryTarget.value === 'day') {
+    exercises.value.push(exerciseFromSaved(saved))
+    showToast(`Added ${saved.name} to day builder`)
+    return
+  }
+
+  if (libraryTarget.value?.programId && libraryTarget.value?.dayName) {
+    const { programId, dayName } = libraryTarget.value
+    getOrInitDraft(programId, dayName).exercises.push(exerciseFromSaved(saved, true))
+    showToast(`Added ${saved.name} to ${dayName}`)
+  }
 }
 
 function removeExercise(i) {
@@ -2309,6 +2378,34 @@ async function confirmLog() {
   border-color: #a78bfa;
   color: #c4b5fd;
   background: #a78bfa11;
+}
+
+.exercise-add-actions {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-from-library {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  background: #a78bfa11;
+  border: 1px solid #a78bfa44;
+  border-radius: 8px;
+  color: #c4b5fd;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 150ms ease-out;
+}
+
+.btn-from-library:hover {
+  border-color: #a78bfa;
+  color: #ffffff;
+  background: #a78bfa22;
 }
 
 .day-save-actions-row {
