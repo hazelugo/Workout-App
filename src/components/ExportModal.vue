@@ -260,7 +260,7 @@ function handlePdf() {
   font-size: 0.6875rem;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
   margin-bottom: 4px;
 }
 
@@ -268,7 +268,7 @@ function handlePdf() {
   font-family: Georgia, serif;
   font-size: 1.25rem;
   font-weight: 400;
-  color: #f5f5f5;
+  color: var(--color-text-primary);
   margin: 0;
 }
 
@@ -280,7 +280,7 @@ function handlePdf() {
   justify-content: center;
   background: transparent;
   border: none;
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-size: 26px;
   line-height: 1;
@@ -294,7 +294,7 @@ function handlePdf() {
 }
 
 .export-close-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -337,7 +337,7 @@ function handlePdf() {
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
 }
 
 .export-select {
@@ -346,7 +346,7 @@ function handlePdf() {
   background: oklch(12% 0.008 45);
   border: 1px solid oklch(22% 0.008 45);
   border-radius: 6px;
-  color: #f5f5f5;
+  color: var(--color-text-primary);
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.8125rem;
   cursor: pointer;
@@ -355,18 +355,18 @@ function handlePdf() {
 
 .export-select:focus {
   outline: none;
-  border-color: #a78bfa;
+  border-color: var(--color-primary);
 }
 
 .export-select:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .export-select:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-color: #a78bfa;
+  border-color: var(--color-primary);
 }
 
 .preview-section {
@@ -386,14 +386,14 @@ function handlePdf() {
   font-size: 0.6875rem;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
 .preview-meta {
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.6875rem;
-  color: #737373;
+  color: var(--color-text-muted);
 }
 
 .preview-textarea {
@@ -418,9 +418,9 @@ function handlePdf() {
 }
 
 .preview-textarea:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
-  border-color: #a78bfa;
+  border-color: var(--color-primary);
 }
 
 .export-footer {
@@ -451,14 +451,14 @@ function handlePdf() {
 }
 
 .btn-action:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
 .btn-copy {
   background: oklch(14% 0.008 45);
   border: 1px solid oklch(24% 0.008 45);
-  color: #f5f5f5;
+  color: var(--color-text-primary);
 }
 
 .btn-copy:hover {
@@ -474,7 +474,7 @@ function handlePdf() {
 .btn-download {
   background: oklch(14% 0.008 45);
   border: 1px solid oklch(24% 0.008 45);
-  color: #f5f5f5;
+  color: var(--color-text-primary);
 }
 
 .btn-download:hover {

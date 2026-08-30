@@ -28,10 +28,7 @@
 
     <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 16px">
       <div v-if="isSignUp" style="display: flex; flex-direction: column; gap: 6px">
-        <label
-          for="auth-display-name"
-          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
-        >
+        <label for="auth-display-name" class="auth-label">
           Name
         </label>
         <input
@@ -48,10 +45,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label
-          for="auth-email"
-          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
-        >
+        <label for="auth-email" class="auth-label">
           Email
         </label>
         <input
@@ -66,10 +60,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label
-          for="auth-password"
-          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
-        >
+        <label for="auth-password" class="auth-label">
           Password
         </label>
         <input
@@ -87,18 +78,7 @@
           v-if="!isSignUp"
           type="button"
           @click="handleForgotPassword"
-          class="auth-link-btn"
-          style="
-            background: none;
-            border: none;
-            color: #a3a3a3;
-            font-size: 11px;
-            cursor: pointer;
-            text-align: left;
-            padding: 4px 0;
-            font-family: Georgia, serif;
-            text-decoration: underline;
-          "
+          class="auth-link-btn auth-forgot-btn"
         >
           Forgot password?
         </button>
@@ -127,7 +107,7 @@
       <!-- Divider -->
       <div style="display: flex; align-items: center; gap: 12px">
         <div style="flex: 1; height: 1px; background: oklch(18% 0.008 45)"></div>
-        <span style="font-size: 11px; color: #a3a3a3">or</span>
+        <span class="auth-divider-text">or</span>
         <div style="flex: 1; height: 1px; background: oklch(18% 0.008 45)"></div>
       </div>
 
@@ -141,22 +121,11 @@
       </button>
     </form>
 
-    <p style="text-align: center; margin-top: 24px; font-size: 12px; color: #a3a3a3">
+    <p class="auth-toggle-text">
       {{ isSignUp ? 'Already have an account?' : "Don't have an account?" }}
       <button
         @click="toggleMode"
-        class="auth-link-btn"
-        style="
-          background: none;
-          border: none;
-          color: #a78bfa;
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 600;
-          font-family: Georgia, serif;
-          text-decoration: underline;
-          padding: 2px 4px;
-        "
+        class="auth-link-btn auth-mode-toggle"
       >
         {{ isSignUp ? 'Sign in' : 'Sign up' }}
       </button>
@@ -246,13 +215,57 @@ async function handleForgotPassword() {
 </script>
 
 <style scoped>
+.auth-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.auth-forgot-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+  padding: 4px 0;
+  font-family: Georgia, serif;
+  text-decoration: underline;
+}
+
+.auth-divider-text {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.auth-toggle-text {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.auth-mode-toggle {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: Georgia, serif;
+  text-decoration: underline;
+  padding: 2px 4px;
+}
+
 .auth-input {
   padding: 10px 12px;
   min-height: 44px;
   background: oklch(11.5% 0.008 45);
   border: 1px solid oklch(20% 0.008 45);
   border-radius: 4px;
-  color: #f5f5f5;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-family: Georgia, serif;
   outline: none;
@@ -260,14 +273,14 @@ async function handleForgotPassword() {
 }
 
 .auth-input:focus-visible {
-  border-color: #a78bfa;
-  outline: 2px solid #a78bfa;
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
 }
 
 .auth-submit-btn {
   padding: 12px;
   min-height: 44px;
-  background: #a78bfa;
+  background: var(--color-primary);
   border: none;
   color: #121118;
   font-size: 11px;
@@ -289,7 +302,7 @@ async function handleForgotPassword() {
 
 .auth-submit-btn:disabled {
   background: oklch(20% 0.008 45);
-  color: #737373;
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
@@ -303,7 +316,7 @@ async function handleForgotPassword() {
   min-height: 44px;
   background: transparent;
   border: 1px solid oklch(22% 0.008 45);
-  color: #f5f5f5;
+  color: var(--color-text-primary);
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -317,17 +330,18 @@ async function handleForgotPassword() {
 }
 
 .auth-google-btn:hover:not(:disabled) {
-  border-color: #a78bfa;
+  border-color: var(--color-primary);
   background: #a78bfa11;
 }
 
 .auth-google-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.auth-link-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+.auth-link-btn:focus-visible,
+.auth-mode-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 2px;
 }

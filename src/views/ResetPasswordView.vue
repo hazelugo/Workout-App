@@ -6,16 +6,11 @@
       </h1>
     </div>
 
-    <div v-if="!ready" style="text-align: center; color: #a3a3a3; font-size: 13px">
-      Verifying reset link...
-    </div>
+    <div v-if="!ready" class="reset-loading">Verifying reset link...</div>
 
     <form v-else @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 16px">
       <div style="display: flex; flex-direction: column; gap: 6px">
-        <label
-          for="reset-password"
-          style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 600"
-        >
+        <label for="reset-password" class="reset-label">
           New Password
         </label>
         <input
@@ -80,13 +75,27 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
+.reset-loading {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.reset-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
 .reset-input {
   padding: 10px 12px;
   min-height: 44px;
   background: oklch(11.5% 0.008 45);
   border: 1px solid oklch(20% 0.008 45);
   border-radius: 4px;
-  color: #f5f5f5;
+  color: var(--color-text-primary);
   font-size: 14px;
   font-family: Georgia, serif;
   outline: none;
@@ -94,14 +103,14 @@ async function handleSubmit() {
 }
 
 .reset-input:focus-visible {
-  border-color: #a78bfa;
-  outline: 2px solid #a78bfa;
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
 }
 
 .reset-submit-btn {
   padding: 12px;
   min-height: 44px;
-  background: #a78bfa;
+  background: var(--color-primary);
   border: none;
   color: #121118;
   font-size: 11px;
@@ -123,7 +132,7 @@ async function handleSubmit() {
 
 .reset-submit-btn:disabled {
   background: oklch(20% 0.008 45);
-  color: #737373;
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
@@ -133,14 +142,14 @@ async function handleSubmit() {
 }
 
 .reset-link {
-  color: #a78bfa;
+  color: var(--color-primary);
   font-weight: 600;
   text-decoration: underline;
   padding: 2px 4px;
 }
 
 .reset-link:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 2px;
 }

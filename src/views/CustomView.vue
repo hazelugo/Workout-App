@@ -415,11 +415,10 @@
                     >
                       <div class="exercise-card-main-row">
                         <span class="exercise-index" aria-hidden="true">{{ i + 1 }}</span>
-                        <input
+                        <ExerciseNamePicker
                           v-model="ex.name"
                           :aria-label="`Exercise ${i + 1} name`"
-                          placeholder="Exercise name"
-                          class="workout-input flex-input"
+                          :input-id="`pd-ex-${program.id}-${d}-${i}`"
                         />
                         <div class="stepper-actions-group">
                           <button
@@ -565,11 +564,10 @@
       >
         <div class="exercise-card-main-row">
           <span class="exercise-index" aria-hidden="true">{{ i + 1 }}</span>
-          <input
+          <ExerciseNamePicker
             v-model="ex.name"
             :aria-label="`Exercise ${i + 1} name`"
-            placeholder="Exercise name"
-            class="workout-input flex-input"
+            :input-id="`day-ex-${i}`"
           />
           <div class="stepper-actions-group">
             <button
@@ -874,6 +872,7 @@ import { invalidateWorkoutHistory } from '@/queries/history'
 import { parseSetCount } from '@/lib/workout'
 import { program as builtInProgram } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
+import ExerciseNamePicker from '@/components/ExerciseNamePicker.vue'
 
 const auth = useAuthStore()
 const connectivity = useConnectivityStore()
@@ -1458,6 +1457,7 @@ async function confirmLog() {
   --color-text-primary: #f5f5f5;
   --color-text-secondary: #a3a3a3;
   --color-text-tertiary: #737373;
+  --color-text-muted: #737373;
   --color-accent-purple: #a78bfa;
   --color-accent-purple-light: #c4b5fd;
   --color-accent-green: #22c55e;
@@ -1639,7 +1639,7 @@ async function confirmLog() {
 
 .btn-create-submit:disabled {
   background: oklch(16% 0.008 45);
-  color: #737373;
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
@@ -2064,7 +2064,7 @@ async function confirmLog() {
 
 .day-empty-hint {
   font-size: 0.75rem;
-  color: #737373;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -2130,7 +2130,7 @@ async function confirmLog() {
 .optional-hint {
   text-transform: none;
   letter-spacing: 0;
-  color: #737373;
+  color: var(--color-text-muted);
   font-weight: 400;
 }
 
@@ -2176,6 +2176,8 @@ async function confirmLog() {
   background: oklch(11% 0.01 45);
   border: 1px solid oklch(18% 0.008 45);
   border-radius: 8px;
+  position: relative;
+  overflow: visible;
 }
 
 .exercise-card-main-row {
@@ -2281,7 +2283,7 @@ async function confirmLog() {
 
 .demo-placeholder-text {
   font-size: 0.75rem;
-  color: #737373;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -2416,7 +2418,7 @@ async function confirmLog() {
 
 .btn-save-workout-version:disabled {
   background: oklch(12% 0.008 45);
-  color: #737373;
+  color: var(--color-text-muted);
   cursor: default;
 }
 
@@ -2783,7 +2785,7 @@ async function confirmLog() {
 
 .btn-confirm-log:disabled {
   background: oklch(14% 0.008 45);
-  color: #737373;
+  color: var(--color-text-muted);
   cursor: wait;
 }
 

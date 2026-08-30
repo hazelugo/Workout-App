@@ -68,6 +68,30 @@
     </div>
   </nav>
 
+  <!-- ── Phase Progression Tip ───────────────────────────────── -->
+  <Transition name="reveal">
+    <aside
+      v-if="!hasActiveCustomProgram && showPhaseTip"
+      class="phase-tip-banner"
+      :style="{ '--phase-color': phase.color }"
+      aria-label="Phase progression tip"
+    >
+      <div class="phase-tip-content">
+        <span class="phase-tip-text">
+          <strong class="phase-tip-highlight">{{ phase.name }} · {{ phase.weeks }}</strong>
+          — {{ phase.subtitle }}. {{ phaseAdvanceHint }}
+        </span>
+        <button
+          class="phase-tip-dismiss"
+          :aria-label="`Dismiss ${phase.name} tip`"
+          @click="dismissPhaseTip(phase.id)"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+    </aside>
+  </Transition>
+
   <!-- ── First-Run Tip Banner ──────────────────────────────────── -->
   <Transition name="reveal">
     <aside v-if="!firstRunSeen" class="first-run-banner" aria-label="Getting started tip">
@@ -564,6 +588,14 @@
               <span class="fast-log-icon" aria-hidden="true">⚡</span>
               <span class="fast-log-text">Log All as Programmed</span>
             </button>
+            <button
+              type="button"
+              class="modal-btn-last-weights"
+              :disabled="!hasLastSessionData || loggingDay === pendingLogDay?.dayIndex"
+              @click="useLastSessionWeights"
+            >
+              Use Last Session Weights
+            </button>
             <div class="modal-footer-secondary-row">
               <button
                 type="button"
@@ -650,6 +682,16 @@
           aria-label="Reset rest timer to 90 seconds"
         >
           Reset
+        </button>
+        <button
+          type="button"
+          class="timer-auto-toggle"
+          :class="{ isOn: restTimerAutoStart }"
+          :aria-pressed="restTimerAutoStart"
+          aria-label="Toggle auto-start rest timer after logging"
+          @click="toggleRestTimerAutoStart"
+        >
+          Auto-start {{ restTimerAutoStart ? 'On' : 'Off' }}
         </button>
       </div>
     </div>
@@ -739,6 +781,35 @@ const lastLoggedWeightMap = computed(() => {
     }
   }
   return map
+})
+
+const lastSessionLogMap = computed(() => {
+  const map = {}
+  if (!workoutHistory.value) return map
+  for (const session of workoutHistory.value) {
+    if (!session.set_logs) continue
+    for (const log of session.set_logs) {
+      if (!log.exercise_name) continue
+      const name = log.exercise_name
+      if (!map[name]) {
+        map[name] = { weight: null, sets: {} }
+      }
+      if (map[name].weight == null && log.weight_kg != null) {
+        map[name].weight = log.weight_kg
+      }
+      if (map[name].sets[log.set_number] == null && log.reps_done != null) {
+        map[name].sets[log.set_number] = log.reps_done
+      }
+    }
+  }
+  return map
+})
+
+const hasLastSessionData = computed(() => {
+  return Object.keys(lastSessionLogMap.value).some((name) => {
+    const entry = lastSessionLogMap.value[name]
+    return entry.weight != null || Object.keys(entry.sets).length > 0
+  })
 })
 
 // Synchronous local cache backup to prevent split-second layout flashes on refresh
@@ -898,6 +969,28 @@ const exportProgramData = computed(() => {
 
 const phase = computed(() => program.phases[activePhase.value])
 
+const dismissedPhaseTips = ref(new Set())
+function _phaseTipKey(phaseId) {
+  return `phase-tip-v1-${phaseId}-${authStore.user?.id ?? 'anon'}`
+}
+const showPhaseTip = computed(() => {
+  const p = program.phases[activePhase.value]
+  return p ? !dismissedPhaseTips.value.has(p.id) : false
+})
+const phaseAdvanceHint = computed(() => {
+  const p = program.phases[activePhase.value]
+  if (!p) return ''
+  const next = program.phases[activePhase.value + 1]
+  if (next) {
+    return `Complete ${p.weeks}, then advance to ${next.name} (${next.weeks}).`
+  }
+  return `Complete ${p.weeks} to finish the program.`
+})
+function dismissPhaseTip(phaseId) {
+  localStorage.setItem(_phaseTipKey(phaseId), '1')
+  dismissedPhaseTips.value = new Set([...dismissedPhaseTips.value, phaseId])
+}
+
 // Reactive object tracking day expansion state (only current day expanded by default)
 const expandedDaysMap = ref({ [todayIndex]: true })
 
@@ -938,11 +1031,18 @@ const logErrorMsg = ref('')
 let _loggedTimer = null
 let _queuedTimer = null
 
+function maybeAutoStartRestTimer() {
+  if (restTimerAutoStart.value) {
+    startRestTimer(90)
+  }
+}
+
 async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides = []) {
   await enqueueWorkout(authStore.user.id, sessionPayload, exercises, setOverrides)
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
   queuedDay.value = dayIndex
+  maybeAutoStartRestTimer()
   clearTimeout(_queuedTimer)
   _queuedTimer = setTimeout(() => {
     if (queuedDay.value === dayIndex) queuedDay.value = null
@@ -959,6 +1059,7 @@ async function queueCustomWorkoutOffline(dayIndex, day, setOverrides = []) {
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
   queuedDay.value = dayIndex
+  maybeAutoStartRestTimer()
   clearTimeout(_queuedTimer)
   _queuedTimer = setTimeout(() => {
     if (queuedDay.value === dayIndex) queuedDay.value = null
@@ -1027,6 +1128,7 @@ async function logWorkout(dayIndex, day, setOverrides = []) {
   loggingDay.value = null
   loggedDay.value = dayIndex
   await invalidateWorkoutHistory(queryClient)
+  maybeAutoStartRestTimer()
   clearTimeout(_loggedTimer)
   _loggedTimer = setTimeout(() => {
     if (loggedDay.value === dayIndex) loggedDay.value = null
@@ -1078,6 +1180,22 @@ function adjustReps(s, delta) {
   }
   const next = Math.max(0, Number(base) + delta)
   s.repsDone = next
+}
+
+function useLastSessionWeights() {
+  for (const group of logModalInputs.value) {
+    const last = lastSessionLogMap.value[group.exerciseName]
+    if (!last) continue
+    for (const s of group.sets) {
+      if (last.weight != null) {
+        s.weightLbs = last.weight
+      }
+      const lastReps = last.sets[s.setNumber]
+      if (lastReps != null) {
+        s.repsDone = lastReps
+      }
+    }
+  }
 }
 
 function logAllAsProgrammed() {
@@ -1133,6 +1251,7 @@ async function confirmLog() {
       )
       await invalidateWorkoutHistory(queryClient)
       loggedDay.value = dayIndex
+      maybeAutoStartRestTimer()
       clearTimeout(_loggedTimer)
       _loggedTimer = setTimeout(() => {
         if (loggedDay.value === dayIndex) loggedDay.value = null
@@ -1156,6 +1275,14 @@ const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
 const currentWeek = ref(1)
 
 // ── Rest Timer Widget with Clock Accuracy & Background Sync ───────
+const _restTimerAutoKey = 'rest-timer-auto-v1'
+const restTimerAutoStart = ref(localStorage.getItem(_restTimerAutoKey) !== '0')
+
+function toggleRestTimerAutoStart() {
+  restTimerAutoStart.value = !restTimerAutoStart.value
+  localStorage.setItem(_restTimerAutoKey, restTimerAutoStart.value ? '1' : '0')
+}
+
 const restTimerSeconds = ref(90)
 const restTimerRunning = ref(false)
 let restTimerTargetEnd = null
@@ -1236,6 +1363,13 @@ onMounted(() => {
     const n = parseInt(saved, 10)
     if (n >= 1 && n <= 8) currentWeek.value = n
   }
+  const dismissed = new Set()
+  for (const p of program.phases) {
+    if (localStorage.getItem(_phaseTipKey(p.id)) === '1') {
+      dismissed.add(p.id)
+    }
+  }
+  dismissedPhaseTips.value = dismissed
 })
 
 onUnmounted(() => {
@@ -1580,6 +1714,57 @@ onUnmounted(() => {
 }
 
 .first-run-dismiss:hover {
+  color: #ffffff;
+}
+
+/* ── Phase Progression Tip ─────────────────────────────────── */
+.phase-tip-banner {
+  max-width: 860px;
+  margin: 12px auto 0;
+  padding: 0 16px;
+}
+
+.phase-tip-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background: oklch(11% 0.01 45);
+  border: 1px solid color-mix(in oklch, var(--phase-color, #4ade80) 40%, oklch(18% 0.008 45));
+  border-radius: 8px;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #d4d4d4;
+}
+
+.phase-tip-highlight {
+  color: var(--phase-color, #4ade80);
+}
+
+.phase-tip-dismiss {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #a3a3a3;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color 150ms;
+}
+
+.phase-tip-dismiss:hover {
   color: #ffffff;
 }
 
@@ -2383,6 +2568,36 @@ onUnmounted(() => {
   cursor: wait;
 }
 
+.modal-btn-last-weights {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 18px;
+  background: oklch(13% 0.008 45);
+  border: 1px solid oklch(24% 0.008 45);
+  border-radius: 8px;
+  color: #d4d4d4;
+  cursor: pointer;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: all 150ms ease-out;
+}
+
+.modal-btn-last-weights:hover:not(:disabled) {
+  background: oklch(16% 0.008 45);
+  border-color: oklch(30% 0.008 45);
+  color: #ffffff;
+}
+
+.modal-btn-last-weights:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .fast-log-icon {
   font-size: 1rem;
 }
@@ -2628,5 +2843,31 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+.timer-auto-toggle {
+  min-height: 44px;
+  padding: 8px 12px;
+  background: oklch(12% 0.008 45);
+  border: 1px solid oklch(22% 0.008 45);
+  border-radius: 20px;
+  color: #a3a3a3;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease-out;
+}
+.timer-auto-toggle.isOn {
+  background: #16653433;
+  border-color: #22c55e66;
+  color: #4ade80;
+}
+.timer-auto-toggle:hover {
+  color: #ffffff;
+  border-color: oklch(30% 0.008 45);
 }
 </style>

@@ -6,18 +6,7 @@
       text-align: center;
     "
   >
-    <div
-      style="
-        font-size: 11px;
-        letter-spacing: 4px;
-        color: #a3a3a3;
-        font-weight: 600;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-      "
-    >
-      Your Log
-    </div>
+    <div class="history-eyebrow">Your Log</div>
     <h1
       style="
         font-size: clamp(1.625rem, 5vw, 2.75rem);
@@ -29,15 +18,11 @@
     >
       Workout History
     </h1>
-    <p style="font-size: 0.875rem; color: #a3a3a3; margin-top: 8px; font-style: italic">
-      Completed sessions · tap to expand
-    </p>
+    <p class="history-subtitle">Completed sessions · tap to expand</p>
   </div>
 
   <div style="max-width: 640px; margin: 24px auto 0; padding: 0 16px">
-    <div v-if="loading" style="padding: 48px 0; text-align: center; color: #a3a3a3; font-size: 0.875rem">
-      Loading history…
-    </div>
+    <div v-if="loading" class="history-loading">Loading history…</div>
 
     <div
       v-else-if="error"
@@ -62,8 +47,8 @@
         text-align: center;
       "
     >
-      <div style="font-size: 0.9375rem; color: #a3a3a3; margin-bottom: 8px; font-weight: 500">No workouts logged yet</div>
-      <div style="font-size: 12px; color: #737373; line-height: 1.7; max-width: 300px; margin: 0 auto 20px">
+      <div class="history-empty-title">No workouts logged yet</div>
+      <div class="history-empty-hint">
         Open a day on the Program page and tap <strong style="color: #d4d4d4; font-weight: 500">Log workout</strong>
         when you're done.
       </div>
@@ -101,36 +86,14 @@
           <div style="font-size: 1.25rem; color: #e8e8e8; font-variant-numeric: tabular-nums">
             {{ sessions.length }}
           </div>
-          <div
-            style="
-              font-size: 10px;
-              letter-spacing: 2px;
-              text-transform: uppercase;
-              color: #a3a3a3;
-              font-weight: 600;
-              margin-top: 2px;
-            "
-          >
-            Sessions
-          </div>
+          <div class="history-stat-label">Sessions</div>
         </div>
         <div style="width: 1px; background: oklch(17% 0.008 45)" />
         <div style="flex: 1; text-align: center">
           <div style="font-size: 1.25rem; color: #e8e8e8; font-variant-numeric: tabular-nums">
             {{ totalSets }}
           </div>
-          <div
-            style="
-              font-size: 10px;
-              letter-spacing: 2px;
-              text-transform: uppercase;
-              color: #a3a3a3;
-              font-weight: 600;
-              margin-top: 2px;
-            "
-          >
-            Sets logged
-          </div>
+          <div class="history-stat-label">Sets logged</div>
         </div>
       </div>
 
@@ -194,11 +157,11 @@
                     fontWeight: '500',
                   }"
                 >{{ phaseMeta(session.phase).name }}</span>
-                <span v-if="session.track && session.track !== 'custom'" style="font-size: 11px; color: #a3a3a3">
+                <span v-if="session.track && session.track !== 'custom'" style="font-size: 11px; color: var(--color-text-secondary)">
                   {{ session.track === 'gym' ? 'Gym' : 'Home' }}
                 </span>
               </div>
-              <div style="font-size: 12px; color: #a3a3a3; display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
+              <div style="font-size: 12px; color: var(--color-text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px">
                 <span>{{ formatSessionDate(session.completed_at) }}</span>
                 <template v-if="session.week"><span>· Week {{ session.week }}</span></template>
                 <span>· {{ session.set_logs?.length ?? 0 }} sets</span>
@@ -212,7 +175,7 @@
               </div>
             </div>
           </div>
-          <span aria-hidden="true" style="color: #a3a3a3; font-size: 18px; line-height: 1; flex-shrink: 0">
+          <span aria-hidden="true" style="color: var(--color-text-secondary); font-size: 18px; line-height: 1; flex-shrink: 0">
             {{ expandedId === session.id ? '−' : '+' }}
           </span>
         </button>
@@ -237,7 +200,7 @@
                   font-size: 10px;
                   letter-spacing: 2px;
                   text-transform: uppercase;
-                  color: #a3a3a3;
+                  color: var(--color-text-secondary);
                 "
               >
                 {{ formatSessionTime(session.completed_at) }}
@@ -302,10 +265,10 @@
                 v-if="isEditing(session.id, name)"
                 style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px"
               >
-                <span style="font-size: 10px; color: #a3a3a3"></span>
-                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Target</span>
-                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Done</span>
-                <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Weight (lbs)</span>
+                <span style="font-size: 10px; color: var(--color-text-secondary)"></span>
+                <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Target</span>
+                <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Done</span>
+                <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Weight (lbs)</span>
               </div>
 
               <div
@@ -314,16 +277,16 @@
                 style="margin-bottom: 4px"
               >
                 <!-- View mode -->
-                <div v-if="!isEditing(session.id, name)" style="font-size: 12px; color: #a3a3a3; line-height: 1.8">
-                  <span style="color: #a3a3a3; font-weight: 600">Set {{ set.set_number }}:</span>
+                <div v-if="!isEditing(session.id, name)" style="font-size: 12px; color: var(--color-text-secondary); line-height: 1.8">
+                  <span style="color: var(--color-text-secondary); font-weight: 600">Set {{ set.set_number }}:</span>
                   <span style="margin-left: 6px; color: #d4d4d4">
                     {{ set.reps_programmed }} reps
                     <template v-if="set.reps_done != null">
-                      <span style="color: #737373"> → </span>
+                      <span style="color: var(--color-text-muted)"> → </span>
                       <span style="color: #d4d4d4">{{ set.reps_done }} done</span>
                     </template>
                     <template v-if="set.weight_kg != null">
-                      <span style="color: #737373"> · </span>
+                      <span style="color: var(--color-text-muted)"> · </span>
                       <span style="color: #d4d4d4">{{ set.weight_kg }} lbs</span>
                     </template>
                   </span>
@@ -334,7 +297,7 @@
                   v-else
                   style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; align-items: center"
                 >
-                  <span style="font-size: 11px; color: #a3a3a3; font-weight: 600">Set {{ set.set_number }}</span>
+                  <span style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600">Set {{ set.set_number }}</span>
                   <span style="font-size: 12px; color: #d4d4d4; text-align: center; font-variant-numeric: tabular-nums">
                     {{ set.reps_programmed }}
                   </span>
@@ -380,13 +343,13 @@
                 v-else
                 style="padding: 14px; background: oklch(12% 0.01 45); border: 1px solid oklch(22% 0.008 45); border-radius: 10px"
               >
-                <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 700; margin-bottom: 12px">
+                <div style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--color-text-secondary); font-weight: 700; margin-bottom: 12px">
                   Add exercise to this session
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 72px 72px; gap: 8px; margin-bottom: 12px">
                   <div>
-                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Name</label>
+                    <label class="history-field-label">Name</label>
                     <input
                       v-model="newExerciseForm.name"
                       type="text"
@@ -396,7 +359,7 @@
                     />
                   </div>
                   <div>
-                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Sets</label>
+                    <label class="history-field-label">Sets</label>
                     <input
                       v-model="newExerciseForm.sets"
                       type="number"
@@ -407,7 +370,7 @@
                     />
                   </div>
                   <div>
-                    <label style="display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 4px">Reps</label>
+                    <label class="history-field-label">Reps</label>
                     <input
                       v-model="newExerciseForm.reps"
                       type="text"
@@ -418,23 +381,23 @@
                 </div>
 
                 <div v-if="newExerciseSetInputs.length" style="margin-bottom: 12px">
-                  <div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #737373; margin-bottom: 8px">
+                  <div style="font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px">
                     Log sets (optional)
                   </div>
                   <div
                     style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; margin-bottom: 4px"
                   >
                     <span></span>
-                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Target</span>
-                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Done</span>
-                    <span style="font-size: 10px; color: #a3a3a3; font-weight: 600; text-align: center">Weight (lbs)</span>
+                    <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Target</span>
+                    <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Done</span>
+                    <span style="font-size: 10px; color: var(--color-text-secondary); font-weight: 600; text-align: center">Weight (lbs)</span>
                   </div>
                   <div
                     v-for="set in newExerciseSetInputs"
                     :key="set.setNumber"
                     style="display: grid; grid-template-columns: 44px 1fr 1fr 1fr; gap: 6px; align-items: center; margin-bottom: 4px"
                   >
-                    <span style="font-size: 11px; color: #a3a3a3; font-weight: 600">Set {{ set.setNumber }}</span>
+                    <span style="font-size: 11px; color: var(--color-text-secondary); font-weight: 600">Set {{ set.setNumber }}</span>
                     <span style="font-size: 12px; color: #d4d4d4; text-align: center; font-variant-numeric: tabular-nums">
                       {{ set.repsProgrammed }}
                     </span>
@@ -488,13 +451,13 @@
                 :aria-expanded="isNutritionExpanded(session.id)"
                 @click="toggleNutritionSection(session.id)"
               >
-                <span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #a3a3a3; font-weight: 700">
+                <span style="font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--color-text-secondary); font-weight: 700">
                   Daily Cardio & Nutrition
                 </span>
-                <span style="font-size: 12px; color: #a3a3a3; margin-left: auto; margin-right: 8px">
+                <span style="font-size: 12px; color: var(--color-text-secondary); margin-left: auto; margin-right: 8px">
                   {{ nutritionSummary(session) }}
                 </span>
-                <span aria-hidden="true" style="color: #a3a3a3">{{ isNutritionExpanded(session.id) ? '−' : '+' }}</span>
+                <span aria-hidden="true" style="color: var(--color-text-secondary)">{{ isNutritionExpanded(session.id) ? '−' : '+' }}</span>
               </button>
 
               <div v-if="isNutritionExpanded(session.id)" style="margin-top: 12px">
@@ -512,33 +475,33 @@
               <!-- View Mode: Metric Chips -->
               <div v-if="editingNutritionId !== session.id" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
                 <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
-                  <span style="color: #a3a3a3">Cardio:</span>
+                  <span style="color: var(--color-text-secondary)">Cardio:</span>
                   <strong v-if="session.cardio_minutes" style="color: #34d399; font-variant-numeric: tabular-nums">{{ session.cardio_minutes }} min</strong>
-                  <span v-else style="color: #737373; font-style: italic">—</span>
+                  <span v-else class="text-empty">—</span>
                 </div>
 
                 <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
-                  <span style="color: #a3a3a3">Calories:</span>
+                  <span style="color: var(--color-text-secondary)">Calories:</span>
                   <strong v-if="session.calories" style="color: #facc15; font-variant-numeric: tabular-nums">{{ Number(session.calories).toLocaleString() }} kcal</strong>
-                  <span v-else style="color: #737373; font-style: italic">—</span>
+                  <span v-else class="text-empty">—</span>
                 </div>
 
                 <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
-                  <span style="color: #a3a3a3">Protein:</span>
+                  <span style="color: var(--color-text-secondary)">Protein:</span>
                   <strong v-if="session.protein_g" style="color: #38bdf8; font-variant-numeric: tabular-nums">{{ session.protein_g }}g</strong>
-                  <span v-else style="color: #737373; font-style: italic">—</span>
+                  <span v-else class="text-empty">—</span>
                 </div>
 
                 <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
-                  <span style="color: #a3a3a3">Carbs:</span>
+                  <span style="color: var(--color-text-secondary)">Carbs:</span>
                   <strong v-if="session.carbs_g" style="color: #fb923c; font-variant-numeric: tabular-nums">{{ session.carbs_g }}g</strong>
-                  <span v-else style="color: #737373; font-style: italic">—</span>
+                  <span v-else class="text-empty">—</span>
                 </div>
 
                 <div style="padding: 6px 12px; background: oklch(13% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px">
-                  <span style="color: #a3a3a3">Fat:</span>
+                  <span style="color: var(--color-text-secondary)">Fat:</span>
                   <strong v-if="session.fat_g" style="color: #f472b6; font-variant-numeric: tabular-nums">{{ session.fat_g }}g</strong>
-                  <span v-else style="color: #737373; font-style: italic">—</span>
+                  <span v-else class="text-empty">—</span>
                 </div>
               </div>
 
@@ -579,7 +542,7 @@
                 </div>
 
                 <!-- Macro calculation breakdown indicator -->
-                <div v-if="calculatedCaloriesFromMacros != null" style="font-size: 11px; color: #a3a3a3; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 6px;">
+                <div v-if="calculatedCaloriesFromMacros != null" style="font-size: 11px; color: var(--color-text-secondary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: oklch(14% 0.008 45); border: 1px solid oklch(20% 0.008 45); border-radius: 6px;">
                   <span>Macro formula: ({{ nutritionInputs.protein || 0 }}g × 4) + ({{ nutritionInputs.carbs || 0 }}g × 4) + ({{ nutritionInputs.fat || 0 }}g × 9)</span>
                   <strong style="color: #facc15; font-variant-numeric: tabular-nums">= {{ calculatedCaloriesFromMacros }} kcal</strong>
                 </div>
@@ -611,7 +574,7 @@
                 </button>
               </div>
               <div v-else style="display: flex; align-items: center; justify-content: space-between; gap: 10px">
-                <span style="font-size: 12px; color: #a3a3a3">Remove this session permanently?</span>
+                <span style="font-size: 12px; color: var(--color-text-secondary)">Remove this session permanently?</span>
                 <div style="display: flex; gap: 8px; flex-shrink: 0">
                   <button
                     @click="deleteSession(session.id)"
@@ -657,7 +620,7 @@ const totalSets = computed(() =>
 )
 
 function phaseMeta(phase) {
-  return PHASES[phase] ?? { name: `Phase ${phase}`, color: '#a3a3a3' }
+  return PHASES[phase] ?? { name: `Phase ${phase}`, color: 'var(--color-text-secondary)' }
 }
 
 function sessionAccentColor(session) {
@@ -971,6 +934,75 @@ async function deleteSession(sessionId) {
 </script>
 
 <style scoped>
+.history-eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.history-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.history-loading {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.history-empty-title {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.history-empty-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  max-width: 300px;
+  margin: 0 auto 20px;
+}
+
+.history-stat-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.history-field-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid #e8e8e8;
@@ -1050,7 +1082,7 @@ a:hover {
 .cancel-btn {
   background: transparent;
   border: 1px solid oklch(20% 0.008 45);
-  color: #a3a3a3;
+  color: var(--color-text-secondary);
   cursor: pointer;
   font-size: 11px;
   letter-spacing: 1px;
@@ -1087,11 +1119,11 @@ a:hover {
   margin: 0;
 }
 .history-input:focus {
-  outline: 2px solid #a78bfa;
-  border-color: #a78bfa;
+  outline: 2px solid var(--color-primary);
+  border-color: var(--color-primary);
 }
 .history-input::placeholder {
-  color: #737373;
+  color: var(--color-text-muted);
 }
 
 .delete-btn {
@@ -1179,7 +1211,7 @@ a:hover {
 }
 
 .nutrition-toggle-btn:focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 6px;
 }
