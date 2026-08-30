@@ -98,8 +98,7 @@
       <div class="first-run-content">
         <span class="first-run-text">
           <strong class="first-run-highlight">Start at Week 1.</strong>
-          Open any day to see your programmed exercises. Tap any exercise name to watch a video
-          demonstration.
+          Today’s workout is shown first — swipe or tap the day pills to move through the week. Tap any exercise for a video demo.
         </span>
         <button class="first-run-dismiss" aria-label="Dismiss tip" @click="dismissFirstRun">
           <span aria-hidden="true">×</span>
@@ -112,236 +111,275 @@
   <main class="program-main">
     <!-- LOADING STATE: auth + queries resolving, show skeleton instead of wrong mode -->
     <div v-if="isLoadingProgram" class="phase-container" style="padding: 24px 0">
-      <div v-for="n in 7" :key="n" class="day-card" style="margin-bottom: 8px; opacity: 0.5">
+      <div class="day-card" style="opacity: 0.5">
         <div class="day-header-btn" style="pointer-events: none">
           <div class="day-header-left">
-            <span
-              class="day-name"
-              style="
-                background: oklch(20% 0.008 45);
-                color: transparent;
-                border-radius: 4px;
-                min-width: 80px;
-              "
-              >Loading</span
-            >
+            <span class="day-name" style="background: oklch(20% 0.008 45); color: transparent; border-radius: 4px; min-width: 80px">Loading</span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
-    <div v-else-if="hasActiveCustomProgram" class="phase-container">
+    <div v-else-if="hasActiveCustomProgram" class="phase-container" style="--phase-color: #a78bfa">
       <div class="phase-info-bar custom-phase-info-bar">
         <div class="phase-info-bar-left">
           <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
-          <span class="phase-subtitle-text">7-Day Split · Tap any day to expand or collapse</span>
+          <span class="phase-subtitle-text">7-Day Split · swipe or tap days to navigate</span>
         </div>
       </div>
 
-      <div class="days-list">
-        <article
-          v-for="(dayName, i) in WEEKDAYS"
-          :key="dayName"
-          class="day-card"
-          :class="{
-            expanded: isDayExpanded(i),
-            isToday: dayName === today,
-          }"
-          style="--phase-color: #a78bfa"
+      <nav class="day-carousel-nav" role="navigation" aria-label="Week day navigation">
+        <button
+          type="button"
+          class="day-nav-btn"
+          :disabled="activeDayIndex === 0"
+          aria-label="Previous day"
+          @click="prevDay"
         >
-          <!-- Day Accordion Header Button -->
+          ‹
+        </button>
+        <div class="day-pills" role="tablist" aria-label="Select day">
           <button
-            class="day-header-btn"
-            :aria-expanded="isDayExpanded(i)"
-            :aria-label="`${dayName}: ${activeCustomSchedule[dayName.toLowerCase()]?.title || 'Rest Day'} — ${isDayExpanded(i) ? 'collapse' : 'expand'}`"
-            @click="toggleDay(i)"
+            v-for="(pill, i) in dayPillItems"
+            :key="pill.key"
+            type="button"
+            role="tab"
+            class="day-pill"
+            :class="{ active: activeDayIndex === i, isToday: pill.isToday }"
+            :aria-selected="activeDayIndex === i"
+            :title="pill.title"
+            @click="goToDay(i)"
           >
-            <div class="day-header-left">
-              <span class="day-name">{{ dayName }}</span>
-              <span
-                v-if="activeCustomSchedule[dayName.toLowerCase()]"
-                class="day-label-pill"
-                style="background: #a78bfa22; color: #c4b5fd"
-              >
-                {{
-                  activeCustomSchedule[dayName.toLowerCase()].title ||
-                  `${activeCustomSchedule[dayName.toLowerCase()].exercises?.length ?? 0} exercises`
-                }}
-              </span>
-              <span
-                v-else
-                class="day-label-pill"
-                style="background: oklch(14% 0.008 45); color: #737373"
-              >
-                Rest Day
-              </span>
-              <span
-                v-if="dayName === today"
-                class="today-badge"
-                style="background: #a78bfa; color: #000"
-                >Today</span
-              >
-            </div>
-            <span class="accordion-icon" aria-hidden="true">
-              {{ isDayExpanded(i) ? '−' : '+' }}
-            </span>
+            {{ pill.short }}
           </button>
+        </div>
+        <button
+          type="button"
+          class="day-nav-btn"
+          :disabled="activeDayIndex >= dayCount - 1"
+          aria-label="Next day"
+          @click="nextDay"
+        >
+          ›
+        </button>
+      </nav>
 
-          <!-- Day Content (no Transition — avoids opacity:0 blocking on initial render) -->
-          <div v-if="isDayExpanded(i)" class="day-content">
-            <div
-              v-if="activeCustomSchedule[dayName.toLowerCase()]?.exercises?.length"
-              class="table-container"
-            >
-              <table class="exercise-table">
-                <thead>
-                  <tr>
-                    <th scope="col" class="th-exercise">Exercise</th>
-                    <th scope="col" class="th-sets">Sets</th>
-                    <th scope="col" class="th-reps">Reps</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(ex, j) in activeCustomSchedule[dayName.toLowerCase()].exercises"
-                    :key="j"
-                    class="exercise-row"
-                  >
-                    <td class="td-exercise">
-                      <a
-                        :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="exercise-link"
-                        style="color: #c4b5fd; border-bottom-color: #a78bfa77"
-                        :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
-                      >
-                        <span class="exercise-name">{{ ex.name }}</span>
-                        <span class="demo-icon" aria-hidden="true">↗</span>
-                      </a>
-                    </td>
-                    <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
-                    <td class="td-reps">{{ ex.reps || '—' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Log Workout CTA -->
-              <div class="day-action-bar">
-                <button
-                  class="btn-log-action"
-                  :class="{
-                    isLogged: loggedDay === i,
-                    isQueued: queuedDay === i,
-                  }"
-                  :disabled="loggingDay === i"
-                  @click="
-                    openLogModal(
-                      i,
-                      {
-                        day: dayName,
-                        title: activeCustomSchedule[dayName.toLowerCase()].title,
-                        exercises: activeCustomSchedule[dayName.toLowerCase()].exercises,
-                      },
-                      true,
-                    )
-                  "
+      <div
+        class="day-carousel-panel"
+        tabindex="0"
+        aria-label="Workout day details. Swipe left or right to change days."
+        @touchstart.passive="onDaySwipeStart"
+        @touchend.passive="onDaySwipeEnd"
+        @keydown="onDayCarouselKeydown"
+      >
+        <Transition name="day-slide" mode="out-in">
+          <article
+            :key="`custom-${activeDayIndex}`"
+            class="day-card expanded"
+            :class="{ isToday: WEEKDAYS[activeDayIndex] === today }"
+            style="--phase-color: #a78bfa"
+          >
+            <div class="day-header-display">
+              <div class="day-header-left">
+                <span class="day-name">{{ WEEKDAYS[activeDayIndex] }}</span>
+                <span
+                  v-if="activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()]"
+                  class="day-label-pill"
+                  style="background: #a78bfa22; color: #c4b5fd"
                 >
-                  <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
-                  <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
-                  <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
-                  <span v-else class="btn-text">Log workout</span>
-                </button>
-                <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
-                  View history →
-                </RouterLink>
+                  {{
+                    activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()].title ||
+                    `${activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()].exercises?.length ?? 0} exercises`
+                  }}
+                </span>
+                <span
+                  v-else
+                  class="day-label-pill"
+                  style="background: oklch(14% 0.008 45); color: #737373"
+                >
+                  Rest Day
+                </span>
+                <span
+                  v-if="WEEKDAYS[activeDayIndex] === today"
+                  class="today-badge"
+                  style="background: #a78bfa; color: #000"
+                  >Today</span
+                >
               </div>
             </div>
 
-            <!-- Rest Day -->
-            <div
-              v-else
-              style="
-                padding: 20px 0;
-                text-align: center;
-                color: #737373;
-                font-style: italic;
-                font-size: 0.875rem;
-              "
-            >
-              Rest &amp; recovery day — no exercises scheduled.
+            <div class="day-content">
+              <div
+                v-if="activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()]?.exercises?.length"
+                class="table-container"
+              >
+                <table class="exercise-table">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="th-exercise">Exercise</th>
+                      <th scope="col" class="th-sets">Sets</th>
+                      <th scope="col" class="th-reps">Reps</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(ex, j) in activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()].exercises"
+                      :key="j"
+                      class="exercise-row"
+                    >
+                      <td class="td-exercise">
+                        <a
+                          :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="exercise-link"
+                          style="color: #c4b5fd; border-bottom-color: #a78bfa77"
+                          :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
+                        >
+                          <span class="exercise-name">{{ ex.name }}</span>
+                          <span class="demo-icon" aria-hidden="true">↗</span>
+                        </a>
+                      </td>
+                      <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
+                      <td class="td-reps">{{ ex.reps || '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="day-action-bar">
+                  <button
+                    class="btn-log-action"
+                    :class="{
+                      isLogged: loggedDay === activeDayIndex,
+                      isQueued: queuedDay === activeDayIndex,
+                    }"
+                    :disabled="loggingDay === activeDayIndex"
+                    @click="
+                      openLogModal(
+                        activeDayIndex,
+                        {
+                          day: WEEKDAYS[activeDayIndex],
+                          title: activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()].title,
+                          exercises: activeCustomSchedule[WEEKDAYS[activeDayIndex].toLowerCase()].exercises,
+                        },
+                        true,
+                      )
+                    "
+                  >
+                    <span v-if="loggingDay === activeDayIndex" class="btn-text">Saving workout…</span>
+                    <span v-else-if="loggedDay === activeDayIndex" class="btn-text">Logged ✓</span>
+                    <span v-else-if="queuedDay === activeDayIndex" class="btn-text">Queued offline ✓</span>
+                    <span v-else class="btn-text">Log workout</span>
+                  </button>
+                  <RouterLink v-if="loggedDay === activeDayIndex" to="/history" class="view-history-link">
+                    View history →
+                  </RouterLink>
+                </div>
+              </div>
+
+              <div
+                v-else
+                style="padding: 20px 0; text-align: center; color: #737373; font-style: italic; font-size: 0.875rem"
+              >
+                Rest &amp; recovery day — no exercises scheduled.
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+        </Transition>
       </div>
     </div>
 
     <!-- MODE 2: DEFAULT PROGRAM (BUILD FROM ZERO) -->
     <Transition v-else name="phase-switch" mode="out-in">
-      <div :key="activePhase" class="phase-container">
+      <div :key="activePhase" class="phase-container" :style="{ '--phase-color': phase.color }">
         <!-- Phase Subtitle Info -->
         <div class="phase-info-bar">
           <span class="phase-dot" :style="{ background: phase.color }" aria-hidden="true" />
           <span class="phase-subtitle-text">{{ phase.subtitle }}</span>
         </div>
 
-        <!-- Days Accordion List -->
-        <div class="days-list">
-          <article
-            v-for="(d, i) in phase.days"
-            :key="d.day"
-            class="day-card"
-            :class="{
-              expanded: isDayExpanded(i),
-              isToday: d.day === today,
-            }"
-            :style="{
-              '--phase-color': phase.color,
-            }"
+        <!-- Day Carousel -->
+        <nav class="day-carousel-nav" role="navigation" aria-label="Week day navigation">
+          <button
+            type="button"
+            class="day-nav-btn"
+            :disabled="activeDayIndex === 0"
+            aria-label="Previous day"
+            @click="prevDay"
           >
-            <!-- Day Accordion Header Button -->
+            ‹
+          </button>
+          <div class="day-pills" role="tablist" aria-label="Select day">
             <button
-              class="day-header-btn"
-              :aria-expanded="isDayExpanded(i)"
-              :aria-label="`${d.day}: ${d.label} — ${isDayExpanded(i) ? 'collapse' : 'expand'}`"
-              @click="toggleDay(i)"
+              v-for="(pill, i) in dayPillItems"
+              :key="pill.key"
+              type="button"
+              role="tab"
+              class="day-pill"
+              :class="{ active: activeDayIndex === i, isToday: pill.isToday }"
+              :aria-selected="activeDayIndex === i"
+              :title="pill.title"
+              @click="goToDay(i)"
             >
-              <div class="day-header-left">
-                <span class="day-name">{{ d.day }}</span>
-                <span class="day-label-pill">{{ d.label }}</span>
-                <span v-if="!d.gym" class="home-only-badge">Home only</span>
-                <span v-if="d.day === today" class="today-badge">Today</span>
-              </div>
-              <span class="accordion-icon" aria-hidden="true">
-                {{ isDayExpanded(i) ? '−' : '+' }}
-              </span>
+              {{ pill.short }}
             </button>
+          </div>
+          <button
+            type="button"
+            class="day-nav-btn"
+            :disabled="activeDayIndex >= dayCount - 1"
+            aria-label="Next day"
+            @click="nextDay"
+          >
+            ›
+          </button>
+        </nav>
 
-            <!-- Track Toggle (Home vs Gym) -->
-            <Transition name="reveal">
+        <div
+          class="day-carousel-panel"
+          tabindex="0"
+          aria-label="Workout day details. Swipe left or right to change days."
+          @touchstart.passive="onDaySwipeStart"
+          @touchend.passive="onDaySwipeEnd"
+          @keydown="onDayCarouselKeydown"
+        >
+          <Transition name="day-slide" mode="out-in">
+            <article
+              v-if="phase.days[activeDayIndex]"
+              :key="`builtin-${activePhase}-${activeDayIndex}`"
+              class="day-card expanded"
+              :class="{ isToday: phase.days[activeDayIndex].day === today }"
+              :style="{ '--phase-color': phase.color }"
+            >
+              <div class="day-header-display">
+                <div class="day-header-left">
+                  <span class="day-name">{{ phase.days[activeDayIndex].day }}</span>
+                  <span class="day-label-pill">{{ phase.days[activeDayIndex].label }}</span>
+                  <span v-if="!phase.days[activeDayIndex].gym" class="home-only-badge">Home only</span>
+                  <span v-if="phase.days[activeDayIndex].day === today" class="today-badge">Today</span>
+                </div>
+              </div>
+
               <div
-                v-if="isDayExpanded(i) && d.gym"
+                v-if="phase.days[activeDayIndex].gym"
                 class="track-switcher"
                 role="group"
-                :aria-label="`Track selection for ${d.day}`"
+                :aria-label="`Track selection for ${phase.days[activeDayIndex].day}`"
               >
                 <button
                   v-for="t in ['home', 'gym']"
                   :key="t"
                   class="track-btn"
-                  :class="{ active: getTrack(i, true) === t }"
-                  :aria-pressed="getTrack(i, true) === t"
-                  @click="setDayTrack(i, t)"
+                  :class="{ active: getTrack(activeDayIndex, true) === t }"
+                  :aria-pressed="getTrack(activeDayIndex, true) === t"
+                  @click="setDayTrack(activeDayIndex, t)"
                 >
                   <span class="track-label">{{ t === 'home' ? 'Home' : 'Gym' }}</span>
                 </button>
               </div>
-            </Transition>
 
-            <!-- Exercise List / Table -->
-            <Transition name="accordion">
-              <div v-if="isDayExpanded(i)" class="day-content">
+              <div class="day-content">
                 <div class="table-container">
                   <table class="exercise-table">
                     <thead>
@@ -352,7 +390,11 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(ex, j) in getExercises(i, d)" :key="j" class="exercise-row">
+                      <tr
+                        v-for="(ex, j) in getExercises(activeDayIndex, phase.days[activeDayIndex])"
+                        :key="j"
+                        class="exercise-row"
+                      >
                         <td class="td-exercise">
                           <a
                             v-if="ex.link"
@@ -366,53 +408,46 @@
                             <span class="demo-icon" aria-hidden="true">↗</span>
                           </a>
                           <span v-else class="exercise-name-plain">{{ ex.name }}</span>
-                          <p v-if="ex.note" class="exercise-note">
-                            {{ ex.note }}
-                          </p>
+                          <p v-if="ex.note" class="exercise-note">{{ ex.note }}</p>
                         </td>
-                        <td class="td-sets">
-                          {{ ex.sets }}
-                        </td>
-                        <td class="td-reps">
-                          {{ ex.reps }}
-                        </td>
+                        <td class="td-sets">{{ ex.sets }}</td>
+                        <td class="td-reps">{{ ex.reps }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                <!-- Day Action Bar (Log Workout CTA) -->
                 <div class="day-action-bar">
                   <button
                     class="btn-log-action"
                     :class="{
-                      isLogged: loggedDay === i,
-                      isQueued: queuedDay === i,
+                      isLogged: loggedDay === activeDayIndex,
+                      isQueued: queuedDay === activeDayIndex,
                     }"
-                    :disabled="loggingDay === i"
-                    @click="openLogModal(i, d)"
+                    :disabled="loggingDay === activeDayIndex"
+                    @click="openLogModal(activeDayIndex, phase.days[activeDayIndex])"
                   >
-                    <span v-if="loggingDay === i" class="btn-text">Saving workout…</span>
-                    <span v-else-if="loggedDay === i" class="btn-text">Logged ✓</span>
-                    <span v-else-if="queuedDay === i" class="btn-text">Queued offline ✓</span>
+                    <span v-if="loggingDay === activeDayIndex" class="btn-text">Saving workout…</span>
+                    <span v-else-if="loggedDay === activeDayIndex" class="btn-text">Logged ✓</span>
+                    <span v-else-if="queuedDay === activeDayIndex" class="btn-text">Queued offline ✓</span>
                     <span v-else class="btn-text">Log workout</span>
                   </button>
 
-                  <RouterLink v-if="loggedDay === i" to="/history" class="view-history-link">
+                  <RouterLink v-if="loggedDay === activeDayIndex" to="/history" class="view-history-link">
                     View history →
                   </RouterLink>
 
-                  <div v-if="queuedDay === i && !connectivity.isOnline" class="offline-notice">
+                  <div v-if="queuedDay === activeDayIndex && !connectivity.isOnline" class="offline-notice">
                     Saved offline — will sync automatically when reconnected
                   </div>
 
-                  <div v-if="logError === i" class="log-error-msg" role="alert">
+                  <div v-if="logError === activeDayIndex" class="log-error-msg" role="alert">
                     {{ logErrorMsg }}
                   </div>
                 </div>
               </div>
-            </Transition>
-          </article>
+            </article>
+          </Transition>
         </div>
       </div>
     </Transition>
@@ -707,7 +742,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useConnectivityStore } from '@/stores/connectivity'
@@ -991,22 +1026,89 @@ function dismissPhaseTip(phaseId) {
   dismissedPhaseTips.value = new Set([...dismissedPhaseTips.value, phaseId])
 }
 
-// Reactive object tracking day expansion state (only current day expanded by default)
-const expandedDaysMap = ref({ [todayIndex]: true })
+// ── Day carousel (single expanded day, swipe / arrow nav) ─────
+const SHORT_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-function isDayExpanded(i) {
-  return !!expandedDaysMap.value[i]
+function defaultBuiltInDayIndex(phaseIdx = activePhase.value) {
+  const days = program.phases[phaseIdx]?.days ?? []
+  const idx = days.findIndex((d) => d.day === today)
+  return idx >= 0 ? idx : 0
+}
+
+const activeDayIndex = ref(
+  todayIndex < WEEKDAYS.length ? todayIndex : 0,
+)
+
+const dayPillItems = computed(() => {
+  if (hasActiveCustomProgram.value) {
+    return WEEKDAYS.map((name, i) => ({
+      key: name,
+      short: SHORT_DAYS[i],
+      isToday: name === today,
+      title: name,
+    }))
+  }
+  return phase.value.days.map((d) => ({
+    key: d.day,
+    short: d.day.slice(0, 3),
+    isToday: d.day === today,
+    title: `${d.day} · ${d.label}`,
+  }))
+})
+
+const dayCount = computed(() => dayPillItems.value.length)
+
+function initActiveDayIndex() {
+  activeDayIndex.value = hasActiveCustomProgram.value
+    ? (todayIndex < WEEKDAYS.length ? todayIndex : 0)
+    : defaultBuiltInDayIndex()
+}
+
+watch(hasActiveCustomProgram, () => initActiveDayIndex())
+watch(activePhase, () => {
+  if (!hasActiveCustomProgram.value) {
+    activeDayIndex.value = defaultBuiltInDayIndex()
+  }
+})
+
+function goToDay(i) {
+  if (i >= 0 && i < dayCount.value) activeDayIndex.value = i
+}
+
+function prevDay() {
+  goToDay(activeDayIndex.value - 1)
+}
+
+function nextDay() {
+  goToDay(activeDayIndex.value + 1)
+}
+
+let _touchStartX = 0
+
+function onDaySwipeStart(e) {
+  _touchStartX = e.changedTouches?.[0]?.screenX ?? 0
+}
+
+function onDaySwipeEnd(e) {
+  const endX = e.changedTouches?.[0]?.screenX ?? 0
+  const dx = endX - _touchStartX
+  if (Math.abs(dx) < 48) return
+  if (dx < 0) nextDay()
+  else prevDay()
+}
+
+function onDayCarouselKeydown(e) {
+  if (e.key === 'ArrowLeft') {
+    prevDay()
+    e.preventDefault()
+  } else if (e.key === 'ArrowRight') {
+    nextDay()
+    e.preventDefault()
+  }
 }
 
 function selectPhase(i) {
   activePhase.value = i
-}
-
-function toggleDay(i) {
-  expandedDaysMap.value = {
-    ...expandedDaysMap.value,
-    [i]: !expandedDaysMap.value[i],
-  }
 }
 
 function getTrack(dayIndex, hasGym) {
@@ -1814,7 +1916,137 @@ onUnmounted(() => {
   font-style: italic;
 }
 
-/* ── Day Cards Accordion ─────────────────────────────────── */
+/* ── Day Carousel ────────────────────────────────────────── */
+.day-carousel-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.day-nav-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid oklch(22% 0.008 45);
+  background: oklch(12% 0.008 45);
+  color: #e8e8e8;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+
+.day-nav-btn:hover:not(:disabled) {
+  border-color: var(--phase-color, #a78bfa);
+  color: #ffffff;
+}
+
+.day-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.day-nav-btn:focus-visible {
+  outline: 2px solid var(--phase-color, #a78bfa);
+  outline-offset: 2px;
+}
+
+.day-pills {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.day-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.day-pill {
+  flex: 1 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 9999px;
+  border: 1px solid oklch(20% 0.008 45);
+  background: oklch(11% 0.008 45);
+  color: #a3a3a3;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 150ms ease-out;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.day-pill:hover {
+  border-color: oklch(28% 0.008 45);
+  color: #f5f5f5;
+}
+
+.day-pill.active {
+  background: var(--phase-color, #a78bfa);
+  border-color: var(--phase-color, #a78bfa);
+  color: #111;
+}
+
+.day-pill.isToday:not(.active) {
+  border-color: var(--phase-color, #4ade80);
+  color: #e8e8e8;
+}
+
+.day-pill:focus-visible {
+  outline: 2px solid var(--phase-color, #a78bfa);
+  outline-offset: 2px;
+}
+
+.day-carousel-panel {
+  outline: none;
+  touch-action: pan-y;
+}
+
+.day-carousel-panel:focus-visible {
+  outline: 2px solid oklch(28% 0.008 45);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.day-header-display {
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 18px;
+  background: oklch(11.5% 0.008 45);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid oklch(16% 0.008 45);
+}
+
+.day-slide-enter-active,
+.day-slide-leave-active {
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.day-slide-enter-from {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.day-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+/* ── Day Cards ───────────────────────────────────────────── */
 .days-list {
   display: flex;
   flex-direction: column;
