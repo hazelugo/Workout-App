@@ -5,6 +5,13 @@ import { queryKeys } from './keys'
 
 export const EXERCISE_CATEGORIES = ['Push', 'Pull', 'Legs', 'Core', 'Cardio', 'Other']
 
+export function normalizeExerciseCategory(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return 'Other'
+  const match = EXERCISE_CATEGORIES.find((cat) => cat.toLowerCase() === raw.toLowerCase())
+  return match ?? 'Other'
+}
+
 const STORAGE_KEY = (userId) => `saved-exercises-v1-${userId}`
 
 function readLocal(userId) {
@@ -31,7 +38,7 @@ function normalizeRow(row) {
   return {
     id: row.id,
     name: row.name,
-    category: row.category || 'Other',
+    category: normalizeExerciseCategory(row.category),
     default_sets: row.default_sets ?? '',
     default_reps: row.default_reps ?? '',
     notes: row.notes ?? '',
@@ -80,7 +87,7 @@ export async function createSavedExercise(userId, payload) {
 
   const row = {
     name,
-    category: payload.category || 'Other',
+    category: normalizeExerciseCategory(payload.category),
     default_sets: payload.default_sets?.trim() || null,
     default_reps: payload.default_reps?.trim() || null,
     notes: payload.notes?.trim() || null,
@@ -117,7 +124,7 @@ export async function updateSavedExercise(userId, id, payload) {
 
   const patch = {
     name,
-    category: payload.category || 'Other',
+    category: normalizeExerciseCategory(payload.category),
     default_sets: payload.default_sets?.trim() || null,
     default_reps: payload.default_reps?.trim() || null,
     notes: payload.notes?.trim() || null,
@@ -165,7 +172,7 @@ function buildExerciseRow(payload) {
 
   return {
     name,
-    category: payload.category || 'Other',
+    category: normalizeExerciseCategory(payload.category),
     default_sets: payload.default_sets?.trim() || null,
     default_reps: payload.default_reps?.trim() || null,
     notes: payload.notes?.trim() || null,

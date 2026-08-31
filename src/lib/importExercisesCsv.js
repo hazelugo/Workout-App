@@ -1,4 +1,4 @@
-import { EXERCISE_CATEGORIES } from '@/queries/savedExercises'
+import { normalizeExerciseCategory } from '@/queries/savedExercises'
 
 const HEADER_ALIASES = {
   name: ['name', 'exercise', 'exercise name', 'exercise_name', 'title'],
@@ -113,7 +113,7 @@ export function parseExercisesCsv(text) {
       continue
     }
 
-    const category = normalizeCategory(record.category)
+    const category = normalizeExerciseCategory(record.category)
     rows.push({
       name,
       category,
@@ -124,13 +124,6 @@ export function parseExercisesCsv(text) {
   }
 
   return { rows, errors }
-}
-
-function normalizeCategory(value) {
-  const raw = String(value ?? '').trim()
-  if (!raw) return 'Other'
-  const match = EXERCISE_CATEGORIES.find((cat) => cat.toLowerCase() === raw.toLowerCase())
-  return match ?? 'Other'
 }
 
 export const EXERCISE_CSV_TEMPLATE = `name,category,default_sets,default_reps,notes

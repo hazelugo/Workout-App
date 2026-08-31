@@ -17,6 +17,14 @@
         aria-label="Search saved exercises"
       />
       <div class="exercises-toolbar-actions">
+        <label class="category-filter-field">
+          <span class="category-filter-sr">Filter by category</span>
+          <select v-model="activeCategory" class="category-filter-select" aria-label="Filter by category">
+            <option v-for="cat in filterCategories" :key="cat" :value="cat">
+              {{ categoryFilterLabel(cat) }}
+            </option>
+          </select>
+        </label>
         <button type="button" class="btn-import-csv" @click="openCsvPicker">
           Import CSV
         </button>
@@ -33,26 +41,6 @@
         tabindex="-1"
         @change="onCsvSelected"
       />
-    </div>
-
-    <div
-      v-if="!loading && !loadError && exercises.length"
-      class="category-filter-row"
-      role="group"
-      aria-label="Filter by category"
-    >
-      <button
-        v-for="cat in filterCategories"
-        :key="cat"
-        type="button"
-        class="category-filter-btn"
-        :class="{ active: activeCategory === cat }"
-        :aria-pressed="activeCategory === cat"
-        @click="activeCategory = cat"
-      >
-        {{ cat }}
-        <span class="category-filter-count">{{ categoryCounts[cat] ?? 0 }}</span>
-      </button>
     </div>
 
     <p v-if="importError && !importPreview" class="form-error import-inline-error">{{ importError }}</p>
@@ -201,6 +189,7 @@ import {
   invalidateSavedExercises,
   importSavedExercises,
   EXERCISE_CATEGORIES,
+  normalizeExerciseCategory,
 } from '@/queries/savedExercises'
 import { parseExercisesCsv, downloadExerciseCsvTemplate } from '@/lib/importExercisesCsv'
 
@@ -241,11 +230,21 @@ const editForm = ref(emptyForm())
 
 const filterCategories = ['All', ...EXERCISE_CATEGORIES]
 
+function exerciseCategory(ex) {
+  return normalizeExerciseCategory(ex.category)
+}
+
+function categoryFilterLabel(cat) {
+  const count = categoryCounts.value[cat] ?? 0
+  if (cat === 'All') return `All (${count})`
+  return `${cat} (${count})`
+}
+
 const categoryCounts = computed(() => {
   const counts = { All: exercises.value.length }
   for (const cat of EXERCISE_CATEGORIES) counts[cat] = 0
   for (const ex of exercises.value) {
-    const cat = ex.category || 'Other'
+    const cat = exerciseCategory(ex)
     counts[cat] = (counts[cat] ?? 0) + 1
   }
   return counts
@@ -254,14 +253,14 @@ const categoryCounts = computed(() => {
 const filteredExercises = computed(() => {
   let list = exercises.value
   if (activeCategory.value !== 'All') {
-    list = list.filter((ex) => (ex.category || 'Other') === activeCategory.value)
+    list = list.filter((ex) => exerciseCategory(ex) === activeCategory.value)
   }
   const q = search.value.trim().toLowerCase()
   if (!q) return list
   return list.filter(
     (ex) =>
       ex.name.toLowerCase().includes(q) ||
-      ex.category.toLowerCase().includes(q) ||
+      exerciseCategory(ex).toLowerCase().includes(q) ||
       String(ex.notes ?? '').toLowerCase().includes(q),
   )
 })
@@ -442,65 +441,47 @@ async function removeExercise(id) {
   margin-bottom: 12px;
 }
 
-.category-filter-row {
+.category-filter-field {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 14px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.category-filter-row::-webkit-scrollbar {
-  display: none;
-}
-
-.category-filter-btn {
-  flex-shrink: 0;
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 8px 14px;
+}
+
+.category-filter-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.category-filter-select {
+  min-height: 44px;
+  min-width: 132px;
+  padding: 10px 32px 10px 12px;
   border-radius: 9999px;
-  border: 1px solid oklch(20% 0.008 45);
+  border: 1px solid oklch(22% 0.008 45);
   background: oklch(10% 0.01 45);
   color: var(--color-text-secondary);
   font-size: 11px;
-  font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 150ms, background 150ms, color 150ms;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a3a3a3' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
 }
 
-.category-filter-btn:hover {
+.category-filter-select:hover,
+.category-filter-select:focus {
   border-color: #a78bfa66;
-  color: #e5e5e5;
-}
-
-.category-filter-btn.active {
-  border-color: #a78bfa;
-  background: #a78bfa22;
   color: #c4b5fd;
-}
-
-.category-filter-count {
-  min-width: 18px;
-  padding: 2px 6px;
-  border-radius: 9999px;
-  background: oklch(14% 0.008 45);
-  color: var(--color-text-muted);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.category-filter-btn.active .category-filter-count {
-  background: #a78bfa33;
-  color: #e9d5ff;
+  outline: none;
 }
 
 .clear-filter-link {
