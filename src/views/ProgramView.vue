@@ -20,9 +20,6 @@
         >
           Export Plan
         </button>
-        <RouterLink v-if="hasActiveCustomProgram" to="/custom" class="badge edit-studio-badge">
-          Edit in Studio →
-        </RouterLink>
       </div>
     </div>
   </header>
@@ -113,13 +110,6 @@
 
     <!-- MODE 1: ACTIVE CUSTOM PROGRAM -->
     <div v-else-if="hasActiveCustomProgram" class="phase-container" style="--phase-color: #a78bfa">
-      <div class="phase-info-bar custom-phase-info-bar">
-        <div class="phase-info-bar-left">
-          <span class="phase-dot" style="background: #a78bfa" aria-hidden="true" />
-          <span class="phase-subtitle-text">7-Day Split · swipe or tap days to navigate</span>
-        </div>
-      </div>
-
       <ProgramDayNav
         :items="dayPillItems"
         :active-index="activeDayIndex"
@@ -198,17 +188,13 @@
                       class="exercise-row"
                     >
                       <td class="td-exercise">
-                        <a
-                          :href="`https://www.youtube.com/results?search_query=${encodeURIComponent((ex.name || '') + ' exercise demonstration')}`"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="exercise-link"
-                          style="color: #c4b5fd; border-bottom-color: #a78bfa77"
-                          :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
+                        <button
+                          type="button"
+                          class="exercise-info-btn"
+                          @click="openExerciseDetail(ex)"
                         >
                           <span class="exercise-name">{{ ex.name }}</span>
-                          <span class="demo-icon" aria-hidden="true">↗</span>
-                        </a>
+                        </button>
                       </td>
                       <td class="td-sets" style="color: #a78bfa">{{ ex.sets || '—' }}</td>
                       <td class="td-reps">{{ ex.reps || '—' }}</td>
@@ -343,18 +329,13 @@
                         class="exercise-row"
                       >
                         <td class="td-exercise">
-                          <a
-                            v-if="ex.link"
-                            :href="ex.link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="exercise-link"
-                            :aria-label="`Watch exercise demonstration for ${ex.name} on YouTube (opens in new tab)`"
+                          <button
+                            type="button"
+                            class="exercise-info-btn"
+                            @click="openExerciseDetail(ex)"
                           >
                             <span class="exercise-name">{{ ex.name }}</span>
-                            <span class="demo-icon" aria-hidden="true">↗</span>
-                          </a>
-                          <span v-else class="exercise-name-plain">{{ ex.name }}</span>
+                          </button>
                           <p v-if="ex.note" class="exercise-note">{{ ex.note }}</p>
                         </td>
                         <td class="td-sets">{{ ex.sets }}</td>
@@ -434,7 +415,13 @@
               class="modal-exercise-group"
             >
               <div class="group-exercise-header">
-                <h3 class="group-exercise-title">{{ group.exerciseName }}</h3>
+                <button
+                  type="button"
+                  class="group-exercise-title-btn"
+                  @click="openExerciseDetailFromLog(group.exerciseName)"
+                >
+                  {{ group.exerciseName }}
+                </button>
                 <span
                   v-if="lastLoggedWeightMap[group.exerciseName] != null"
                   class="last-weight-badge"
@@ -519,6 +506,15 @@
                       </button>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    class="set-done-btn"
+                    :class="{ 'is-done': s.done }"
+                    :aria-label="`Mark ${group.exerciseName} set ${s.setNumber} complete and start rest`"
+                    @click="markSetDone(s)"
+                  >
+                    ✓
+                  </button>
                 </div>
               </div>
             </div>
@@ -527,6 +523,10 @@
               All set inputs are optional. Leave fields empty to record default programmed reps
               without weight.
             </p>
+          </div>
+
+          <div class="modal-rest-timer">
+            <RestTimerWidget ref="restTimerRef" embedded />
           </div>
 
           <!-- Modal Footer CTA: Fast-path 1-tap + Standard Actions -->
@@ -567,87 +567,11 @@
     </Transition>
   </Teleport>
 
-  <!-- ── Rest Timer Floating Bar ───────────────────────────────── -->
-  <div class="rest-timer-bar">
-    <div class="rest-timer-inner">
-      <div class="rest-timer-display" :class="{ isZero: restTimerSeconds === 0 }">
-        <span class="rest-timer-label">Rest Timer</span>
-        <span class="rest-timer-digits">{{ restTimerFormatted }}</span>
-      </div>
-
-      <div class="rest-timer-controls">
-        <button
-          v-if="!restTimerRunning"
-          type="button"
-          class="timer-ctrl-btn timer-btn-start"
-          @click="startRestTimer()"
-          aria-label="Start rest timer"
-        >
-          Start
-        </button>
-        <button
-          v-else
-          type="button"
-          class="timer-ctrl-btn timer-btn-pause"
-          @click="pauseRestTimer()"
-          aria-label="Pause rest timer"
-        >
-          Pause
-        </button>
-
-        <button
-          type="button"
-          class="timer-preset-btn"
-          @click="startRestTimer(60)"
-          aria-label="Start 60 second rest timer"
-        >
-          60s
-        </button>
-        <button
-          type="button"
-          class="timer-preset-btn"
-          @click="startRestTimer(90)"
-          aria-label="Start 90 second rest timer"
-        >
-          90s
-        </button>
-        <button
-          type="button"
-          class="timer-preset-btn"
-          @click="startRestTimer(120)"
-          aria-label="Start 2 minute rest timer"
-        >
-          2m
-        </button>
-        <button
-          type="button"
-          class="timer-preset-btn"
-          @click="addRestTime(30)"
-          aria-label="Add 30 seconds to rest timer"
-        >
-          +30s
-        </button>
-        <button
-          type="button"
-          class="timer-reset-btn"
-          @click="resetRestTimer(90)"
-          aria-label="Reset rest timer to 90 seconds"
-        >
-          Reset
-        </button>
-        <button
-          type="button"
-          class="timer-auto-toggle"
-          :class="{ isOn: restTimerAutoStart }"
-          :aria-pressed="restTimerAutoStart"
-          aria-label="Toggle auto-start rest timer after logging"
-          @click="toggleRestTimerAutoStart"
-        >
-          Auto-start {{ restTimerAutoStart ? 'On' : 'Off' }}
-        </button>
-      </div>
-    </div>
-  </div>
+  <ExerciseDetailModal
+    :show="showExerciseDetail"
+    :exercise="selectedExercise"
+    @close="closeExerciseDetail"
+  />
 
   <!-- ── Export Program Modal ─────────────────────────────────── -->
   <ExportModal
@@ -674,10 +598,32 @@ import { logCustomDay } from '@/queries/customLog'
 import { program, WEEKDAYS } from '@/data/program'
 import ExportModal from '@/components/ExportModal.vue'
 import ProgramDayNav from '@/components/ProgramDayNav.vue'
+import RestTimerWidget from '@/components/RestTimerWidget.vue'
+import ExerciseDetailModal from '@/components/ExerciseDetailModal.vue'
 
 const authStore = useAuthStore()
 const connectivity = useConnectivityStore()
 const _router = useRouter()
+const restTimerRef = ref(null)
+const showExerciseDetail = ref(false)
+const selectedExercise = ref(null)
+
+function openExerciseDetail(exercise) {
+  selectedExercise.value = exercise
+  showExerciseDetail.value = true
+}
+
+function openExerciseDetailFromLog(exerciseName) {
+  const programmed = pendingLogDay.value?.day?.exercises?.find(
+    (ex) => ex.name === exerciseName,
+  )
+  openExerciseDetail(programmed ?? { name: exerciseName })
+}
+
+function closeExerciseDetail() {
+  showExerciseDetail.value = false
+  selectedExercise.value = null
+}
 
 const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 const todayIndex = WEEKDAYS.indexOf(today) >= 0 ? WEEKDAYS.indexOf(today) : 0
@@ -1052,9 +998,12 @@ let _loggedTimer = null
 let _queuedTimer = null
 
 function maybeAutoStartRestTimer() {
-  if (restTimerAutoStart.value) {
-    startRestTimer(90)
-  }
+  restTimerRef.value?.autoStart?.(90)
+}
+
+function markSetDone(setRow) {
+  setRow.done = true
+  maybeAutoStartRestTimer()
 }
 
 async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverrides = []) {
@@ -1062,7 +1011,6 @@ async function queueWorkoutOffline(dayIndex, sessionPayload, exercises, setOverr
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
   queuedDay.value = dayIndex
-  maybeAutoStartRestTimer()
   clearTimeout(_queuedTimer)
   _queuedTimer = setTimeout(() => {
     if (queuedDay.value === dayIndex) queuedDay.value = null
@@ -1079,7 +1027,6 @@ async function queueCustomWorkoutOffline(dayIndex, day, setOverrides = []) {
   await connectivity.onWorkoutQueued()
   loggingDay.value = null
   queuedDay.value = dayIndex
-  maybeAutoStartRestTimer()
   clearTimeout(_queuedTimer)
   _queuedTimer = setTimeout(() => {
     if (queuedDay.value === dayIndex) queuedDay.value = null
@@ -1148,7 +1095,6 @@ async function logWorkout(dayIndex, day, setOverrides = []) {
   loggingDay.value = null
   loggedDay.value = dayIndex
   await invalidateWorkoutHistory(queryClient)
-  maybeAutoStartRestTimer()
   clearTimeout(_loggedTimer)
   _loggedTimer = setTimeout(() => {
     if (loggedDay.value === dayIndex) loggedDay.value = null
@@ -1172,6 +1118,7 @@ function openLogModal(dayIndex, day, isCustom = false) {
       repsProgrammed: parseRepsProgrammed(ex.reps),
       repsDone: null,
       weightLbs: null,
+      done: false,
     })),
   }))
   pendingLogDay.value = { dayIndex, day, isCustom }
@@ -1271,7 +1218,6 @@ async function confirmLog() {
       )
       await invalidateWorkoutHistory(queryClient)
       loggedDay.value = dayIndex
-      maybeAutoStartRestTimer()
       clearTimeout(_loggedTimer)
       _loggedTimer = setTimeout(() => {
         if (loggedDay.value === dayIndex) loggedDay.value = null
@@ -1295,89 +1241,7 @@ const _weekKey = computed(() => `program-week-${authStore.user?.id ?? 'anon'}`)
 const currentWeek = ref(1)
 
 // ── Rest Timer Widget with Clock Accuracy & Background Sync ───────
-const _restTimerAutoKey = 'rest-timer-auto-v1'
-const restTimerAutoStart = ref(localStorage.getItem(_restTimerAutoKey) !== '0')
-
-function toggleRestTimerAutoStart() {
-  restTimerAutoStart.value = !restTimerAutoStart.value
-  localStorage.setItem(_restTimerAutoKey, restTimerAutoStart.value ? '1' : '0')
-}
-
-const restTimerSeconds = ref(90)
-const restTimerRunning = ref(false)
-let restTimerTargetEnd = null
-let _timerInterval = null
-
-const restTimerFormatted = computed(() => {
-  const mins = Math.floor(restTimerSeconds.value / 60)
-  const secs = restTimerSeconds.value % 60
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-})
-
-function updateRestTimerFromClock() {
-  if (!restTimerRunning.value || !restTimerTargetEnd) return
-  const now = Date.now()
-  const remainingMs = restTimerTargetEnd - now
-  if (remainingMs <= 0) {
-    restTimerSeconds.value = 0
-    pauseRestTimer()
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try {
-        navigator.vibrate([200, 100, 200])
-      } catch {}
-    }
-  } else {
-    restTimerSeconds.value = Math.ceil(remainingMs / 1000)
-  }
-}
-
-function startRestTimer(seconds) {
-  if (seconds != null) {
-    restTimerSeconds.value = seconds
-  } else if (restTimerSeconds.value <= 0) {
-    restTimerSeconds.value = 90
-  }
-  restTimerTargetEnd = Date.now() + restTimerSeconds.value * 1000
-  restTimerRunning.value = true
-  clearInterval(_timerInterval)
-  _timerInterval = setInterval(() => {
-    updateRestTimerFromClock()
-  }, 250)
-}
-
-function pauseRestTimer() {
-  if (restTimerRunning.value && restTimerTargetEnd) {
-    const remainingMs = restTimerTargetEnd - Date.now()
-    restTimerSeconds.value = Math.max(0, Math.ceil(remainingMs / 1000))
-  }
-  restTimerRunning.value = false
-  restTimerTargetEnd = null
-  clearInterval(_timerInterval)
-}
-
-function addRestTime(secs = 30) {
-  if (restTimerRunning.value && restTimerTargetEnd) {
-    restTimerTargetEnd += secs * 1000
-    updateRestTimerFromClock()
-  } else {
-    restTimerSeconds.value += secs
-  }
-}
-
-function resetRestTimer(secs = 90) {
-  pauseRestTimer()
-  restTimerSeconds.value = secs
-}
-
-function handleVisibilityChange() {
-  if (document.visibilityState === 'visible' && restTimerRunning.value) {
-    updateRestTimerFromClock()
-  }
-}
-
 onMounted(() => {
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-  window.addEventListener('focus', handleVisibilityChange)
   const saved = localStorage.getItem(_weekKey.value)
   if (saved) {
     const n = parseInt(saved, 10)
@@ -1393,9 +1257,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-  window.removeEventListener('focus', handleVisibilityChange)
-  clearInterval(_timerInterval)
   clearTimeout(_loggedTimer)
   clearTimeout(_queuedTimer)
 })
@@ -1466,19 +1327,6 @@ onUnmounted(() => {
 .badge.highlight {
   color: #e5e5e5;
   border-color: oklch(24% 0.008 45);
-}
-
-.edit-studio-badge {
-  color: #c4b5fd;
-  text-decoration: none;
-  border-color: #a78bfa66;
-  transition: all 150ms;
-}
-
-.edit-studio-badge:hover {
-  background: oklch(14% 0.008 45);
-  border-color: #a78bfa;
-  color: #ffffff;
 }
 
 /* ── Phase Tabs Navigation ───────────────────────────────── */
@@ -2136,28 +1984,27 @@ onUnmounted(() => {
   padding: 14px 12px 14px 0;
 }
 
-.exercise-link {
+.exercise-info-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  padding: 8px 0;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--phase-color, #4ade80);
   color: var(--phase-color, #4ade80);
-  text-decoration: none;
   font-size: 0.9375rem;
   font-weight: 500;
   line-height: 1.4;
-  padding: 8px 0;
-  min-height: 44px;
-  border-bottom: 1px dashed var(--phase-color, #4ade80);
-  transition: opacity 150ms;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 150ms, color 150ms;
 }
 
-.exercise-link:hover {
-  opacity: 0.8;
-}
-
-.demo-icon {
-  font-size: 0.8125rem;
-  opacity: 0.8;
+.exercise-info-btn:hover {
+  opacity: 0.85;
+  color: #ffffff;
 }
 
 .exercise-name-plain {
@@ -2406,7 +2253,7 @@ onUnmounted(() => {
   margin-bottom: 12px;
 }
 
-.group-exercise-title {
+.group-exercise-title-btn {
   font-family:
     system-ui,
     -apple-system,
@@ -2415,6 +2262,19 @@ onUnmounted(() => {
   color: #f5f5f5;
   margin: 0;
   font-weight: 600;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: oklch(45% 0.02 45);
+  text-underline-offset: 3px;
+}
+
+.group-exercise-title-btn:hover {
+  color: #fff;
+  text-decoration-color: #4ade80;
 }
 
 .last-weight-badge {
@@ -2464,9 +2324,41 @@ onUnmounted(() => {
 
 .set-input-row {
   display: grid;
-  grid-template-columns: 36px 1fr 1fr;
+  grid-template-columns: 36px 1fr 1fr 40px;
   gap: 10px;
   align-items: center;
+}
+
+.set-done-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid oklch(22% 0.008 45);
+  background: oklch(14% 0.008 45);
+  color: #737373;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.set-done-btn:hover {
+  border-color: #22c55e66;
+  color: #4ade80;
+}
+
+.set-done-btn.is-done {
+  border-color: #22c55e;
+  background: #16653433;
+  color: #4ade80;
+}
+
+.modal-rest-timer {
+  padding: 0 20px 12px;
+  border-top: 1px solid oklch(15% 0.008 45);
+  background: oklch(9% 0.012 45);
 }
 
 .set-number-label {
@@ -2782,140 +2674,5 @@ onUnmounted(() => {
   background: oklch(18% 0.008 45);
   border-color: oklch(30% 0.008 45);
   color: #ffffff;
-}
-
-/* ── Rest Timer Bar ────────────────────────────────────────── */
-.rest-timer-bar {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 40;
-  background: oklch(9% 0.012 45);
-  border-top: 1px solid oklch(20% 0.008 45);
-  padding: 10px 16px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-}
-.rest-timer-inner {
-  max-width: 640px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.rest-timer-display {
-  display: flex;
-  flex-direction: column;
-}
-.rest-timer-label {
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #a3a3a3;
-  font-weight: 600;
-}
-.rest-timer-digits {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #4ade80;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-.rest-timer-display.isZero .rest-timer-digits {
-  color: #f87171;
-}
-.rest-timer-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.timer-ctrl-btn {
-  min-height: 44px;
-  min-width: 60px;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-}
-.timer-btn-start {
-  background: #166534;
-  border: 1px solid #22c55e;
-  color: #ffffff;
-}
-.timer-btn-pause {
-  background: oklch(18% 0.008 45);
-  border: 1px solid oklch(28% 0.008 45);
-  color: #f5f5f5;
-}
-.timer-preset-btn {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 8px 12px;
-  background: oklch(14% 0.008 45);
-  border: 1px solid oklch(24% 0.008 45);
-  border-radius: 20px;
-  color: #d4d4d4;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.timer-preset-btn:hover {
-  background: oklch(18% 0.008 45);
-  color: #ffffff;
-}
-.timer-reset-btn {
-  min-height: 44px;
-  min-width: 50px;
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid oklch(20% 0.008 45);
-  border-radius: 20px;
-  color: #a3a3a3;
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.timer-auto-toggle {
-  min-height: 44px;
-  padding: 8px 12px;
-  background: oklch(12% 0.008 45);
-  border: 1px solid oklch(22% 0.008 45);
-  border-radius: 20px;
-  color: #a3a3a3;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 150ms ease-out;
-}
-.timer-auto-toggle.isOn {
-  background: #16653433;
-  border-color: #22c55e66;
-  color: #4ade80;
-}
-.timer-auto-toggle:hover {
-  color: #ffffff;
-  border-color: oklch(30% 0.008 45);
 }
 </style>

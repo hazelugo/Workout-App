@@ -35,6 +35,26 @@
       />
     </div>
 
+    <div
+      v-if="!loading && !loadError && exercises.length"
+      class="category-filter-row"
+      role="group"
+      aria-label="Filter by category"
+    >
+      <button
+        v-for="cat in filterCategories"
+        :key="cat"
+        type="button"
+        class="category-filter-btn"
+        :class="{ active: activeCategory === cat }"
+        :aria-pressed="activeCategory === cat"
+        @click="activeCategory = cat"
+      >
+        {{ cat }}
+        <span class="category-filter-count">{{ categoryCounts[cat] ?? 0 }}</span>
+      </button>
+    </div>
+
     <p v-if="importError && !importPreview" class="form-error import-inline-error">{{ importError }}</p>
 
     <Transition name="reveal">
@@ -115,6 +135,10 @@
       <p v-if="!exercises.length">
         No exercises saved yet. Add moves you use often — they are not tied to a day until you add them in Custom Studio.
       </p>
+      <p v-else-if="activeCategory !== 'All'">
+        No {{ activeCategory }} exercises yet.
+        <button type="button" class="clear-filter-link" @click="activeCategory = 'All'">Show all</button>
+      </p>
       <p v-else>No exercises match your search.</p>
     </div>
 
@@ -176,6 +200,7 @@ import {
   deleteSavedExercise,
   invalidateSavedExercises,
   importSavedExercises,
+  EXERCISE_CATEGORIES,
 } from '@/queries/savedExercises'
 import { parseExercisesCsv, downloadExerciseCsvTemplate } from '@/lib/importExercisesCsv'
 
@@ -190,6 +215,7 @@ const loading = computed(() => isPending.value)
 const loadError = computed(() => (isError.value ? error.value?.message ?? 'Failed to load exercises' : ''))
 
 const search = ref('')
+const activeCategory = ref('All')
 const creating = ref(false)
 const editingId = ref(null)
 const confirmDeleteId = ref(null)
@@ -213,10 +239,26 @@ const emptyForm = () => ({
 const createForm = ref(emptyForm())
 const editForm = ref(emptyForm())
 
+const filterCategories = ['All', ...EXERCISE_CATEGORIES]
+
+const categoryCounts = computed(() => {
+  const counts = { All: exercises.value.length }
+  for (const cat of EXERCISE_CATEGORIES) counts[cat] = 0
+  for (const ex of exercises.value) {
+    const cat = ex.category || 'Other'
+    counts[cat] = (counts[cat] ?? 0) + 1
+  }
+  return counts
+})
+
 const filteredExercises = computed(() => {
+  let list = exercises.value
+  if (activeCategory.value !== 'All') {
+    list = list.filter((ex) => (ex.category || 'Other') === activeCategory.value)
+  }
   const q = search.value.trim().toLowerCase()
-  if (!q) return exercises.value
-  return exercises.value.filter(
+  if (!q) return list
+  return list.filter(
     (ex) =>
       ex.name.toLowerCase().includes(q) ||
       ex.category.toLowerCase().includes(q) ||
@@ -397,7 +439,81 @@ async function removeExercise(id) {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
+}
+
+.category-filter-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 14px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.category-filter-row::-webkit-scrollbar {
+  display: none;
+}
+
+.category-filter-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid oklch(20% 0.008 45);
+  background: oklch(10% 0.01 45);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, color 150ms;
+}
+
+.category-filter-btn:hover {
+  border-color: #a78bfa66;
+  color: #e5e5e5;
+}
+
+.category-filter-btn.active {
+  border-color: #a78bfa;
+  background: #a78bfa22;
+  color: #c4b5fd;
+}
+
+.category-filter-count {
+  min-width: 18px;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: oklch(14% 0.008 45);
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.category-filter-btn.active .category-filter-count {
+  background: #a78bfa33;
+  color: #e9d5ff;
+}
+
+.clear-filter-link {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #c4b5fd;
+  font-size: inherit;
+  font-style: normal;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .exercises-toolbar-actions {
