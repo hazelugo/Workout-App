@@ -158,3 +158,71 @@ export async function deleteSavedExercise(userId, id) {
     )
   }
 }
+
+function buildExerciseRow(payload) {
+  const name = payload.name?.trim()
+  if (!name) throw new Error('Exercise name is required')
+
+  return {
+    name,
+    category: payload.category || 'Other',
+    default_sets: payload.default_sets?.trim() || null,
+    default_reps: payload.default_reps?.trim() || null,
+    notes: payload.notes?.trim() || null,
+  }
+}
+
+/**
+ * Import multiple exercises from parsed CSV rows.
+ * Skips names that already exist (case-insensitive).
+ */
+export async function importSavedExercises(userId, rows) {
+  if (!userId) throw new Error('Not signed in')
+  if (!rows?.length) throw new Error('No exercises to import')
+
+  const existing = await fetchSavedExercises(userId)
+  const existingNames = new Set(existing.map((e) => e.name.toLowerCase()))
+
+  const toInsert = []
+  let skipped = 0
+
+  for (const row of rows) {
+    const built = buildExerciseRow(row)
+    if (existingNames.has(built.name.toLowerCase())) {
+      skipped++
+      continue
+    }
+    existingNames.add(built.name.toLowerCase())
+    toInsert.push(built)
+  }
+
+  if (!toInsert.length) {
+    return { imported: 0, skipped }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('saved_exercises')
+      .insert(toInsert.map((row) => ({ user_id: userId, ...row })))
+      .select('id, name, category, default_sets, default_reps, notes, created_at')
+
+    if (error) throw error
+    const merged = [...existing, ...(data ?? []).map(normalizeRow)].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )
+    writeLocal(userId, merged)
+    return { imported: data?.length ?? 0, skipped }
+  } catch (err) {
+    if (!isMissingTableError(err)) throw err
+
+    const created = toInsert.map((row) =>
+      normalizeRow({
+        id: crypto.randomUUID(),
+        ...row,
+        created_at: new Date().toISOString(),
+      }),
+    )
+    writeLocal(userId, [...existing, ...created].sort((a, b) => a.name.localeCompare(b.name)))
+    return { imported: created.length, skipped }
+  }
+}

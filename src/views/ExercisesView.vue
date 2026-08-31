@@ -16,10 +16,83 @@
         placeholder="Search exercises…"
         aria-label="Search saved exercises"
       />
-      <button type="button" class="btn-add-exercise" @click="startCreate">
-        + Add Exercise
-      </button>
+      <div class="exercises-toolbar-actions">
+        <button type="button" class="btn-import-csv" @click="openCsvPicker">
+          Import CSV
+        </button>
+        <button type="button" class="btn-add-exercise" @click="startCreate">
+          + Add Exercise
+        </button>
+      </div>
+      <input
+        ref="csvInputRef"
+        type="file"
+        accept=".csv,text/csv"
+        class="csv-file-input"
+        aria-hidden="true"
+        tabindex="-1"
+        @change="onCsvSelected"
+      />
     </div>
+
+    <p v-if="importError && !importPreview" class="form-error import-inline-error">{{ importError }}</p>
+
+    <Transition name="reveal">
+      <div v-if="importPreview" class="import-card">
+        <div class="create-card-title">Import preview</div>
+        <p class="import-summary">
+          {{ importPreview.rows.length }} exercise{{ importPreview.rows.length === 1 ? '' : 's' }} ready to import
+          <span v-if="importPreview.errors.length"> · {{ importPreview.errors.length }} line warning{{ importPreview.errors.length === 1 ? '' : 's' }}</span>
+        </p>
+        <p class="import-hint">
+          Columns: <code>name</code>, optional <code>category</code>, <code>default_sets</code>, <code>default_reps</code>, <code>notes</code>.
+          Duplicates are skipped.
+        </p>
+        <button type="button" class="template-link" @click="downloadExerciseCsvTemplate">
+          Download CSV template
+        </button>
+
+        <div v-if="importPreview.errors.length" class="import-errors">
+          <div v-for="(msg, i) in importPreview.errors.slice(0, 5)" :key="i">{{ msg }}</div>
+          <div v-if="importPreview.errors.length > 5">
+            + {{ importPreview.errors.length - 5 }} more warnings
+          </div>
+        </div>
+
+        <div v-if="importPreview.rows.length" class="import-preview-list">
+          <div
+            v-for="row in importPreview.rows.slice(0, 8)"
+            :key="`${row.name}-${row.default_sets}-${row.default_reps}`"
+            class="import-preview-row"
+          >
+            <span class="import-preview-name">{{ row.name }}</span>
+            <span class="import-preview-meta">
+              {{ row.category }}
+              <template v-if="row.default_sets || row.default_reps">
+                · {{ row.default_sets || '—' }} × {{ row.default_reps || '—' }}
+              </template>
+            </span>
+          </div>
+          <div v-if="importPreview.rows.length > 8" class="import-preview-more">
+            + {{ importPreview.rows.length - 8 }} more
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="save-btn"
+            :disabled="importing || !importPreview.rows.length"
+            @click="confirmImport"
+          >
+            {{ importing ? 'Importing…' : `Import ${importPreview.rows.length}` }}
+          </button>
+          <button type="button" class="cancel-btn" @click="clearImportPreview">Cancel</button>
+        </div>
+        <p v-if="importError" class="form-error">{{ importError }}</p>
+        <p v-if="importSuccess" class="import-success">{{ importSuccess }}</p>
+      </div>
+    </Transition>
 
     <Transition name="reveal">
       <div v-if="creating" class="create-card">
@@ -102,7 +175,9 @@ import {
   updateSavedExercise,
   deleteSavedExercise,
   invalidateSavedExercises,
+  importSavedExercises,
 } from '@/queries/savedExercises'
+import { parseExercisesCsv, downloadExerciseCsvTemplate } from '@/lib/importExercisesCsv'
 
 const auth = useAuthStore()
 const queryClient = useQueryClient()
@@ -120,7 +195,12 @@ const editingId = ref(null)
 const confirmDeleteId = ref(null)
 const saving = ref(false)
 const deleting = ref(false)
+const importing = ref(false)
 const formError = ref(null)
+const importPreview = ref(null)
+const importError = ref(null)
+const importSuccess = ref(null)
+const csvInputRef = ref(null)
 
 const emptyForm = () => ({
   name: '',
@@ -148,8 +228,64 @@ function startCreate() {
   editingId.value = null
   confirmDeleteId.value = null
   formError.value = null
+  clearImportPreview()
   createForm.value = emptyForm()
   creating.value = true
+}
+
+function openCsvPicker() {
+  importError.value = null
+  importSuccess.value = null
+  csvInputRef.value?.click()
+}
+
+function clearImportPreview() {
+  importPreview.value = null
+  importError.value = null
+  importSuccess.value = null
+  if (csvInputRef.value) csvInputRef.value.value = ''
+}
+
+async function onCsvSelected(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  importError.value = null
+  importSuccess.value = null
+  creating.value = false
+
+  try {
+    const text = await file.text()
+    const parsed = parseExercisesCsv(text)
+    if (!parsed.rows.length && parsed.errors.length) {
+      importError.value = parsed.errors[0]
+      importPreview.value = null
+      return
+    }
+    importPreview.value = parsed
+  } catch (err) {
+    importError.value = err?.message ?? 'Could not read CSV file.'
+    importPreview.value = null
+  }
+}
+
+async function confirmImport() {
+  if (!userId.value || !importPreview.value?.rows.length) return
+  importing.value = true
+  importError.value = null
+  importSuccess.value = null
+  try {
+    const result = await importSavedExercises(userId.value, importPreview.value.rows)
+    await invalidateSavedExercises(queryClient, userId.value)
+    const skippedMsg = result.skipped ? ` (${result.skipped} duplicate${result.skipped === 1 ? '' : 's'} skipped)` : ''
+    importSuccess.value = `Imported ${result.imported} exercise${result.imported === 1 ? '' : 's'}${skippedMsg}.`
+    importPreview.value = null
+    if (csvInputRef.value) csvInputRef.value.value = ''
+  } catch (err) {
+    importError.value = err?.message ?? 'Import failed.'
+  } finally {
+    importing.value = false
+  }
 }
 
 function startEdit(ex) {
@@ -264,6 +400,111 @@ async function removeExercise(id) {
   margin-bottom: 18px;
 }
 
+.exercises-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.csv-file-input {
+  display: none;
+}
+
+.import-card {
+  border: 1px solid oklch(17% 0.008 45);
+  border-radius: 10px;
+  background: oklch(10% 0.01 45);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.import-summary {
+  margin: 0 0 8px;
+  color: #e5e5e5;
+  font-size: 0.875rem;
+}
+
+.import-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.import-hint code {
+  color: #c4b5fd;
+  font-size: 11px;
+}
+
+.template-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #c4b5fd;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.import-errors {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8717111;
+  border: 1px solid #f8717144;
+  color: #fca5a5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.import-preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.import-preview-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid oklch(16% 0.008 45);
+  border-radius: 8px;
+  background: oklch(8% 0.012 45);
+}
+
+.import-preview-name {
+  font-size: 0.875rem;
+  color: #f5f5f5;
+  font-weight: 500;
+}
+
+.import-preview-meta {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.import-preview-more {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.import-success {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #4ade80;
+}
+
+.import-inline-error {
+  margin: -8px 0 14px;
+}
+
 @media (min-width: 560px) {
   .exercises-toolbar {
     flex-direction: row;
@@ -272,6 +513,10 @@ async function removeExercise(id) {
 
   .exercises-search {
     flex: 1;
+  }
+
+  .exercises-toolbar-actions {
+    flex-shrink: 0;
   }
 }
 
@@ -408,6 +653,26 @@ async function removeExercise(id) {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.btn-import-csv {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  border: 1px solid oklch(22% 0.008 45);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-import-csv:hover {
+  border-color: #a78bfa66;
+  color: #c4b5fd;
 }
 
 .edit-btn {
