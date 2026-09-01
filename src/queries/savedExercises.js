@@ -1,5 +1,5 @@
 import { computed, unref } from 'vue'
-import { useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys } from './keys'
 
@@ -106,7 +106,7 @@ export async function createSavedExercise(userId, payload) {
     if (!isMissingTableError(err)) throw err
     const local = readLocal(userId)
     if (local.some((e) => e.name.toLowerCase() === name.toLowerCase())) {
-      throw new Error('You already saved an exercise with this name.')
+      throw new Error('You already saved an exercise with this name.', { cause: err })
     }
     const created = normalizeRow({
       id: crypto.randomUUID(),
@@ -145,7 +145,7 @@ export async function updateSavedExercise(userId, id, payload) {
     if (!isMissingTableError(err)) throw err
     const local = readLocal(userId)
     const idx = local.findIndex((e) => e.id === id)
-    if (idx < 0) throw new Error('Exercise not found')
+    if (idx < 0) throw new Error('Exercise not found', { cause: err })
     const updated = normalizeRow({ ...local[idx], ...patch })
     local[idx] = updated
     writeLocal(userId, local.sort((a, b) => a.name.localeCompare(b.name)))

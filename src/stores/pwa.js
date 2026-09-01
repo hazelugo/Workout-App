@@ -3,6 +3,25 @@ import { ref, computed } from 'vue'
 
 const INSTALL_DISMISS_KEY = 'pwa-install-dismissed-v1'
 
+function getStorageItem(key) {
+  try {
+    if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+      return localStorage.getItem(key)
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
+function setStorageItem(key, value) {
+  try {
+    if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+      localStorage.setItem(key, value)
+    }
+  } catch {}
+}
+
 function isStandaloneMode() {
   if (typeof window === 'undefined') return false
   return (
@@ -20,9 +39,7 @@ export const usePwaStore = defineStore('pwa', () => {
   const deferredPrompt = ref(null)
   const needRefresh = ref(false)
   const offlineReady = ref(false)
-  const installDismissed = ref(
-    typeof localStorage !== 'undefined' && localStorage.getItem(INSTALL_DISMISS_KEY) === '1',
-  )
+  const installDismissed = ref(getStorageItem(INSTALL_DISMISS_KEY) === '1')
 
   let refreshHandler = null
 
@@ -52,7 +69,7 @@ export const usePwaStore = defineStore('pwa', () => {
 
     if (outcome === 'accepted') {
       installDismissed.value = true
-      localStorage.setItem(INSTALL_DISMISS_KEY, '1')
+      setStorageItem(INSTALL_DISMISS_KEY, '1')
     }
 
     return outcome === 'accepted'
@@ -60,7 +77,7 @@ export const usePwaStore = defineStore('pwa', () => {
 
   function dismissInstall() {
     installDismissed.value = true
-    localStorage.setItem(INSTALL_DISMISS_KEY, '1')
+    setStorageItem(INSTALL_DISMISS_KEY, '1')
   }
 
   function setRefreshHandler(handler) {
